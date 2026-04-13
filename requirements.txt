@@ -1,0 +1,6 @@
+crewai
+litellm
+python-dotenv
+pydantic
+fastapi>=0.110.0
+uvicorn>=0.29.0
