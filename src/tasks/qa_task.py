@@ -5,50 +5,64 @@ class QATaskFactory:
     @staticmethod
     def create(agent, file_path: str, file_diff: str, code_content: str) -> Task:
         description = f"""
-Você é um QA Sênior e deve produzir um relatório técnico completo sobre a mudança abaixo.
+Você deve investigar a mudança abaixo com postura de QA Sênior Investigador.
 
-Arquivo: {file_path}
+Arquivo alterado: {file_path}
 
 Diff da mudança:
 [INICIO_DIFF]
 {file_diff}
 [FIM_DIFF]
 
-Conteúdo atual do arquivo para contexto:
+Conteúdo atual do arquivo:
 [INICIO_CODIGO]
 {code_content}
 [FIM_CODIGO]
 
-Analise com foco em:
-- riscos funcionais da mudança
-- regressão
-- comportamento inválido
-- casos de borda
-- integração
-- observabilidade
-- impacto em performance, quando aplicável
+Instruções:
+1. Primeiro, entenda exatamente o que mudou no diff.
+2. Se necessário, use as tools disponíveis para buscar contexto adicional no repositório.
+3. Procure arquivos relacionados, usos, testes existentes ou referências relevantes.
+4. Só depois escreva a revisão final.
 
-Preencha obrigatoriamente estas seções:
-# Resumo da mudança
+Sua resposta deve conter:
+
+# Tipo da mudança
+Classifique como visual, funcional, integração, validação, regra de negócio, refatoração, performance ou outro.
+
+# Evidências observadas
+Aponte os trechos ou comportamentos que justificam sua análise.
+
+# Impacto provável
+Explique o que provavelmente foi afetado.
+
 # Riscos identificados
-# Cenários de testes manuais
-# Sugestões de testes unitários
-# Sugestões de testes de integração
-# Sugestões de testes de carga ou desempenho
-# Pontos que precisam de esclarecimento
+Liste riscos reais e contextualizados.
 
-Regras obrigatórias:
-- foque principalmente no diff
-- use o conteúdo completo apenas como contexto
-- não inclua "Thought:"
-- não inclua raciocínio interno
-- não faça conclusão final
-- não diga "o relatório acima"
-- entregue apenas o relatório final em markdown
+# Cenários de testes manuais
+Sugira cenários específicos para a mudança.
+
+# Sugestões de testes unitários
+Sugira testes unitários específicos.
+
+# Sugestões de testes de integração
+Sugira testes de integração específicos.
+
+# Sugestões de testes de carga ou desempenho
+Só inclua se a mudança justificar.
+
+# Pontos que precisam de esclarecimento
+Liste dúvidas relevantes de negócio ou implementação.
+
+Regras:
+- não escreva resposta genérica
+- não faça checklist superficial
+- não diga apenas "testar funcionalidade"
+- seja específico em relação ao diff e ao contexto encontrado
 """
 
         expected_output = """
-Relatório completo em Markdown, com todas as seções solicitadas preenchidas.
+Relatório completo em Markdown, técnico, contextualizado e baseado no diff e na investigação do repositório.
 """
 
         return Task(
@@ -56,5 +70,4 @@ Relatório completo em Markdown, com todas as seções solicitadas preenchidas.
             expected_output=expected_output,
             agent=agent,
             markdown=True,
-            output_file="outputs/analysis.md",
         )

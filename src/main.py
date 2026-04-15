@@ -95,6 +95,7 @@ def main() -> None:
             file_path=file_path,
             file_diff=file_diff,
             code_content=code_content,
+            repo_path=str(repo_path),
         )
 
         section = f"# Arquivo analisado: {file_path}\n\n{result}"
