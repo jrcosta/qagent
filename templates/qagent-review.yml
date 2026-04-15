@@ -1,0 +1,47 @@
+name: QAgent Review
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  qagent-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório principal com submódulos
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências do QAgent
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r qagent/requirements.txt
+
+      - name: Criar arquivo .env para o QAgent
+        run: |
+          echo "LLM_PROVIDER=groq" >> qagent/.env
+          echo "LLM_MODEL=groq/llama-3.3-70b-versatile" >> qagent/.env
+          echo "LLM_API_KEY=${{ secrets.GROQ_API_KEY }}" >> qagent/.env
+          echo "LLM_TEMPERATURE=0" >> qagent/.env
+
+      - name: Executar o QAgent no repositório principal
+        run: |
+          cd qagent
+          python -m src.main --repo-path .. --output-file ../outputs/analysis.md
+
+      - name: Publicar relatório
+        uses: actions/upload-artifact@v4
+        with:
+          name: qagent-analysis
+          path: outputs/analysis.md

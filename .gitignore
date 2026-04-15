@@ -2,5 +2,5 @@
 __pycache__/
 *.pyc
 .env
-outputs/*.md
-outputs/*.json
+outputs/
+.pytest_cache/
