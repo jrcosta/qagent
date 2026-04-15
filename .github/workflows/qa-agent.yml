@@ -1,11 +1,13 @@
 name: QA Agent Review
 
 on:
+  repository_dispatch:
+    types: [analyze_target_repo]
+  workflow_dispatch:
   push:
     branches:
       - main
       - master
-  workflow_dispatch:
 
 jobs:
   qa-review:
