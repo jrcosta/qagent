@@ -36,6 +36,7 @@ jobs:
           ref: ${{ github.event.client_payload.target_ref }}
           path: target
           fetch-depth: 0
+          token: ${{ secrets.TARGET_REPO_PAT }}
 
       - name: Configurar Python
         uses: actions/setup-python@v5
