@@ -1,85 +1,50 @@
 from pathlib import Path
-from typing import List
+
+from crewai import Crew, Process
+
+from src.agent.qa_agent import QAAgentFactory
+from src.config.settings import Settings
+from src.tasks.qa_task import QATaskFactory
+from src.tools.repo_tools import (
+    FindRelatedTestFilesTool,
+    ListFilesInRepoTool,
+    ReadFileTool,
+    SearchInRepoTool,
+)
 
 
-class RepoTools:
-    def __init__(self, repo_path: Path) -> None:
-        self.repo_path = repo_path
+class QACrewRunner:
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
 
-    def read_file(self, file_path: str) -> str:
-        path = self.repo_path / file_path
+    def run(self, file_path: str, file_diff: str, code_content: str, repo_path: str) -> str:
+        repo_path_obj = Path(repo_path)
 
-        if not path.exists():
-            return f"Arquivo não encontrado: {file_path}"
+        tools = [
+            ReadFileTool(repo_path_obj),
+            SearchInRepoTool(repo_path_obj),
+            ListFilesInRepoTool(repo_path_obj),
+            FindRelatedTestFilesTool(repo_path_obj),
+        ]
 
-        if not path.is_file():
-            return f"Caminho não é um arquivo: {file_path}"
+        agent = QAAgentFactory(self.settings).create(tools=tools)
+        task = QATaskFactory.create(agent, file_path, file_diff, code_content)
 
-        try:
-            return path.read_text(encoding="utf-8")
-        except Exception as error:
-            return f"Erro ao ler arquivo {file_path}: {error}"
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=True,
+        )
 
-    def search_in_repo(self, term: str, max_results: int = 20) -> List[str]:
-        matches: List[str] = []
+        result = crew.kickoff()
 
-        for path in self.repo_path.rglob("*"):
-            if not path.is_file():
-                continue
+        if hasattr(result, "tasks_output") and result.tasks_output:
+            task_output = result.tasks_output[-1]
+            if hasattr(task_output, "raw") and task_output.raw:
+                return task_output.raw
 
-            if ".git" in path.parts or "__pycache__" in path.parts or "node_modules" in path.parts:
-                continue
+        if hasattr(result, "raw") and result.raw:
+            return result.raw
 
-            try:
-                content = path.read_text(encoding="utf-8")
-            except Exception:
-                continue
-
-            if term in content:
-                relative_path = str(path.relative_to(self.repo_path))
-                matches.append(relative_path)
-
-            if len(matches) >= max_results:
-                break
-
-        return matches
-
-    def list_files_in_repo(self, extension_filter: str | None = None, max_results: int = 100) -> List[str]:
-        files: List[str] = []
-
-        for path in self.repo_path.rglob("*"):
-            if not path.is_file():
-                continue
-
-            if ".git" in path.parts or "__pycache__" in path.parts or "node_modules" in path.parts:
-                continue
-
-            if extension_filter and path.suffix != extension_filter:
-                continue
-
-            files.append(str(path.relative_to(self.repo_path)))
-
-            if len(files) >= max_results:
-                break
-
-        return files
-
-    def find_related_test_files(self, changed_file: str) -> List[str]:
-        changed_path = Path(changed_file)
-        stem = changed_path.stem.lower()
-
-        related: List[str] = []
-
-        for path in self.repo_path.rglob("*"):
-            if not path.is_file():
-                continue
-
-            if ".git" in path.parts or "__pycache__" in path.parts or "node_modules" in path.parts:
-                continue
-
-            name = path.name.lower()
-
-            if stem in name and ("test" in name or "spec" in name):
-                related.append(str(path.relative_to(self.repo_path)))
-
-        return related
+        return str(result)
