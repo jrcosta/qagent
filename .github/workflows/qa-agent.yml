@@ -10,20 +10,11 @@ on:
       - master
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 
 jobs:
   qa-review:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Debug payload
@@ -87,7 +78,7 @@ jobs:
           path: target/outputs/analysis.md
           retention-days: 7
 
-      - name: Baixar histórico atual da branch gh-pages
+      - name: Preparar histórico existente
         run: |
           mkdir -p previous-pages
           if git ls-remote --exit-code --heads origin gh-pages; then
@@ -101,14 +92,33 @@ jobs:
           python scripts/build_pages_site.py --analysis-file ../target/outputs/analysis.md
         working-directory: agent
 
-      - name: Configurar Pages
-        uses: actions/configure-pages@v5
+      - name: Preparar branch gh-pages para publicação
+        run: |
+          mkdir -p publish
+          if git ls-remote --exit-code --heads origin gh-pages; then
+            git fetch origin gh-pages
+            git worktree add publish gh-pages
+          else
+            git worktree add --detach publish
+            cd publish
+            git checkout --orphan gh-pages
+            git rm -rf . || true
+            cd ..
+          fi
+        working-directory: agent
 
-      - name: Upload do site para Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: agent/site
+      - name: Atualizar conteúdo do site publicado
+        run: |
+          rm -rf publish/*
+          cp -R site/* publish/
+        working-directory: agent
 
-      - name: Deploy no GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publicar em gh-pages
+        run: |
+          cd publish
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "docs: update qagent history" || echo "Sem mudanças para commit"
+          git push origin gh-pages
+        working-directory: agent

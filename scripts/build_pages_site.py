@@ -30,6 +30,8 @@ def copy_previous_history() -> None:
 
 
 def ensure_site_dirs() -> None:
+    if SITE_DIR.exists():
+        shutil.rmtree(SITE_DIR)
     SITE_DIR.mkdir(exist_ok=True)
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -78,16 +80,22 @@ def write_run_pages(run_slug: str, analysis_md: str) -> None:
 
 
 def list_runs() -> list[str]:
+    if not HISTORY_DIR.exists():
+        return []
+
     runs = [p.name for p in HISTORY_DIR.iterdir() if p.is_dir()]
     runs.sort(reverse=True)
     return runs
 
 
 def write_index(runs: list[str]) -> None:
-    items = "\n".join(
-        f'<li><a href="history/{html.escape(run)}/index.html">{html.escape(run)}</a></li>'
-        for run in runs
-    )
+    if not runs:
+        items = "<li>Nenhuma execução registrada.</li>"
+    else:
+        items = "\n".join(
+            f'<li><a href="history/{html.escape(run)}/index.html">{html.escape(run)}</a></li>'
+            for run in runs
+        )
 
     index_file = SITE_DIR / "index.html"
     index_file.write_text(
