@@ -1,16 +1,8 @@
-from pathlib import Path
-
-from crewai import Crew, Process
-
 from src.agent.qa_agent import QAAgentFactory
 from src.config.settings import Settings
+from src.services.context_builder import RepoContextBuilder
 from src.tasks.qa_task import QATaskFactory
-from src.tools.repo_tools import (
-    FindRelatedTestFilesTool,
-    ListFilesInRepoTool,
-    ReadFileTool,
-    SearchInRepoTool,
-)
+from crewai import Crew, Process
 
 
 class QACrewRunner:
@@ -18,17 +10,20 @@ class QACrewRunner:
         self.settings = settings
 
     def run(self, file_path: str, file_diff: str, code_content: str, repo_path: str) -> str:
-        repo_path_obj = Path(repo_path)
+        context_builder = RepoContextBuilder(repo_path)
+        repo_context = context_builder.build(
+            changed_file=file_path,
+            code_content=code_content,
+        )
 
-        tools = [
-            ReadFileTool(repo_path_obj),
-            SearchInRepoTool(repo_path_obj),
-            ListFilesInRepoTool(repo_path_obj),
-            FindRelatedTestFilesTool(repo_path_obj),
-        ]
-
-        agent = QAAgentFactory(self.settings).create(tools=tools)
-        task = QATaskFactory.create(agent, file_path, file_diff, code_content)
+        agent = QAAgentFactory(self.settings).create()
+        task = QATaskFactory.create(
+            agent=agent,
+            file_path=file_path,
+            file_diff=file_diff,
+            code_content=code_content,
+            repo_context=repo_context,
+        )
 
         crew = Crew(
             agents=[agent],

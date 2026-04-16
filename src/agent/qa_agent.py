@@ -14,7 +14,7 @@ class QAAgentFactory:
         prompt_path = Path("src/prompts/system_prompt.txt")
         return prompt_path.read_text(encoding="utf-8")
 
-    def create(self, tools: list | None = None) -> Agent:
+    def create(self) -> Agent:
         llm = LLM(
             model=self.settings.llm_model,
             api_key=self.settings.llm_api_key,
@@ -24,12 +24,11 @@ class QAAgentFactory:
         return Agent(
             role="QA Sênior Investigador",
             goal=(
-                "Investigar mudanças de código com profundidade, entender contexto no repositório, "
-                "identificar riscos reais, inferir impacto funcional e propor testes relevantes"
+                "Analisar mudanças de código com profundidade usando diff, conteúdo do arquivo "
+                "e contexto adicional do repositório para identificar riscos reais e testes relevantes"
             ),
             backstory=self.system_prompt,
             llm=llm,
-            tools=tools or [],
             verbose=True,
             allow_delegation=False,
         )
