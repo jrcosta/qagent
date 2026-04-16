@@ -5,7 +5,12 @@ from crewai import Crew, Process
 from src.agent.qa_agent import QAAgentFactory
 from src.config.settings import Settings
 from src.tasks.qa_task import QATaskFactory
-from src.tools.repo_tools import RepoTools
+from src.tools.repo_tools import (
+    FindRelatedTestFilesTool,
+    ListFilesInRepoTool,
+    ReadFileTool,
+    SearchInRepoTool,
+)
 
 
 class QACrewRunner:
@@ -13,13 +18,13 @@ class QACrewRunner:
         self.settings = settings
 
     def run(self, file_path: str, file_diff: str, code_content: str, repo_path: str) -> str:
-        repo_tools = RepoTools(Path(repo_path))
+        repo_path_obj = Path(repo_path)
 
         tools = [
-            repo_tools.read_file,
-            repo_tools.search_in_repo,
-            repo_tools.list_files_in_repo,
-            repo_tools.find_related_test_files,
+            ReadFileTool(repo_path_obj),
+            SearchInRepoTool(repo_path_obj),
+            ListFilesInRepoTool(repo_path_obj),
+            FindRelatedTestFilesTool(repo_path_obj),
         ]
 
         agent = QAAgentFactory(self.settings).create(tools=tools)
