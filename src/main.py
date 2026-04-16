@@ -33,6 +33,18 @@ def parse_args():
         help="Commit final para comparação",
     )
 
+    parser.add_argument(
+        "--repo-owner",
+        default="unknown-owner",
+        help="Owner do repositório analisado",
+    )
+
+    parser.add_argument(
+        "--repo-name",
+        default=None,
+        help="Nome do repositório analisado. Se omitido, usa o nome da pasta do repo.",
+    )
+
     return parser.parse_args()
 
 
@@ -51,13 +63,21 @@ def save_output(content: str, output_file: str) -> None:
     output_path.write_text(content, encoding="utf-8")
 
 
-def build_report(sections: list[str]) -> str:
-    return "\n\n---\n\n".join(sections)
+def build_report(sections: list[str], repo_owner: str, repo_name: str, base_sha: str | None, head_sha: str | None) -> str:
+    header = (
+        f"# QAgent Report\n\n"
+        f"- **Repositório:** {repo_owner}/{repo_name}\n"
+        f"- **Base SHA:** {base_sha or '-'}\n"
+        f"- **Head SHA:** {head_sha or '-'}\n"
+    )
+    body = "\n\n---\n\n".join(sections)
+    return f"{header}\n\n---\n\n{body}"
 
 
 def main() -> None:
     args = parse_args()
     repo_path = Path(args.repo_path).resolve()
+    repo_name = args.repo_name or repo_path.name
 
     settings = get_settings()
     crew_runner = QACrewRunner(settings)
@@ -69,7 +89,12 @@ def main() -> None:
     )
 
     if not changed_files:
-        message = "# Nenhum arquivo alterado relevante encontrado para análise."
+        message = (
+            "# Nenhum arquivo alterado relevante encontrado para análise.\n\n"
+            f"- **Repositório:** {args.repo_owner}/{repo_name}\n"
+            f"- **Base SHA:** {args.base_sha or '-'}\n"
+            f"- **Head SHA:** {args.head_sha or '-'}\n"
+        )
         save_output(message, args.output_file)
         print(message)
         return
@@ -102,12 +127,23 @@ def main() -> None:
         analyses.append(section)
 
     if not analyses:
-        message = "# Nenhum diff relevante encontrado para análise."
+        message = (
+            "# Nenhum diff relevante encontrado para análise.\n\n"
+            f"- **Repositório:** {args.repo_owner}/{repo_name}\n"
+            f"- **Base SHA:** {args.base_sha or '-'}\n"
+            f"- **Head SHA:** {args.head_sha or '-'}\n"
+        )
         save_output(message, args.output_file)
         print(message)
         return
 
-    final_report = build_report(analyses)
+    final_report = build_report(
+        sections=analyses,
+        repo_owner=args.repo_owner,
+        repo_name=repo_name,
+        base_sha=args.base_sha,
+        head_sha=args.head_sha,
+    )
     save_output(final_report, args.output_file)
 
     print("\nAnálise salva em:")

@@ -27,6 +27,49 @@ jobs:
           echo "base_sha=${{ github.event.client_payload.base_sha }}"
           echo "head_sha=${{ github.event.client_payload.head_sha }}"
 
+      - name: Definir metadados do repositório alvo
+        id: target_meta
+        shell: bash
+        run: |
+          EVENT_NAME="${{ github.event_name }}"
+          PAYLOAD_OWNER="${{ github.event.client_payload.target_owner }}"
+          PAYLOAD_REPO="${{ github.event.client_payload.target_repo }}"
+          PAYLOAD_REF="${{ github.event.client_payload.target_ref }}"
+          PAYLOAD_BASE_SHA="${{ github.event.client_payload.base_sha }}"
+          PAYLOAD_HEAD_SHA="${{ github.event.client_payload.head_sha }}"
+
+          if [ -n "$PAYLOAD_OWNER" ] && [ -n "$PAYLOAD_REPO" ]; then
+            TARGET_OWNER="$PAYLOAD_OWNER"
+            TARGET_REPO="$PAYLOAD_REPO"
+          else
+            TARGET_OWNER="${GITHUB_REPOSITORY_OWNER}"
+            TARGET_REPO="${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}"
+          fi
+
+          if [ -n "$PAYLOAD_REF" ]; then
+            TARGET_REF="$PAYLOAD_REF"
+          else
+            TARGET_REF="${GITHUB_SHA}"
+          fi
+
+          if [ -n "$PAYLOAD_HEAD_SHA" ]; then
+            HEAD_SHA="$PAYLOAD_HEAD_SHA"
+          else
+            HEAD_SHA="${GITHUB_SHA}"
+          fi
+
+          if [ -n "$PAYLOAD_BASE_SHA" ]; then
+            BASE_SHA="$PAYLOAD_BASE_SHA"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+
+          echo "target_owner=$TARGET_OWNER" >> "$GITHUB_OUTPUT"
+          echo "target_repo=$TARGET_REPO" >> "$GITHUB_OUTPUT"
+          echo "target_ref=$TARGET_REF" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Checkout do repo do agente
         uses: actions/checkout@v4
         with:
@@ -36,8 +79,8 @@ jobs:
       - name: Checkout do repo alvo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.client_payload.target_owner }}/${{ github.event.client_payload.target_repo }}
-          ref: ${{ github.event.client_payload.target_ref }}
+          repository: ${{ steps.target_meta.outputs.target_owner }}/${{ steps.target_meta.outputs.target_repo }}
+          ref: ${{ steps.target_meta.outputs.target_ref }}
           path: target
           fetch-depth: 0
           token: ${{ secrets.TARGET_REPO_PAT }}
@@ -65,8 +108,8 @@ jobs:
           python -m src.main \
             --repo-path ../target \
             --output-file ../target/outputs/analysis.md \
-            --base-sha "${{ github.event.client_payload.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha }}"
+            --base-sha "${{ steps.target_meta.outputs.base_sha }}" \
+            --head-sha "${{ steps.target_meta.outputs.head_sha }}"
 
       - name: Mostrar relatório gerado
         run: |
@@ -75,7 +118,7 @@ jobs:
       - name: Publicar relatório como artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qa-analysis
+          name: qa-analysis-${{ steps.target_meta.outputs.target_owner }}-${{ steps.target_meta.outputs.target_repo }}
           path: target/outputs/analysis.md
           retention-days: 7
 
@@ -89,7 +132,12 @@ jobs:
 
       - name: Montar site com histórico
         run: |
-          python scripts/build_pages_site.py --analysis-file ../target/outputs/analysis.md
+          python scripts/build_pages_site.py \
+            --analysis-file ../target/outputs/analysis.md \
+            --repo-owner "${{ steps.target_meta.outputs.target_owner }}" \
+            --repo-name "${{ steps.target_meta.outputs.target_repo }}" \
+            --base-sha "${{ steps.target_meta.outputs.base_sha }}" \
+            --head-sha "${{ steps.target_meta.outputs.head_sha }}"
         working-directory: agent
 
       - name: Remover worktree temporário
