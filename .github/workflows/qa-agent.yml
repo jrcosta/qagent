@@ -52,7 +52,7 @@ jobs:
       - name: Criar arquivo .env do agente
         run: |
           echo "LLM_PROVIDER=groq" >> agent/.env
-          echo "LLM_MODEL=openai/gpt-oss-120b" >> agent/.env
+          echo "LLM_MODEL=gpt-4o-mini" >> agent/.env
           echo "LLM_API_KEY=${{ secrets.GROQ_API_KEY }}" >> agent/.env
           echo "LLM_TEMPERATURE=0" >> agent/.env
 
