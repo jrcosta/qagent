@@ -97,10 +97,16 @@ jobs:
 
       - name: Criar arquivo .env do agente
         run: |
-          echo "LLM_PROVIDER=groq" >> agent/.env
-          echo "LLM_MODEL=groq/llama-3.3-70b-versatile" >> agent/.env
-          echo "LLM_API_KEY=${{ secrets.GROQ_API_KEY }}" >> agent/.env
-          echo "LLM_TEMPERATURE=0" >> agent/.env
+          # Use printf to avoid edge-cases where echo could interpret
+          # special characters or truncate the secret. This writes the
+          # .env file in a robust, literal-safe way.
+          mkdir -p agent
+          {
+            printf 'LLM_PROVIDER=%s\n' "groq"
+            printf 'LLM_MODEL=%s\n' "groq/llama-3.3-70b-versatile"
+            printf 'LLM_API_KEY=%s\n' "${{ secrets.GROQ_API_KEY }}"
+            printf 'LLM_TEMPERATURE=%s\n' "0"
+          } >> agent/.env
 
       - name: Executar QAgent contra o repo alvo
         run: |
