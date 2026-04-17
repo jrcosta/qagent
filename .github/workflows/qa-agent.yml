@@ -86,7 +86,10 @@ jobs:
 
       - name: Montar site com histórico
         run: |
-          python scripts/build_pages_site.py --analysis-file ../target/outputs/analysis.md
+          python scripts/build_pages_site.py \
+            --analysis-file ../target/outputs/analysis.md \
+            --target-owner "${{ github.event.client_payload.target_owner }}" \
+            --target-repo "${{ github.event.client_payload.target_repo }}"
         working-directory: agent
 
       - name: Remover worktree temporário

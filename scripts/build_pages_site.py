@@ -3,25 +3,147 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from datetime import datetime, timezone
 from pathlib import Path
-import html
+import html as html_mod
+import json
 import shutil
 
+import markdown
 
 ROOT = Path.cwd()
 SITE_DIR = ROOT / "site"
 HISTORY_DIR = SITE_DIR / "history"
 PREVIOUS_PAGES_DIR = ROOT / "previous-pages"
 
+# ---------------------------------------------------------------------------
+# Shared CSS
+# ---------------------------------------------------------------------------
+
+SHARED_CSS = """
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+"""
+
+INDEX_CSS = SHARED_CSS + """
+.hero { text-align: center; padding: 48px 0 24px; }
+.hero h1 { font-size: 2rem; margin: 0; }
+.hero h1 span { color: var(--accent); }
+.hero p { color: var(--text-muted); margin: 8px 0 0; font-size: 1.05rem; }
+.badge { display: inline-block; font-size: .75rem; padding: 2px 10px; border-radius: 20px;
+         background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); margin-left: 8px; }
+.cards { display: grid; gap: 12px; margin-top: 24px; }
+.card {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  transition: background .15s, border-color .15s;
+}
+.card:hover { background: var(--surface-hover); border-color: var(--accent); }
+.card-icon { font-size: 1.4rem; flex-shrink: 0; }
+.card-body { flex: 1; min-width: 0; }
+.card-title { font-weight: 600; font-size: .95rem; }
+.card-meta { color: var(--text-muted); font-size: .82rem; margin-top: 2px; }
+.card-arrow { color: var(--text-muted); font-size: 1.2rem; transition: transform .15s; }
+.card:hover .card-arrow { transform: translateX(3px); color: var(--accent); }
+.empty { text-align: center; color: var(--text-muted); padding: 60px 0; font-size: 1.1rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+"""
+
+REPORT_CSS = SHARED_CSS + """
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+"""
+
+
+# ---------------------------------------------------------------------------
+# CLI args
+# ---------------------------------------------------------------------------
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument(
-        "--analysis-file",
-        default="outputs/analysis.md",
-        help="Caminho do relatório markdown a ser publicado",
-    )
+    parser.add_argument("--analysis-file", default="outputs/analysis.md",
+                        help="Caminho do relatório markdown")
+    parser.add_argument("--target-owner", default="", help="Owner do repo analisado")
+    parser.add_argument("--target-repo", default="", help="Nome do repo analisado")
     return parser.parse_args()
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def copy_previous_history() -> None:
     previous_history = PREVIOUS_PAGES_DIR / "history"
@@ -36,8 +158,26 @@ def ensure_site_dirs() -> None:
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def current_run_slug() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
+def run_slug(target_owner: str, target_repo: str) -> str:
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
+    if target_owner and target_repo:
+        return f"{ts}__{target_owner}__{target_repo}"
+    return ts
+
+
+def parse_slug(slug: str) -> dict:
+    """Extract date/time and repo info from a slug."""
+    parts = slug.split("__", 2)
+    ts_raw = parts[0]                       # 2026-04-17_05-03-41_UTC
+    owner = parts[1] if len(parts) > 1 else ""
+    repo = parts[2] if len(parts) > 2 else ""
+    # Parse friendly date
+    try:
+        dt = datetime.strptime(ts_raw, "%Y-%m-%d_%H-%M-%S_UTC")
+        friendly = dt.strftime("%d %b %Y – %H:%M:%S UTC")
+    except ValueError:
+        friendly = ts_raw
+    return {"ts": ts_raw, "owner": owner, "repo": repo, "friendly": friendly}
 
 
 def read_analysis(analysis_file: Path) -> str:
@@ -46,32 +186,59 @@ def read_analysis(analysis_file: Path) -> str:
     return analysis_file.read_text(encoding="utf-8")
 
 
-def write_run_pages(run_slug: str, analysis_md: str) -> None:
-    run_dir = HISTORY_DIR / run_slug
+def md_to_html(md_text: str) -> str:
+    return markdown.markdown(
+        md_text,
+        extensions=["fenced_code", "tables", "toc", "nl2br", "sane_lists"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Page writers
+# ---------------------------------------------------------------------------
+
+def write_run_pages(slug: str, analysis_md: str) -> None:
+    run_dir = HISTORY_DIR / slug
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    md_file = run_dir / "analysis.md"
-    md_file.write_text(analysis_md, encoding="utf-8")
+    info = parse_slug(slug)
+    repo_label = f"{info['owner']}/{info['repo']}" if info["repo"] else "—"
+    rendered = md_to_html(analysis_md)
 
-    html_file = run_dir / "index.html"
-    html_file.write_text(
+    # Save raw md
+    (run_dir / "analysis.md").write_text(analysis_md, encoding="utf-8")
+
+    # Save metadata
+    (run_dir / "meta.json").write_text(
+        json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    # Save HTML
+    (run_dir / "index.html").write_text(
         f"""<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>QAgent Report - {run_slug}</title>
+  <title>QAgent · {html_mod.escape(repo_label)} · {html_mod.escape(info["friendly"])}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {{ font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 16px; line-height: 1.5; }}
-    pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f6f8fa; padding: 16px; border-radius: 8px; }}
-    a {{ text-decoration: none; }}
-  </style>
+  <style>{REPORT_CSS}</style>
 </head>
 <body>
-  <p><a href="../../index.html">← Voltar ao histórico</a></p>
-  <h1>Relatório QAgent</h1>
-  <p><strong>Execução:</strong> {html.escape(run_slug)}</p>
-  <pre>{html.escape(analysis_md)}</pre>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">{html_mod.escape(slug)}</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>{html_mod.escape(repo_label)}</span></div>
+      <div class="meta-item"><label>Execução</label><span>{html_mod.escape(info["friendly"])}</span></div>
+    </div>
+    <article class="report">
+      {rendered}
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
 </body>
 </html>
 """,
@@ -82,7 +249,6 @@ def write_run_pages(run_slug: str, analysis_md: str) -> None:
 def list_runs() -> list[str]:
     if not HISTORY_DIR.exists():
         return []
-
     runs = [p.name for p in HISTORY_DIR.iterdir() if p.is_dir()]
     runs.sort(reverse=True)
     return runs
@@ -90,39 +256,58 @@ def list_runs() -> list[str]:
 
 def write_index(runs: list[str]) -> None:
     if not runs:
-        items = "<li>Nenhuma execução registrada.</li>"
+        cards = '<div class="empty">Nenhuma execução registrada ainda.</div>'
     else:
-        items = "\n".join(
-            f'<li><a href="history/{html.escape(run)}/index.html">{html.escape(run)}</a></li>'
-            for run in runs
-        )
+        card_items: list[str] = []
+        for r in runs:
+            info = parse_slug(r)
+            repo_label = f"{info['owner']}/{info['repo']}" if info["repo"] else "execução local"
+            card_items.append(f"""
+      <a class="card" href="history/{html_mod.escape(r)}/index.html">
+        <span class="card-icon">📋</span>
+        <div class="card-body">
+          <div class="card-title">{html_mod.escape(repo_label)}</div>
+          <div class="card-meta">{html_mod.escape(info["friendly"])}</div>
+        </div>
+        <span class="card-arrow">→</span>
+      </a>""")
+        cards = "\n".join(card_items)
 
-    index_file = SITE_DIR / "index.html"
-    index_file.write_text(
+    count = len(runs)
+    (SITE_DIR / "index.html").write_text(
         f"""<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>QAgent History</title>
+  <title>QAgent · Histórico de Relatórios</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {{ font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 16px; line-height: 1.5; }}
-    li {{ margin: 8px 0; }}
-    a {{ text-decoration: none; }}
-  </style>
+  <style>{INDEX_CSS}</style>
 </head>
 <body>
-  <h1>QAgent - Histórico de Relatórios</h1>
-  <p>Execuções mais recentes primeiro.</p>
-  <ul>
-    {items}
-  </ul>
+  <div class="container">
+    <div class="hero">
+      <h1>🤖 <span>QAgent</span></h1>
+      <p>Histórico de análises automatizadas de QA</p>
+    </div>
+    <p style="color:var(--text-muted);font-size:.9rem;">
+      {count} execuç{'ão' if count == 1 else 'ões'} registrada{'s' if count != 1 else ''}
+      <span class="badge">mais recentes primeiro</span>
+    </p>
+    <div class="cards">
+      {cards}
+    </div>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
 </body>
 </html>
 """,
         encoding="utf-8",
     )
 
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main() -> None:
     args = parse_args()
@@ -132,9 +317,9 @@ def main() -> None:
     copy_previous_history()
 
     analysis_md = read_analysis(analysis_file)
-    run_slug = current_run_slug()
+    slug = run_slug(args.target_owner, args.target_repo)
 
-    write_run_pages(run_slug, analysis_md)
+    write_run_pages(slug, analysis_md)
     runs = list_runs()
     write_index(runs)
 
