@@ -1,13 +1,7 @@
+
 from __future__ import annotations
 
-from typing import Optional
-
 from crewai import Task
-
-try:
-    from src.utils.debug_logger import DebugLogger
-except Exception:  # pragma: no cover
-    DebugLogger = None  # type: ignore
 
 
 class QATaskFactory:
@@ -18,119 +12,77 @@ class QATaskFactory:
         file_diff: str,
         code_content: str,
         repo_context: str,
-        change_hints: str = "",
-        all_changed_files: Optional[list[str]] = None,
-        debug_logger: Optional[DebugLogger] = None,
+        change_hints: str,
+        all_changed_files: list[str] | None = None,
+        debug_logger=None,
     ) -> Task:
-        changed_files_block = "\n".join(all_changed_files or []) or "Nenhum outro arquivo informado."
+        changed_files_block = "\n".join(all_changed_files or [])
 
         description = f"""
-Você deve revisar a mudança abaixo com postura de QA Sênior Investigador, de forma agnóstica à linguagem e ao framework.
+Analise criticamente a mudança do arquivo abaixo.
 
-Arquivo alterado: {file_path}
+Arquivo analisado:
+{file_path}
 
-Todos os arquivos alterados nesta execução:
-[INICIO_ARQUIVOS_ALTERADOS]
-{changed_files_block}
-[FIM_ARQUIVOS_ALTERADOS]
+Outros arquivos alterados nesta execução:
+{changed_files_block or "Nenhum adicional informado."}
 
-Diff da mudança:
-[INICIO_DIFF]
+Diff:
+```diff
 {file_diff}
-[FIM_DIFF]
+```
 
 Conteúdo atual do arquivo:
-[INICIO_CODIGO]
+```text
 {code_content}
-[FIM_CODIGO]
+```
 
-Contexto adicional do repositório:
-[INICIO_CONTEXTO]
+Contexto inicial do repositório:
 {repo_context}
-[FIM_CONTEXTO]
 
-Pistas de revisão:
-[INICIO_PISTAS]
-{change_hints or 'Sem pistas adicionais.'}
-[FIM_PISTAS]
+Pistas gerais da mudança:
+{change_hints}
 
 Instruções:
-1. Entenda a intenção aparente da mudança a partir do diff e do código atual.
-2. Tente identificar inconsistências entre a intenção aparente da alteração e o que o código realmente faz.
-3. Não assuma domínio específico. Analise a partir de coerência, contrato, integração, cobertura e risco de regressão.
-4. Use tools quando o diff não for suficiente. Em especial, você pode:
-   - inspecionar a stack do repositório,
-   - localizar documentação oficial da tecnologia detectada,
-   - ler arquivos relacionados,
-   - buscar usos de símbolos ou módulos,
-   - localizar testes relacionados.
-5. Ao usar tools, incorpore explicitamente o que foi encontrado à análise.
-6. Priorize defeitos concretos ou suspeitas fortes sustentadas por evidência. Evite riscos genéricos sem base observável.
-7. Quando não houver evidência suficiente, declare a limitação com honestidade.
-8. Se houver múltiplos arquivos alterados, correlacione-os quando isso ajudar a explicar um risco ou uma lacuna de cobertura.
+- Não se limite a resumir a mudança.
+- Primeiro tente entender a intenção aparente da alteração.
+- Depois tente identificar inconsistências, fragilidades, regressões ou lacunas de cobertura.
+- Se o diff não for suficiente, use as tools disponíveis para investigar arquivos relacionados, testes, stack do repositório e documentação oficial.
+- Não assuma framework, arquitetura ou domínio específico sem evidência.
+- Evite riscos genéricos sem base observável.
+- Quando algo depender do comportamento da linguagem, framework ou ferramenta, identifique a stack e use documentação oficial como apoio.
 
-Sua resposta deve conter:
+Formato obrigatório da resposta:
 
-# Tipo da mudança
-Classifique a mudança.
+# Arquivo analisado: {file_path}
 
 # Intenção aparente da mudança
-Explique o que a alteração parece querer fazer.
+- ...
 
 # Defeitos concretos ou suspeitas fortes
-Liste defeitos concretos ou suspeitas fortes sustentadas por evidência.
-Para cada item, informe:
-- Suspeita
-- Evidência
-- Por que isso pode estar errado ou frágil
-- Como validar ou reproduzir
-- Nível de confiança
-
-# Evidências observadas
-Aponte os trechos do diff, do arquivo, do contexto e das tools que sustentam sua análise.
-
-# Impacto provável
-Explique o que provavelmente foi afetado.
+- Suspeita:
+- Evidência:
+- Impacto provável:
+- Como validar:
 
 # Riscos identificados
-Liste apenas riscos contextualizados e sustentados por evidência.
+- ...
 
 # Cenários de testes manuais
-Sugira cenários específicos para a mudança.
+- ...
 
-# Sugestões de testes unitários
-Sugira testes unitários específicos.
-
-# Sugestões de testes de integração
-Sugira testes de integração específicos.
-
-# Sugestões de testes de carga ou desempenho
-Inclua apenas se a mudança justificar claramente.
+# Sugestões de testes automatizados
+- ...
 
 # Pontos que precisam de esclarecimento
-Liste dúvidas relevantes de implementação, contrato ou comportamento.
-
-Regras:
-- não escreva resposta genérica
-- não faça checklist superficial
-- não diga apenas "testar funcionalidade"
-- não invente contexto que não esteja no diff, no arquivo, no contexto ou nas tools
-- não sugira performance/carga sem indício real
-- não assuma tecnologias específicas sem evidência
-- use documentação oficial apenas quando ela realmente ajudar a interpretar a mudança
+- ...
 """
-
-        expected_output = (
-            "Relatório completo em Markdown, técnico, investigativo, agnóstico à stack e baseado em evidências "
-            "do diff, do código atual, do contexto do repositório e das tools utilizadas."
-        )
 
         if debug_logger:
             debug_logger.write_text("task_prompt.md", description)
 
         return Task(
             description=description,
-            expected_output=expected_output,
+            expected_output="Relatório técnico em markdown, com evidências concretas e sugestões de validação.",
             agent=agent,
-            markdown=True,
         )

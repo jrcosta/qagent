@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import re
@@ -26,58 +27,62 @@ class QACrewRunner:
 
         added_lines = len(re.findall(r"^\+(?!\+\+)", file_diff, flags=re.MULTILINE))
         removed_lines = len(re.findall(r"^\-(?!--)", file_diff, flags=re.MULTILINE))
-        modified_existing_behavior = added_lines > 0 and removed_lines > 0
 
-        if modified_existing_behavior:
+        if added_lines and removed_lines:
             hints.append(
-                "A mudança altera comportamento existente. Verifique se a substituição parece completa e coerente com o restante do código."
+                "A mudança altera comportamento existente. Verifique se a intenção aparente permanece coerente "
+                "com o restante do código e se a substituição parece completa."
             )
         elif added_lines:
             hints.append(
-                "A mudança introduz código novo. Verifique se a nova lógica está integrada de forma coerente com estruturas, contratos e convenções já existentes."
+                "A mudança introduz código novo. Verifique se a nova lógica está integrada de forma coerente "
+                "com estruturas, convenções e expectativas já existentes no projeto."
             )
         elif removed_lines:
             hints.append(
-                "A mudança remove código existente. Verifique se a remoção elimina proteção, cobertura, validação, tratamento de erro ou comportamento ainda necessário."
+                "A mudança remove código existente. Verifique se a remoção elimina proteção, cobertura, "
+                "validação, tratamento de erro ou comportamento ainda necessário."
             )
 
         if re.search(r"^-.*def test_|^-.*class Test|^-.*@pytest|^-.*assert ", file_diff, flags=re.MULTILINE):
             hints.append(
-                "Há redução aparente de cobertura automatizada. Investigue se a mudança remove proteção útil ou diminui a capacidade de detectar regressões."
+                "Há redução aparente de cobertura automatizada. Investigue se a mudança remove proteção útil "
+                "ou diminui a capacidade de detectar regressões."
             )
 
-        if re.search(r"^\+.*(def |class |function |interface |type )", file_diff, flags=re.MULTILINE):
+        if re.search(r"^\+.*def |^\+.*class |^\+.*function |^\+.*interface |^\+.*type ", file_diff, flags=re.MULTILINE):
             hints.append(
-                "Há definição nova ou alterada de unidade lógica. Verifique se nome, responsabilidade, uso e comportamento aparente estão alinhados."
+                "Há definição nova ou alterada de unidade lógica. Verifique se nome, responsabilidade, uso "
+                "e comportamento aparente estão alinhados."
             )
 
-        if re.search(r"\b(import|from .* import|require\(|using |include )", code_content):
+        if re.search(r"import |from .* import |require\(|using |include ", code_content):
             hints.append(
-                "Considere dependências e integrações aparentes. Verifique se a mudança preserva compatibilidade com módulos, serviços, contratos, interfaces ou componentes relacionados."
+                "Considere dependências e integrações aparentes. Verifique se a mudança preserva compatibilidade "
+                "com módulos, serviços, contratos, interfaces ou componentes relacionados."
             )
 
-        if re.search(r"\b(try:|except |catch\s*\(|raise |throw |assert )", code_content):
+        if re.search(r"try:|except |catch\s*\(|raise |throw |assert ", code_content):
             hints.append(
-                "Observe tratamento de erro e mecanismos de proteção. Verifique se a mudança introduz caminhos frágeis, silenciosos ou sem validação suficiente."
-            )
-
-        extension = Path(file_path).suffix.lower()
-        if extension in {".yml", ".yaml", ".json", ".toml", ".ini", ".env"}:
-            hints.append(
-                "O arquivo parece ser de configuração ou infraestrutura. Verifique impacto em ambiente, integração, ordem de execução, segredos e compatibilidade entre ambientes."
+                "Observe tratamento de erro e mecanismos de proteção. Verifique se a mudança introduz caminhos "
+                "frágeis, silenciosos ou sem validação suficiente."
             )
 
         hints.append(
-            "Antes de resumir a mudança, tente identificar inconsistências entre a intenção aparente da alteração e o que o código realmente faz."
+            "Antes de resumir a mudança, tente identificar inconsistências entre a intenção aparente da alteração "
+            "e o que o código realmente faz."
         )
         hints.append(
-            "Se o diff não for suficiente, use tools para buscar evidências adicionais em arquivos relacionados, implementações conectadas, testes existentes e documentação oficial da stack quando necessário."
+            "Se o diff não for suficiente, use tools para buscar evidências adicionais em arquivos relacionados, "
+            "implementações conectadas, testes existentes e stack do repositório."
         )
         hints.append(
-            "Priorize defeitos concretos ou suspeitas fortes sustentadas por evidência. Evite riscos genéricos sem base observável."
+            "Priorize defeitos concretos ou suspeitas fortes sustentadas por evidência. Evite riscos genéricos "
+            "sem base observável."
         )
         hints.append(
-            "Não assuma framework, arquitetura ou domínio específico. Analise a mudança a partir de coerência, contrato, integração, cobertura e regressão."
+            "Não assuma framework, arquitetura ou domínio específico. Analise a mudança a partir de coerência, "
+            "contrato, integração, cobertura e regressão."
         )
 
         return "\n".join(f"- {hint}" for hint in hints)
@@ -112,6 +117,7 @@ class QACrewRunner:
             changed_file=file_path,
             code_content=code_content,
         )
+
         change_hints = self._build_change_hints(file_path, file_diff, code_content)
 
         if debug_logger:

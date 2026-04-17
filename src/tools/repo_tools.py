@@ -27,12 +27,10 @@ class _NoOpLogger:
 
 
 class _RepoTool(BaseTool):
-    repo_path: str = Field(..., description="Absolute path to the repository root")
+    repo_path: str = Field(..., description="Absolute path to repository root")
     debug_logger: Any | None = Field(default=None, exclude=True)
 
-    model_config = {
-        "arbitrary_types_allowed": True,
-    }
+    model_config = {"arbitrary_types_allowed": True}
 
     def _root(self) -> Path:
         return Path(self.repo_path).resolve()
@@ -43,17 +41,17 @@ class _RepoTool(BaseTool):
     def _safe_resolve(self, relative_path: str) -> Path:
         root = self._root()
         candidate = (root / relative_path).resolve()
-        if root not in candidate.parents and candidate != root:
+        if candidate != root and root not in candidate.parents:
             raise ValueError(f"Path outside repository: {relative_path}")
         return candidate
 
     def _iter_files(self):
-        root = self._root()
         ignored_dirs = {
             ".git", ".venv", "venv", "__pycache__", "node_modules",
             ".mypy_cache", ".pytest_cache", "dist", "build", ".next",
-            ".idea", ".vscode"
+            ".idea", ".vscode", "coverage", ".coverage"
         }
+        root = self._root()
         for path in root.rglob("*"):
             if not path.is_file():
                 continue
@@ -70,10 +68,7 @@ class _RepoTool(BaseTool):
 
 class ReadFileTool(_RepoTool):
     name: str = "read_file"
-    description: str = (
-        "Read a repository file by relative path and return its contents. "
-        "Use this when you need direct evidence from a specific file."
-    )
+    description: str = "Read a repository file by relative path and return its contents."
 
     def _run(self, file_path: str) -> str:
         logger = self._logger()
@@ -82,14 +77,10 @@ class ReadFileTool(_RepoTool):
             target = self._safe_resolve(file_path)
             if not target.exists() or not target.is_file():
                 raise FileNotFoundError(file_path)
-
             content = target.read_text(encoding="utf-8", errors="ignore")
             rel = str(target.relative_to(self._root()))
             result = f"# File: {rel}\n\n{self._truncate(content)}"
-            logger.log_tool_success(
-                self.name,
-                {"file_path": file_path, "resolved_path": rel, "length": len(content)},
-            )
+            logger.log_tool_success(self.name, {"file_path": file_path, "resolved_path": rel, "length": len(content)})
             return result
         except Exception as exc:
             logger.log_tool_error(self.name, {"file_path": file_path, "error": repr(exc)})
@@ -98,21 +89,14 @@ class ReadFileTool(_RepoTool):
 
 class SearchInRepoTool(_RepoTool):
     name: str = "search_in_repo"
-    description: str = (
-        "Search the repository for a text or regex pattern and return matching files "
-        "with line numbers and short excerpts."
-    )
+    description: str = "Search repository text or regex pattern and return matching files with excerpts."
 
     def _run(self, query: str, use_regex: bool = False, max_results: int = 20) -> str:
         logger = self._logger()
-        logger.log_tool_start(
-            self.name,
-            {"query": query, "use_regex": use_regex, "max_results": max_results},
-        )
+        logger.log_tool_start(self.name, {"query": query, "use_regex": use_regex, "max_results": max_results})
         try:
-            results: list[str] = []
             pattern = re.compile(query) if use_regex else None
-
+            results: list[str] = []
             for file_path in self._iter_files():
                 try:
                     content = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -123,8 +107,7 @@ class SearchInRepoTool(_RepoTool):
                     matched = bool(pattern.search(line)) if use_regex else (query in line)
                     if matched:
                         rel = str(file_path.relative_to(self._root()))
-                        excerpt = line.strip()
-                        results.append(f"{rel}:{idx}: {excerpt}")
+                        results.append(f"{rel}:{idx}: {line.strip()}")
                         if len(results) >= max_results:
                             break
                 if len(results) >= max_results:
@@ -134,9 +117,8 @@ class SearchInRepoTool(_RepoTool):
                 logger.log_tool_success(self.name, {"matches": 0})
                 return f"No matches found for query: {query}"
 
-            payload = "\n".join(results)
             logger.log_tool_success(self.name, {"matches": len(results)})
-            return self._truncate(payload, 8000)
+            return self._truncate("\n".join(results), 8000)
         except Exception as exc:
             logger.log_tool_error(self.name, {"query": query, "error": repr(exc)})
             return f"Error searching repository for '{query}': {exc}"
@@ -144,10 +126,7 @@ class SearchInRepoTool(_RepoTool):
 
 class ListFilesInRepoTool(_RepoTool):
     name: str = "list_files_in_repo"
-    description: str = (
-        "List repository files, optionally filtering by glob pattern and limiting results. "
-        "Useful to inspect project structure or discover related files."
-    )
+    description: str = "List repository files, optionally filtered by glob pattern."
 
     def _run(self, pattern: str = "*", max_results: int = 200) -> str:
         logger = self._logger()
@@ -155,7 +134,6 @@ class ListFilesInRepoTool(_RepoTool):
         try:
             matches: list[str] = []
             root = self._root()
-
             for file_path in self._iter_files():
                 rel = str(file_path.relative_to(root))
                 if fnmatch.fnmatch(rel, pattern) or fnmatch.fnmatch(file_path.name, pattern):
@@ -164,10 +142,8 @@ class ListFilesInRepoTool(_RepoTool):
                         break
 
             logger.log_tool_success(self.name, {"matches": len(matches), "pattern": pattern})
-
             if not matches:
                 return f"No files found for pattern: {pattern}"
-
             return "\n".join(matches)
         except Exception as exc:
             logger.log_tool_error(self.name, {"pattern": pattern, "error": repr(exc)})
@@ -176,10 +152,7 @@ class ListFilesInRepoTool(_RepoTool):
 
 class FindRelatedTestFilesTool(_RepoTool):
     name: str = "find_related_test_files"
-    description: str = (
-        "Find likely related automated test files for a changed file based on naming "
-        "conventions and path similarity."
-    )
+    description: str = "Find likely related automated test files for a changed file."
 
     TEST_PATTERNS: ClassVar[list[str]] = [
         "test_*.py", "*_test.py", "*.spec.ts", "*.test.ts", "*.spec.js", "*.test.js",
@@ -192,18 +165,17 @@ class FindRelatedTestFilesTool(_RepoTool):
         try:
             changed_path = Path(changed_file)
             stem = changed_path.stem.lower()
-
             matches: list[tuple[int, str]] = []
+
             for file_path in self._iter_files():
                 rel = str(file_path.relative_to(self._root()))
                 filename = file_path.name
-
                 if not any(fnmatch.fnmatch(filename, pattern) for pattern in self.TEST_PATTERNS):
                     continue
 
                 score = 0
-                rel_lower = rel.lower()
                 name_lower = filename.lower()
+                rel_lower = rel.lower()
 
                 if stem and stem in name_lower:
                     score += 5
@@ -218,13 +190,10 @@ class FindRelatedTestFilesTool(_RepoTool):
             matches.sort(key=lambda item: (-item[0], item[1]))
             top = [path for _, path in matches[:max_results]]
 
-            if not top:
-                logger.log_tool_success(self.name, {"matches": 0})
-                return f"No related test files found for: {changed_file}"
-
-            result = "\n".join(top)
             logger.log_tool_success(self.name, {"matches": len(top)})
-            return result
+            if not top:
+                return f"No related test files found for: {changed_file}"
+            return "\n".join(top)
         except Exception as exc:
             logger.log_tool_error(self.name, {"changed_file": changed_file, "error": repr(exc)})
             return f"Error finding related test files for '{changed_file}': {exc}"
@@ -232,10 +201,7 @@ class FindRelatedTestFilesTool(_RepoTool):
 
 class InspectRepoStackTool(_RepoTool):
     name: str = "inspect_repo_stack"
-    description: str = (
-        "Inspect the repository to infer main languages, common frameworks, build tools, "
-        "manifest files and test tooling."
-    )
+    description: str = "Inspect repository to infer main languages, frameworks, manifest files and test tooling."
 
     MANIFESTS: ClassVar[dict[str, str]] = {
         "package.json": "Node.js/JavaScript",
@@ -287,8 +253,6 @@ class InspectRepoStackTool(_RepoTool):
         "NestJS": ["@nestjs", "nestjs"],
         "Spring": ["spring-boot", "org.springframework", "springframework"],
         "JUnit": ["junit"],
-        "Maven": ["<project", "<dependency"],
-        "Gradle": ["plugins {", "dependencies {"],
         "Terraform": ["terraform", "provider"],
     }
 
@@ -300,7 +264,6 @@ class InspectRepoStackTool(_RepoTool):
             language_counts: dict[str, int] = {}
             detected_frameworks: set[str] = set()
             test_tools: set[str] = set()
-
             root = self._root()
 
             for file_path in self._iter_files():
@@ -352,10 +315,7 @@ class InspectRepoStackTool(_RepoTool):
 
 class GetOfficialDocsReferenceTool(BaseTool):
     name: str = "get_official_docs_reference"
-    description: str = (
-        "Return canonical official documentation links for a language, framework, test tool, "
-        "or build tool. Use when repo stack semantics matter to the review."
-    )
+    description: str = "Return canonical official documentation links for a language, framework, test tool, or build tool."
 
     DOCS: ClassVar[dict[str, str]] = {
         "python": "https://docs.python.org/3/",
@@ -392,11 +352,9 @@ class GetOfficialDocsReferenceTool(BaseTool):
         key = technology.strip().lower()
         if key in self.DOCS:
             return self.DOCS[key]
-
         simplified = key.replace("framework", "").strip()
         if simplified in self.DOCS:
             return self.DOCS[simplified]
-
         return f"No official documentation mapping found for: {technology}"
 
 
