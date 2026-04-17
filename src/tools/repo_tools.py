@@ -1,369 +1,379 @@
+
 from __future__ import annotations
 
+import fnmatch
+import json
+import re
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import Any, ClassVar
 
-from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 try:
-    from src.utils.debug_logger import DebugLogger
+    from crewai.tools import BaseTool
 except Exception:  # pragma: no cover
-    DebugLogger = None  # type: ignore
+    from crewai_tools import BaseTool  # type: ignore
 
 
-IGNORED_PARTS = {".git", "__pycache__", "node_modules", ".venv", "venv", ".idea", ".pytest_cache"}
+class _NoOpLogger:
+    def log_tool_start(self, tool_name: str, payload: dict[str, Any]) -> None:
+        pass
 
+    def log_tool_success(self, tool_name: str, payload: dict[str, Any]) -> None:
+        pass
 
-def _should_skip(path: Path) -> bool:
-    return any(part in IGNORED_PARTS for part in path.parts)
-
-
-def _read_text_safe(path: Path) -> Optional[str]:
-    try:
-        return path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        try:
-            return path.read_text(encoding="latin-1")
-        except Exception:
-            return None
-    except Exception:
-        return None
-
-
-class ReadFileInput(BaseModel):
-    file_path: str = Field(..., description="Caminho relativo do arquivo a ser lido no repositório alvo.")
-
-
-class SearchInRepoInput(BaseModel):
-    term: str = Field(..., description="Termo a ser buscado no repositório alvo.")
-    max_results: int = Field(20, description="Quantidade máxima de arquivos retornados.")
-
-
-class ListFilesInRepoInput(BaseModel):
-    extension_filter: str | None = Field(default=None, description="Extensão opcional para filtrar arquivos, exemplo: .py, .ts, .java")
-    max_results: int = Field(100, description="Quantidade máxima de arquivos retornados.")
-
-
-class FindRelatedTestFilesInput(BaseModel):
-    changed_file: str = Field(..., description="Arquivo alterado para buscar testes relacionados por nome e convenção.")
-
-
-class InspectRepoStackInput(BaseModel):
-    max_files: int = Field(300, description="Quantidade máxima de arquivos a inspecionar para inferir a stack do repositório.")
-
-
-class GetOfficialDocsReferenceInput(BaseModel):
-    technology: str = Field(..., description="Tecnologia, linguagem, framework ou ferramenta para obter a documentação oficial canônica.")
+    def log_tool_error(self, tool_name: str, payload: dict[str, Any]) -> None:
+        pass
 
 
 class _RepoTool(BaseTool):
-    def __init__(self, repo_path: Path, debug_logger: Optional[DebugLogger] = None):
-        super().__init__()
-        self._repo_path = repo_path
-        self._debug_logger = debug_logger
+    repo_path: str = Field(..., description="Absolute path to the repository root")
+    debug_logger: Any | None = Field(default=None, exclude=True)
 
-    def _log(self, event: str, payload: dict) -> None:
-        if self._debug_logger:
-            self._debug_logger.log_tool_event(event, payload)
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
+
+    def _root(self) -> Path:
+        return Path(self.repo_path).resolve()
+
+    def _logger(self) -> Any:
+        return self.debug_logger or _NoOpLogger()
+
+    def _safe_resolve(self, relative_path: str) -> Path:
+        root = self._root()
+        candidate = (root / relative_path).resolve()
+        if root not in candidate.parents and candidate != root:
+            raise ValueError(f"Path outside repository: {relative_path}")
+        return candidate
+
+    def _iter_files(self):
+        root = self._root()
+        ignored_dirs = {
+            ".git", ".venv", "venv", "__pycache__", "node_modules",
+            ".mypy_cache", ".pytest_cache", "dist", "build", ".next",
+            ".idea", ".vscode"
+        }
+        for path in root.rglob("*"):
+            if not path.is_file():
+                continue
+            if any(part in ignored_dirs for part in path.parts):
+                continue
+            yield path
+
+    @staticmethod
+    def _truncate(text: str, limit: int = 12000) -> str:
+        if len(text) <= limit:
+            return text
+        return text[:limit] + "\n\n...[truncated]..."
 
 
 class ReadFileTool(_RepoTool):
     name: str = "read_file"
-    description: str = "Lê o conteúdo de um arquivo do repositório alvo a partir do caminho relativo. Use para inspecionar implementações, testes, manifestos e configuração." 
-    args_schema: Type[BaseModel] = ReadFileInput
+    description: str = (
+        "Read a repository file by relative path and return its contents. "
+        "Use this when you need direct evidence from a specific file."
+    )
 
     def _run(self, file_path: str) -> str:
-        self._log("START", {"tool": self.name, "file_path": file_path})
-        path = self._repo_path / file_path
+        logger = self._logger()
+        logger.log_tool_start(self.name, {"file_path": file_path})
+        try:
+            target = self._safe_resolve(file_path)
+            if not target.exists() or not target.is_file():
+                raise FileNotFoundError(file_path)
 
-        if not path.exists():
-            result = f"Arquivo não encontrado: {file_path}"
-            self._log("ERROR", {"tool": self.name, "file_path": file_path, "error": result})
+            content = target.read_text(encoding="utf-8", errors="ignore")
+            rel = str(target.relative_to(self._root()))
+            result = f"# File: {rel}\n\n{self._truncate(content)}"
+            logger.log_tool_success(
+                self.name,
+                {"file_path": file_path, "resolved_path": rel, "length": len(content)},
+            )
             return result
-
-        if not path.is_file():
-            result = f"Caminho não é um arquivo: {file_path}"
-            self._log("ERROR", {"tool": self.name, "file_path": file_path, "error": result})
-            return result
-
-        content = _read_text_safe(path)
-        if content is None:
-            result = f"Não foi possível ler arquivo como texto: {file_path}"
-            self._log("ERROR", {"tool": self.name, "file_path": file_path, "error": result})
-            return result
-
-        truncated = content[:12000]
-        if len(content) > len(truncated):
-            truncated += "\n\n[TRUNCADO: arquivo muito grande para leitura completa pela tool]"
-
-        self._log("SUCCESS", {"tool": self.name, "file_path": file_path, "length": len(truncated)})
-        return truncated
+        except Exception as exc:
+            logger.log_tool_error(self.name, {"file_path": file_path, "error": repr(exc)})
+            return f"Error reading file '{file_path}': {exc}"
 
 
 class SearchInRepoTool(_RepoTool):
     name: str = "search_in_repo"
-    description: str = "Busca um termo no repositório e retorna caminhos relativos dos arquivos em que o termo foi encontrado. Use para localizar usos, referências e testes relacionados." 
-    args_schema: Type[BaseModel] = SearchInRepoInput
+    description: str = (
+        "Search the repository for a text or regex pattern and return matching files "
+        "with line numbers and short excerpts."
+    )
 
-    def _run(self, term: str, max_results: int = 20) -> str:
-        self._log("START", {"tool": self.name, "term": term, "max_results": max_results})
-        matches: List[str] = []
-        needle = term.lower()
+    def _run(self, query: str, use_regex: bool = False, max_results: int = 20) -> str:
+        logger = self._logger()
+        logger.log_tool_start(
+            self.name,
+            {"query": query, "use_regex": use_regex, "max_results": max_results},
+        )
+        try:
+            results: list[str] = []
+            pattern = re.compile(query) if use_regex else None
 
-        for path in self._repo_path.rglob("*"):
-            if not path.is_file() or _should_skip(path):
-                continue
+            for file_path in self._iter_files():
+                try:
+                    content = file_path.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
 
-            content = _read_text_safe(path)
-            if content is None:
-                continue
-
-            if needle in content.lower() or needle in path.name.lower():
-                matches.append(str(path.relative_to(self._repo_path)))
-                if len(matches) >= max_results:
+                for idx, line in enumerate(content.splitlines(), start=1):
+                    matched = bool(pattern.search(line)) if use_regex else (query in line)
+                    if matched:
+                        rel = str(file_path.relative_to(self._root()))
+                        excerpt = line.strip()
+                        results.append(f"{rel}:{idx}: {excerpt}")
+                        if len(results) >= max_results:
+                            break
+                if len(results) >= max_results:
                     break
 
-        if not matches:
-            result = "Nenhum arquivo encontrado."
-            self._log("SUCCESS", {"tool": self.name, "matches": 0})
-            return result
+            if not results:
+                logger.log_tool_success(self.name, {"matches": 0})
+                return f"No matches found for query: {query}"
 
-        result = "\n".join(matches)
-        self._log("SUCCESS", {"tool": self.name, "matches": len(matches)})
-        return result
-
-
-class ListFilesInRepoTool(_RepoTool):
-    name: str = "list_files_in_repo"
-    description: str = "Lista arquivos do repositório, com filtro opcional por extensão. Use para descobrir estrutura, manifestos e convenções do projeto." 
-    args_schema: Type[BaseModel] = ListFilesInRepoInput
-
-    def _run(self, extension_filter: str | None = None, max_results: int = 100) -> str:
-        self._log("START", {"tool": self.name, "extension_filter": extension_filter, "max_results": max_results})
-        files: List[str] = []
-
-        for path in self._repo_path.rglob("*"):
-            if not path.is_file() or _should_skip(path):
-                continue
-            if extension_filter and path.suffix != extension_filter:
-                continue
-
-            files.append(str(path.relative_to(self._repo_path)))
-            if len(files) >= max_results:
-                break
-
-        if not files:
-            result = "Nenhum arquivo encontrado."
-            self._log("SUCCESS", {"tool": self.name, "files": 0})
-            return result
-
-        result = "\n".join(files)
-        self._log("SUCCESS", {"tool": self.name, "files": len(files)})
-        return result
+            payload = "\n".join(results)
+            logger.log_tool_success(self.name, {"matches": len(results)})
+            return self._truncate(payload, 8000)
+        except Exception as exc:
+            logger.log_tool_error(self.name, {"query": query, "error": repr(exc)})
+            return f"Error searching repository for '{query}': {exc}"
 
 
 class FindRelatedTestFilesTool(_RepoTool):
     name: str = "find_related_test_files"
-    description: str = "Procura arquivos de teste relacionados ao arquivo alterado com base no nome, na convenção e no nome base do módulo." 
-    args_schema: Type[BaseModel] = FindRelatedTestFilesInput
+    description: str = (
+        "Find likely related automated test files for a changed file based on naming "
+        "conventions and path similarity."
+    )
 
-    def _run(self, changed_file: str) -> str:
-        self._log("START", {"tool": self.name, "changed_file": changed_file})
-        changed_path = Path(changed_file)
-        stem = changed_path.stem.lower()
-        parent_name = changed_path.parent.name.lower() if changed_path.parent.name else ""
+    TEST_PATTERNS: ClassVar[list[str]] = [
+        "test_*.py", "*_test.py", "*.spec.ts", "*.test.ts", "*.spec.js", "*.test.js",
+        "*Tests.java", "*Test.java", "*_spec.rb", "*_test.rb"
+    ]
 
-        related: List[str] = []
+    def _run(self, changed_file: str, max_results: int = 10) -> str:
+        logger = self._logger()
+        logger.log_tool_start(self.name, {"changed_file": changed_file, "max_results": max_results})
+        try:
+            changed_path = Path(changed_file)
+            stem = changed_path.stem.lower()
 
-        for path in self._repo_path.rglob("*"):
-            if not path.is_file() or _should_skip(path):
-                continue
+            matches: list[tuple[int, str]] = []
+            for file_path in self._iter_files():
+                rel = str(file_path.relative_to(self._root()))
+                filename = file_path.name
 
-            name = path.name.lower()
-            rel = str(path.relative_to(self._repo_path))
-            is_test_name = any(token in name for token in ("test", "spec"))
-            if not is_test_name:
-                continue
+                if not any(fnmatch.fnmatch(filename, pattern) for pattern in self.TEST_PATTERNS):
+                    continue
 
-            score = 0
-            if stem and stem in name:
-                score += 2
-            if parent_name and parent_name in rel.lower():
-                score += 1
-            if changed_path.stem.replace("_", "") and changed_path.stem.replace("_", "") in name.replace("_", ""):
-                score += 1
+                score = 0
+                rel_lower = rel.lower()
+                name_lower = filename.lower()
 
-            if score > 0:
-                related.append(rel)
+                if stem and stem in name_lower:
+                    score += 5
+                if changed_path.parent.name and changed_path.parent.name.lower() in rel_lower:
+                    score += 2
+                if any(part.lower() in rel_lower for part in changed_path.parts if part):
+                    score += 1
 
-        if not related:
-            result = "Nenhum teste relacionado encontrado."
-            self._log("SUCCESS", {"tool": self.name, "matches": 0})
+                if score > 0:
+                    matches.append((score, rel))
+
+            matches.sort(key=lambda item: (-item[0], item[1]))
+            top = [path for _, path in matches[:max_results]]
+
+            if not top:
+                logger.log_tool_success(self.name, {"matches": 0})
+                return f"No related test files found for: {changed_file}"
+
+            result = "\n".join(top)
+            logger.log_tool_success(self.name, {"matches": len(top)})
             return result
-
-        unique_related = list(dict.fromkeys(related))[:20]
-        result = "\n".join(unique_related)
-        self._log("SUCCESS", {"tool": self.name, "matches": len(unique_related)})
-        return result
+        except Exception as exc:
+            logger.log_tool_error(self.name, {"changed_file": changed_file, "error": repr(exc)})
+            return f"Error finding related test files for '{changed_file}': {exc}"
 
 
 class InspectRepoStackTool(_RepoTool):
     name: str = "inspect_repo_stack"
-    description: str = "Inspeciona o repositório para inferir linguagem, framework, ferramentas de build, testes e manifestos. Use quando a análise depender da semântica da stack." 
-    args_schema: Type[BaseModel] = InspectRepoStackInput
+    description: str = (
+        "Inspect the repository to infer main languages, common frameworks, build tools, "
+        "manifest files and test tooling."
+    )
 
-    MANIFESTS = {
+    MANIFESTS: ClassVar[dict[str, str]] = {
         "package.json": "Node.js/JavaScript",
         "pyproject.toml": "Python",
         "requirements.txt": "Python",
+        "poetry.lock": "Python",
+        "Pipfile": "Python",
         "pom.xml": "Java/Maven",
         "build.gradle": "Java/Gradle",
+        "build.gradle.kts": "Java/Kotlin Gradle",
         "Cargo.toml": "Rust",
         "go.mod": "Go",
         "composer.json": "PHP",
         "Gemfile": "Ruby",
         "pubspec.yaml": "Dart/Flutter",
         "mix.exs": "Elixir",
-        "*.csproj": ".NET",
     }
 
-    DOC_HINTS = {
-        "fastapi": "FastAPI",
-        "django": "Django",
-        "flask": "Flask",
-        "pytest": "pytest",
-        "unittest": "Python unittest",
-        "jest": "Jest",
-        "vitest": "Vitest",
-        "react": "React",
-        "next": "Next.js",
-        "express": "Express",
-        "spring": "Spring",
-        "junit": "JUnit 5",
-        "laravel": "Laravel",
-        "terraform": "Terraform",
+    EXTENSION_LANGUAGES: ClassVar[dict[str, str]] = {
+        ".py": "Python",
+        ".js": "JavaScript",
+        ".jsx": "JavaScript/React",
+        ".ts": "TypeScript",
+        ".tsx": "TypeScript/React",
+        ".java": "Java",
+        ".kt": "Kotlin",
+        ".go": "Go",
+        ".rs": "Rust",
+        ".rb": "Ruby",
+        ".php": "PHP",
+        ".cs": ".NET/C#",
+        ".swift": "Swift",
+        ".scala": "Scala",
+        ".dart": "Dart",
+        ".tf": "Terraform",
+        ".sh": "Shell",
     }
 
-    def _run(self, max_files: int = 300) -> str:
-        self._log("START", {"tool": self.name, "max_files": max_files})
-        manifest_files: List[str] = []
-        suffix_counter: dict[str, int] = {}
-        detected_hints: set[str] = set()
-        scanned = 0
+    FRAMEWORK_HINTS: ClassVar[dict[str, list[str]]] = {
+        "FastAPI": ["fastapi"],
+        "Django": ["django"],
+        "Flask": ["flask"],
+        "Pytest": ["pytest"],
+        "React": ["react"],
+        "Next.js": ["next"],
+        "Jest": ["jest"],
+        "Vitest": ["vitest"],
+        "Express": ["express"],
+        "NestJS": ["@nestjs", "nestjs"],
+        "Spring": ["spring-boot", "org.springframework", "springframework"],
+        "JUnit": ["junit"],
+        "Maven": ["<project", "<dependency"],
+        "Gradle": ["plugins {", "dependencies {"],
+        "Terraform": ["terraform", "provider"],
+    }
 
-        for path in self._repo_path.rglob("*"):
-            if not path.is_file() or _should_skip(path):
-                continue
-            scanned += 1
-            rel = str(path.relative_to(self._repo_path))
-            suffix = path.suffix.lower()
-            if suffix:
-                suffix_counter[suffix] = suffix_counter.get(suffix, 0) + 1
+    def _run(self) -> str:
+        logger = self._logger()
+        logger.log_tool_start(self.name, {})
+        try:
+            manifests: list[str] = []
+            language_counts: dict[str, int] = {}
+            detected_frameworks: set[str] = set()
+            test_tools: set[str] = set()
 
-            name = path.name
-            if name in self.MANIFESTS or name.endswith(".csproj"):
-                manifest_files.append(rel)
+            root = self._root()
 
-            if scanned <= max_files:
-                content = _read_text_safe(path)
-                if content:
-                    low = content.lower()
-                    for hint_key, hint_name in self.DOC_HINTS.items():
-                        if hint_key in low:
-                            detected_hints.add(hint_name)
+            for file_path in self._iter_files():
+                rel = str(file_path.relative_to(root))
+                if file_path.name in self.MANIFESTS:
+                    manifests.append(rel)
 
-        probable_languages: List[str] = []
-        ext_map = {
-            ".py": "Python",
-            ".js": "JavaScript",
-            ".ts": "TypeScript",
-            ".tsx": "TypeScript/React",
-            ".jsx": "JavaScript/React",
-            ".java": "Java",
-            ".kt": "Kotlin",
-            ".go": "Go",
-            ".rs": "Rust",
-            ".rb": "Ruby",
-            ".php": "PHP",
-            ".cs": "C#/.NET",
-            ".tf": "Terraform",
-            ".swift": "Swift",
-            ".dart": "Dart",
-        }
-        for suffix, language in ext_map.items():
-            if suffix_counter.get(suffix):
-                probable_languages.append(language)
+                language = self.EXTENSION_LANGUAGES.get(file_path.suffix.lower())
+                if language:
+                    language_counts[language] = language_counts.get(language, 0) + 1
 
-        lines = [
-            "# Stack inferida do repositório",
-            f"Arquivos inspecionados: {scanned}",
-            "",
-            "## Linguagens prováveis",
-            *(sorted(probable_languages) or ["Nenhuma linguagem inferida claramente."]),
-            "",
-            "## Manifestos e arquivos de build",
-            *(sorted(manifest_files) or ["Nenhum manifesto conhecido encontrado."]),
-            "",
-            "## Tecnologias ou frameworks sugeridos por indícios no código",
-            *(sorted(detected_hints) or ["Nenhuma tecnologia específica inferida com segurança."]),
-        ]
+            for manifest_rel in manifests[:20]:
+                try:
+                    content = (root / manifest_rel).read_text(encoding="utf-8", errors="ignore").lower()
+                except Exception:
+                    continue
 
-        result = "\n".join(lines)
-        self._log("SUCCESS", {"tool": self.name, "scanned": scanned, "languages": probable_languages, "hints": sorted(detected_hints)})
-        return result
+                for framework, hints in self.FRAMEWORK_HINTS.items():
+                    if any(hint in content for hint in hints):
+                        detected_frameworks.add(framework)
+
+                if "pytest" in content or "junit" in content or "jest" in content or "vitest" in content:
+                    if "pytest" in content:
+                        test_tools.add("Pytest")
+                    if "junit" in content:
+                        test_tools.add("JUnit")
+                    if "jest" in content:
+                        test_tools.add("Jest")
+                    if "vitest" in content:
+                        test_tools.add("Vitest")
+
+            # detect .csproj files separately
+            csproj_files = [str(p.relative_to(root)) for p in root.rglob("*.csproj")]
+            if csproj_files:
+                manifests.extend(csproj_files)
+                language_counts[".NET/C#"] = language_counts.get(".NET/C#", 0) + len(csproj_files)
+
+            ordered_languages = sorted(language_counts.items(), key=lambda item: (-item[1], item[0]))
+            result = {
+                "languages": [name for name, _ in ordered_languages[:8]],
+                "frameworks": sorted(detected_frameworks),
+                "test_tools": sorted(test_tools),
+                "manifest_files": sorted(set(manifests))[:30],
+            }
+            logger.log_tool_success(self.name, result)
+            return json.dumps(result, indent=2, ensure_ascii=False)
+        except Exception as exc:
+            logger.log_tool_error(self.name, {"error": repr(exc)})
+            return f"Error inspecting repository stack: {exc}"
 
 
-class GetOfficialDocsReferenceTool(_RepoTool):
+class GetOfficialDocsReferenceTool(BaseTool):
     name: str = "get_official_docs_reference"
-    description: str = "Retorna a URL canônica da documentação oficial de uma linguagem, framework ou ferramenta. Use quando a semântica da stack for importante para validar comportamento." 
-    args_schema: Type[BaseModel] = GetOfficialDocsReferenceInput
+    description: str = (
+        "Return canonical official documentation links for a language, framework, test tool, "
+        "or build tool. Use when repo stack semantics matter to the review."
+    )
 
-    DOCS = {
+    DOCS: ClassVar[dict[str, str]] = {
         "python": "https://docs.python.org/3/",
-        "python unittest": "https://docs.python.org/3/library/unittest.html",
-        "pytest": "https://docs.pytest.org/",
         "fastapi": "https://fastapi.tiangolo.com/",
         "django": "https://docs.djangoproject.com/",
         "flask": "https://flask.palletsprojects.com/",
-        "javascript": "https://developer.mozilla.org/docs/Web/JavaScript",
+        "pytest": "https://docs.pytest.org/",
+        "javascript": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
         "typescript": "https://www.typescriptlang.org/docs/",
         "node.js": "https://nodejs.org/docs/latest/api/",
         "node": "https://nodejs.org/docs/latest/api/",
         "react": "https://react.dev/",
         "next.js": "https://nextjs.org/docs",
         "next": "https://nextjs.org/docs",
-        "express": "https://expressjs.com/",
+        "jest": "https://jestjs.io/docs/getting-started",
+        "vitest": "https://vitest.dev/guide/",
         "java": "https://docs.oracle.com/en/java/",
-        "spring": "https://docs.spring.io/spring-framework/reference/",
+        "spring": "https://docs.spring.io/spring-boot/documentation.html",
         "junit": "https://junit.org/junit5/docs/current/user-guide/",
-        "junit 5": "https://junit.org/junit5/docs/current/user-guide/",
+        "maven": "https://maven.apache.org/guides/",
+        "gradle": "https://docs.gradle.org/current/userguide/userguide.html",
         "go": "https://go.dev/doc/",
         "rust": "https://doc.rust-lang.org/",
-        "terraform": "https://developer.hashicorp.com/terraform/docs",
-        "php": "https://www.php.net/docs.php",
-        "laravel": "https://laravel.com/docs",
         "ruby": "https://www.ruby-lang.org/en/documentation/",
         "rails": "https://guides.rubyonrails.org/",
-        "c#": "https://learn.microsoft.com/dotnet/csharp/",
+        "php": "https://www.php.net/docs.php",
         ".net": "https://learn.microsoft.com/dotnet/",
-        "kotlin": "https://kotlinlang.org/docs/home.html",
-        "swift": "https://www.swift.org/documentation/",
-        "dart": "https://dart.dev/guides",
+        "c#": "https://learn.microsoft.com/dotnet/csharp/",
+        "terraform": "https://developer.hashicorp.com/terraform/docs",
+        "shell": "https://www.gnu.org/software/bash/manual/",
     }
 
     def _run(self, technology: str) -> str:
-        normalized = technology.strip().lower()
-        self._log("START", {"tool": self.name, "technology": normalized})
-        url = self.DOCS.get(normalized)
-        if not url:
-            result = (
-                "Documentação oficial não mapeada para esta tecnologia. "
-                "Tente um termo mais específico como linguagem, framework ou ferramenta principal."
-            )
-            self._log("SUCCESS", {"tool": self.name, "mapped": False})
-            return result
+        key = technology.strip().lower()
+        if key in self.DOCS:
+            return self.DOCS[key]
 
-        result = f"Documentação oficial de {technology.strip()}: {url}"
-        self._log("SUCCESS", {"tool": self.name, "mapped": True, "url": url})
-        return result
+        simplified = key.replace("framework", "").strip()
+        if simplified in self.DOCS:
+            return self.DOCS[simplified]
+
+        return f"No official documentation mapping found for: {technology}"
+
+
+__all__ = [
+    "ReadFileTool",
+    "SearchInRepoTool",
+    "FindRelatedTestFilesTool",
+    "InspectRepoStackTool",
+    "GetOfficialDocsReferenceTool",
+]
