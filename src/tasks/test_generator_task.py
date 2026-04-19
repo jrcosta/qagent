@@ -19,6 +19,9 @@ IMPORTANTE — Lições aprendidas de execuções anteriores (NÃO repita estes 
 {memories}
 [FIM_MEMORIAS]
 """
+            print(f"  🧠 Memory block INJECTED into prompt for '{file_path}'")
+        else:
+            print(f"  🧠 Memory block SKIPPED for '{file_path}' (no relevant memories)")
 
         description = f"""
 Você deve gerar testes unitários baseados no relatório de QA abaixo.

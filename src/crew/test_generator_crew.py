@@ -14,7 +14,14 @@ class TestGeneratorCrewRunner:
         """Query the memories DB for lessons relevant to the file being tested."""
         try:
             tool = QueryMemoriesTool()
-            return tool._run(query=file_path, limit=10)
+            result = tool._run(query=file_path, limit=10)
+            if result and "Nenhuma memória" not in result:
+                count = result.count("score=")
+                print(f"  🧠 Memories loaded: {count} lesson(s) found for '{file_path}'")
+                print(f"  🧠 Memory content preview: {result[:200]}...")
+            else:
+                print(f"  🧠 No relevant memories found for '{file_path}'")
+            return result
         except Exception as exc:
             print(f"  ⚠️ Could not load memories: {exc}")
             return ""
