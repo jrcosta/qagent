@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 19 Apr 2026 – 22:52:24 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-19_22-52-24_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>19 Apr 2026 – 22:52:24 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerUnitTest.java</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<ul>
+<li><strong>Adição de testes unitários</strong> para o <code>UserController</code>, focados em casos de borda e validação de comportamento em situações específicas.</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a inclusão de 7 novos métodos de teste no arquivo <code>UserControllerUnitTest.java</code>.</li>
+<li>Esses testes cobrem:</li>
+<li>Comportamento do método <code>listUsers</code> com parâmetros negativos (limite e offset).</li>
+<li>Comportamento do método <code>firstUserEmail</code> quando a lista de usuários está vazia, esperando exceção 404.</li>
+<li>Comportamento do método <code>searchUsers</code> para busca com caracteres especiais e case insensitive.</li>
+<li>O arquivo atual já continha testes para <code>listUsers</code> com valores zero e negativos, mas os novos testes ampliam a cobertura para combinações negativas e casos específicos.</li>
+<li>O contexto adicional mostra que o repositório possui testes unitários e de integração bem estruturados, e que o serviço <code>UserService</code> trata internamente valores negativos de limit e offset de forma diferente (normaliza para valores mínimos), o que pode gerar divergência entre o comportamento do controller e do serviço.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A mudança não altera código de produção, apenas adiciona testes unitários.</li>
+<li>Provavelmente visa aumentar a cobertura e garantir que o <code>UserController</code> trate corretamente casos de parâmetros inválidos (negativos) e situações de lista vazia.</li>
+<li>O teste de <code>searchUsers</code> com caracteres especiais e case insensitive reforça a validação da lógica de busca, que pode envolver normalização de strings.</li>
+<li>A inclusão do teste que espera exceção 404 para <code>firstUserEmail</code> com lista vazia reforça o contrato esperado da API para esse cenário.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Como são apenas testes adicionados, não há risco direto de regressão no código de produção.</li>
+<li>Contudo, há um potencial risco de inconsistência entre o comportamento do controller e do serviço:</li>
+<li>O <code>UserServiceUnitTest</code> indica que o serviço normaliza valores negativos para limites mínimos (ex: limit negativo vira 1).</li>
+<li>Já os testes do controller esperam que chamadas com limit negativo retornem lista vazia.</li>
+<li>Isso pode indicar uma discrepância entre o que o controller espera e o que o serviço realmente faz, podendo causar falsos positivos nos testes ou comportamento inesperado em produção.</li>
+<li>Se o código de produção não tratar esses casos de forma consistente, pode haver confusão para consumidores da API sobre o que esperar para parâmetros negativos.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Chamar o endpoint <code>listUsers</code> com:</li>
+<li><code>limit</code> negativo e <code>offset</code> zero, verificar se retorna lista vazia.</li>
+<li><code>limit</code> e <code>offset</code> negativos, verificar se retorna lista vazia.</li>
+<li>Chamar o endpoint que retorna o primeiro usuário (<code>firstUserEmail</code>) quando não há usuários cadastrados, verificar se retorna HTTP 404.</li>
+<li>Realizar busca via endpoint <code>searchUsers</code> com termos contendo caracteres especiais e maiúsculas/minúsculas misturadas, verificar se a busca é case insensitive e trata caracteres especiais corretamente (ex: "ÁN" retorna "Ánna-Maria").</li>
+<li>Validar que o serviço não retorna usuários para parâmetros inválidos, ou que o controller trata esses casos conforme esperado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>listUsers</code> com combinações adicionais de valores inválidos, como:</li>
+<li><code>limit</code> zero e <code>offset</code> negativo.</li>
+<li><code>limit</code> muito grande e <code>offset</code> negativo.</li>
+<li>Testar <code>firstUserEmail</code> com lista contendo um único usuário para garantir retorno correto.</li>
+<li>Testar <code>searchUsers</code> com termos contendo espaços, hífens e outros caracteres especiais para validar robustez da busca.</li>
+<li>Testar comportamento do controller quando o serviço lança exceções para chamadas com parâmetros inválidos.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar testes que façam chamadas reais via HTTP para os endpoints:</li>
+<li><code>GET /users?limit=-5&amp;offset=0</code> e validar resposta (espera lista vazia ou erro?).</li>
+<li><code>GET /users/first-email</code> (ou equivalente) quando não há usuários, validar retorno 404.</li>
+<li><code>GET /users/search?q=ÁN</code> e validar que o resultado contém usuários com caracteres especiais e case insensitive.</li>
+<li>Validar que o contrato da API está consistente com os testes unitários e que o comportamento em ambiente real corresponde às expectativas.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança não altera código de produção nem lógica de performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual é o comportamento esperado da API para parâmetros negativos em <code>listUsers</code>?</li>
+<li>O serviço <code>UserService</code> normaliza valores negativos para valores mínimos (limit=1, offset=0), mas os testes do controller esperam lista vazia.</li>
+<li>Isso pode causar inconsistência entre o que o controller retorna e o que o serviço entrega.</li>
+<li>O endpoint <code>firstUserEmail</code> deve lançar 404 quando não há usuários? O teste assume isso, mas é importante confirmar se essa é a regra de negócio oficial.</li>
+<li>A busca <code>searchUsers</code> deve ser case insensitive e tratar caracteres especiais? O teste sugere que sim, mas é importante confirmar se a normalização de strings está implementada no controller ou no serviço.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona testes unitários importantes para casos de borda no <code>UserController</code>, especialmente para parâmetros negativos em paginação, busca com caracteres especiais e tratamento de lista vazia. Não há alteração no código de produção, portanto o risco de regressão é baixo, mas há potencial inconsistência entre o comportamento esperado no controller e o serviço para parâmetros negativos. Recomenda-se validação manual e testes de integração para garantir alinhamento do comportamento da API com as expectativas dos testes.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
