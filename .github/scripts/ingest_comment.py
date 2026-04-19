@@ -75,13 +75,31 @@ def save_lesson(conn, repo, pr_number, lesson, original_comment, author):
 
 
 def parse_lessons(agent_output: str) -> list[str]:
+    """Extract lessons from agent output.
+
+    Accepts lines prefixed with '- ' (standard bullet) or numbered lists
+    like '1. ', '2. '.  Emoji prefixes (❌ ➕ ✅) are stripped so the stored
+    lesson starts with meaningful text.
+    """
+    import re
+
+    EMOJI_PREFIX = re.compile(r"^[\u2000-\u3300\U0001F000-\U0001FFFF\u2600-\u27BF\s]+")
+
     lessons: list[str] = []
     for line in agent_output.strip().splitlines():
         line = line.strip()
+        # Match '- text' or '1. text'
         if line.startswith("- "):
-            lesson = line[2:].strip()
-            if len(lesson) > 10:
-                lessons.append(lesson)
+            candidate = line[2:].strip()
+        elif re.match(r"^\d+\.\s", line):
+            candidate = re.sub(r"^\d+\.\s+", "", line).strip()
+        else:
+            continue
+        # Strip leading emoji/symbols and markdown bold (**...**)
+        candidate = EMOJI_PREFIX.sub("", candidate).strip()
+        candidate = re.sub(r"\*\*(.+?)\*\*", r"\1", candidate).strip()
+        if len(candidate) > 10:
+            lessons.append(candidate)
     return lessons
 
 
@@ -108,15 +126,18 @@ def main():
 
     print(f"Agent output:\n{agent_output}\n")
 
-    lessons = parse_lessons(agent_output)
-    if not lessons:
-        print("No lessons extracted from the comment.")
-        return
-
+    # Always ensure the DB exists (so git can track data/memories.db even on
+    # runs where no lessons are extracted).
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(DB_PATH), timeout=30, check_same_thread=False)
     try:
         init_db(conn)
+
+        lessons = parse_lessons(agent_output)
+        if not lessons:
+            print("No lessons extracted from the comment.")
+            return
+
         saved = 0
         for lesson in lessons:
             if is_duplicate(conn, lesson):
