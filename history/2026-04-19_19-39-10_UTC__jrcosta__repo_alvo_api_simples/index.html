@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 19 Apr 2026 – 19:39:10 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-19_19-39-10_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>19 Apr 2026 – 19:39:10 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerUnitTest.java</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Adição de testes unitários para o método <code>userExists</code> do <code>UserController</code>.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a inclusão de cinco novos métodos de teste na classe <code>UserControllerUnitTest</code>:</li>
+<li><code>userExistsShouldReturnFalseForZeroId()</code></li>
+<li><code>userExistsShouldNotCallExternalService()</code></li>
+<li><code>userExistsShouldBeIdempotentAndNotChangeState()</code></li>
+<li><code>userExistsResponseShouldContainOnlyExistsField()</code></li>
+<li>O conteúdo atual do arquivo já continha testes para <code>userExists</code> cobrindo casos de usuário existente, inexistente, exceções, e ids negativos.</li>
+<li>Os novos testes ampliam a cobertura para:</li>
+<li>Id zero (caso limite).</li>
+<li>Garantia de que o serviço externo (<code>externalService</code>) não é chamado.</li>
+<li>Idempotência da chamada <code>userExists</code> (mesmo resultado em chamadas repetidas, sem alteração de estado).</li>
+<li>Estrutura da resposta <code>UserExistsResponse</code> contendo apenas o campo <code>exists</code>.</li>
+<li>O contexto adicional do repositório confirma que:</li>
+<li><code>UserControllerUnitTest</code> é a classe de teste unitário para <code>UserController</code>.</li>
+<li><code>UserService</code> é mockado para simular respostas.</li>
+<li><code>ExternalService</code> é mockado e não deve ser chamado em <code>userExists</code>.</li>
+<li>A model <code>UserExistsResponse</code> tem apenas o campo <code>exists</code> (confirmado por testes de serialização/deserialização no arquivo <code>UserExistsResponseTest.java</code>).</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A mudança não altera código de produção, apenas adiciona testes unitários.</li>
+<li>Amplia a cobertura e robustez dos testes para o método <code>userExists</code> do <code>UserController</code>.</li>
+<li>Ajuda a garantir que:</li>
+<li>IDs inválidos como zero são tratados corretamente.</li>
+<li>O método não aciona serviços externos desnecessariamente.</li>
+<li>O método é idempotente e não altera estado interno.</li>
+<li>A resposta tem a estrutura esperada, evitando vazamento de dados.</li>
+<li>Isso contribui para maior confiabilidade e manutenção futura do código.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Como a mudança é apenas adição de testes, não há risco direto de regressão no código de produção.</li>
+<li>Risco indireto: se os mocks não estiverem configurados corretamente, os testes podem passar/falhar indevidamente, dando falsa sensação de segurança.</li>
+<li>A verificação via reflexão do campo único em <code>UserExistsResponse</code> pode ser frágil se a classe for alterada no futuro (ex: adição de campos), causando falha nos testes mesmo que funcionalidade esteja correta.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<p>Embora a mudança seja de testes unitários, para complementar a cobertura manual, sugiro:</p>
+<ul>
+<li>Consultar <code>/userExists</code> com <code>userId = 0</code> e verificar que retorna <code>exists: false</code>.</li>
+<li>Consultar <code>/userExists</code> com <code>userId</code> válido repetidas vezes e confirmar que o resultado é consistente e não altera estado.</li>
+<li>Confirmar que chamadas a <code>/userExists</code> não disparam chamadas a serviços externos (pode ser via logs ou monitoramento).</li>
+<li>Verificar que a resposta JSON de <code>/userExists</code> contém apenas o campo <code>exists</code> e nenhum dado adicional.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<p>Os testes adicionados são adequados e cobrem bem os casos. Complementar com:</p>
+<ul>
+<li>Testar <code>userExists</code> com <code>userId</code> negativo e zero em conjunto para garantir tratamento uniforme.</li>
+<li>Testar comportamento quando <code>userService.getById</code> lança exceção para <code>userId = 0</code>.</li>
+<li>Testar se <code>userExists</code> retorna consistentemente <code>false</code> para IDs inválidos (ex: negativos, zero).</li>
+<li>Testar se <code>userExists</code> não altera nenhum estado interno do <code>UserController</code> ou <code>UserService</code> (mockar e verificar ausência de chamadas a métodos de alteração).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar teste de integração para o endpoint HTTP correspondente a <code>userExists</code>:</li>
+<li>Verificar resposta para <code>userId = 0</code> retorna <code>exists: false</code>.</li>
+<li>Verificar que múltiplas chamadas consecutivas para o mesmo <code>userId</code> retornam o mesmo resultado.</li>
+<li>Confirmar que a resposta JSON contém apenas o campo <code>exists</code>.</li>
+<li>Confirmar que chamadas a <code>userExists</code> não disparam chamadas a serviços externos (pode ser via mock ou spy no contexto de integração).</li>
+<li>Testar integração com o serviço real para IDs válidos e inválidos, garantindo comportamento consistente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança não altera lógica de negócio nem performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O método <code>userExists</code> do <code>UserController</code> não está presente no código fornecido; seria útil confirmar se ele realmente não chama <code>externalService</code> e se é esperado que seja idempotente.</li>
+<li>A verificação via reflexão do campo único em <code>UserExistsResponse</code> assume que a classe tem exatamente um campo <code>exists</code>. Caso a model evolua, esse teste pode falhar. É intencional manter essa restrição?</li>
+<li>Não há evidência se <code>userExists</code> pode ser chamado com IDs negativos ou zero na aplicação real; os testes tratam esses casos, mas seria bom confirmar se isso é esperado ou se deveria haver validação prévia.</li>
+<li>O teste <code>userExistsShouldBeIdempotentAndNotChangeState</code> verifica chamadas ao <code>userService.getById</code> duas vezes, mas não verifica se o estado interno do controller ou serviço muda. Seria interessante confirmar se há estado mutável relevante.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona testes unitários importantes para o método <code>userExists</code> do <code>UserController</code>, ampliando a cobertura para casos de IDs limites, idempotência, isolamento de serviços externos e estrutura da resposta. Não há alteração no código de produção, portanto o impacto é positivo e seguro, com riscos mínimos restritos à manutenção dos mocks e à rigidez do teste de reflexão. Recomenda-se complementar com testes de integração para o endpoint HTTP correspondente e validar os pontos de negócio mencionados.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiuserserviceunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserServiceUnitTest.java</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<ul>
+<li><strong>Ampliação da cobertura de testes unitários</strong> no serviço <code>UserService</code>.</li>
+<li>Inclusão de testes para casos de borda, validação de entradas e propagação de exceções.</li>
+<li>Não há alteração no código de produção, apenas no código de teste.</li>
+</ul>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>Foram adicionados vários métodos de teste na classe <code>UserServiceUnitTest</code>:</li>
+<li>Testes para <code>getById</code> com IDs zero e negativos, garantindo retorno vazio.</li>
+<li>Testes para <code>listUsers</code> com valores negativos para <code>limit</code> e <code>offset</code>, validando sanitização e comportamento esperado.</li>
+<li>Testes para <code>findByEmail</code> com valores nulos, vazios e em branco, esperando retorno vazio.</li>
+<li>Testes para criação de usuário:<ul>
+<li>Permissão para emails duplicados no nível do serviço.</li>
+<li>Verificação de que o usuário criado é efetivamente adicionado à lista interna.</li>
+<li>Exceção lançada ao passar <code>null</code> como requisição.</li>
+</ul>
+</li>
+<li>Teste que simula falhas internas no serviço, garantindo que exceções inesperadas são propagadas.</li>
+<li>O arquivo <code>UserServiceUnitTest.java</code> já continha testes para funcionalidades básicas, e os novos testes complementam casos de borda e robustez.</li>
+<li>Contexto adicional mostra que a responsabilidade de rejeitar emails duplicados está no controller, não no serviço, o que é confirmado pelo teste <code>createShouldAllowDuplicateEmailAtServiceLevel</code>.</li>
+<li>O padrão de uso do framework JUnit 5 e AssertJ é mantido.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Melhora na qualidade e robustez da suíte de testes unitários do serviço <code>UserService</code>.</li>
+<li>Maior segurança contra regressões em casos de entradas inválidas (IDs negativos, emails nulos).</li>
+<li>Confirmação explícita do comportamento esperado para criação de usuários com emails duplicados, evitando falsas suposições.</li>
+<li>Validação da propagação correta de exceções inesperadas, importante para diagnósticos e tratamento em camadas superiores.</li>
+<li>Nenhuma alteração funcional no código de produção, portanto impacto direto no comportamento da aplicação é nulo, mas o risco de regressão diminui.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Risco baixo</strong>, pois não há alteração no código de produção.</li>
+<li>Possível falsa sensação de cobertura completa, pois o teste de propagação de exceções depende de uma simulação via subclassing, que pode não refletir todos os tipos de falhas reais.</li>
+<li>Caso o serviço <code>UserService</code> mude internamente para validar emails duplicados, os testes atuais podem gerar falsos positivos, pois assumem que o serviço permite duplicatas.</li>
+<li>Nenhum teste cobre explicitamente comportamento concorrente ou multi-threading, o que pode ser relevante dependendo da implementação interna do serviço (não visível no contexto).</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Consulta por ID zero e negativo:</strong><br />
+   - Consultar usuário com ID = 0 e ID &lt; 0.<br />
+   - Verificar que o resultado é vazio (sem usuário).</li>
+<li><strong>Listagem com parâmetros negativos:</strong><br />
+   - Listar usuários com <code>limit</code> negativo, <code>offset</code> negativo e ambos negativos.<br />
+   - Verificar que o serviço retorna pelo menos um usuário, confirmando sanitização.</li>
+<li><strong>Busca por email nulo, vazio e em branco:</strong><br />
+   - Buscar usuário por email <code>null</code>, <code>""</code> e <code>"   "</code>.<br />
+   - Confirmar que o resultado é vazio.</li>
+<li><strong>Criação de usuário com email duplicado:</strong><br />
+   - Criar usuário com email já existente.<br />
+   - Confirmar que a criação ocorre sem erro e usuário é adicionado.</li>
+<li><strong>Criação de usuário com requisição nula:</strong><br />
+   - Tentar criar usuário passando <code>null</code>.<br />
+   - Confirmar que ocorre <code>NullPointerException</code>.</li>
+<li><strong>Simulação de falha interna:</strong><br />
+   - Simular falha no serviço (se possível via debug ou mock).<br />
+   - Confirmar que exceções são propagadas para o chamador.</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li><strong>Cobertura de exceções específicas:</strong></li>
+<li>Testar se <code>create</code> lança exceções específicas para dados inválidos além de <code>null</code> (ex: nome ou email vazios), caso a implementação suporte.</li>
+<li><strong>Testar limites máximos para <code>listUsers</code>:</strong></li>
+<li>Passar valores muito grandes para <code>limit</code> e <code>offset</code> para verificar comportamento.</li>
+<li><strong>Testar comportamento de <code>create</code> com campos inválidos:</strong></li>
+<li>Criar usuários com emails mal formatados ou nomes vazios, se a validação existir.</li>
+<li><strong>Testar concorrência:</strong></li>
+<li>Criar testes que simulam chamadas concorrentes para <code>create</code> e <code>listAllUsers</code> para verificar consistência da lista interna.</li>
+<li><strong>Testar comportamento de <code>findByEmail</code> com emails com espaços ou maiúsculas/minúsculas:</strong></li>
+<li>Verificar se a busca é case sensitive ou trim.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li><strong>Fluxo completo de criação e busca:</strong></li>
+<li>Criar usuário via API, buscar por ID e email, validar dados.</li>
+<li><strong>Validação de rejeição de email duplicado no controller:</strong></li>
+<li>Criar usuário com email duplicado via API e verificar resposta HTTP 409.</li>
+<li><strong>Testar endpoints com parâmetros inválidos:</strong></li>
+<li>Enviar requisições com IDs zero, negativos, emails nulos ou vazios e verificar respostas.</li>
+<li><strong>Testar propagação de erros:</strong></li>
+<li>Simular falhas no serviço via mocks e verificar se o controller responde com erros apropriados.</li>
+<li><strong>Testar sanitização de parâmetros de paginação na API:</strong></li>
+<li>Enviar <code>limit</code> e <code>offset</code> negativos e verificar comportamento da API.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é exclusivamente em testes unitários e não altera lógica de negócio ou performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Validação de dados na criação de usuário:</strong></li>
+<li>O serviço permite criar usuários com dados inválidos (ex: email mal formatado, nome vazio)? Os testes não cobrem isso.</li>
+<li><strong>Comportamento esperado para emails duplicados:</strong></li>
+<li>Embora o teste documente que a verificação é responsabilidade do controller, há risco de inconsistência se o serviço mudar para validar duplicidade.</li>
+<li><strong>Sanitização de parâmetros negativos em <code>listUsers</code>:</strong></li>
+<li>A normalização para <code>limit</code> mínimo 1 e <code>offset</code> mínimo 0 está implementada no serviço? O teste assume isso, mas não há código visível.</li>
+<li><strong>Simulação de falhas via subclassing:</strong></li>
+<li>Essa abordagem cobre todos os tipos de falhas internas? Há necessidade de testes mais realistas com mocks ou injeção de falhas?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança amplia significativamente a cobertura de testes unitários do <code>UserService</code>, focando em casos de borda, entradas inválidas e propagação de exceções. Não altera código de produção, reduzindo riscos de regressão. Recomenda-se complementar com testes de integração para validar regras de negócio no controller e testes para validação de dados na criação de usuários.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapicontrollerusercontrollertestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/controller/UserControllerTest.java</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<ul>
+<li><strong>Ampliação da cobertura de testes unitários</strong> para o método <code>userExists</code> do <code>UserController</code>.</li>
+<li>Inclusão de casos de borda e verificação de comportamento em situações excepcionais e limites numéricos.</li>
+<li>Verificação explícita de não interação com <code>externalService</code> no método testado.</li>
+</ul>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O diff adiciona cinco novos testes unitários no arquivo <code>UserControllerTest.java</code>:</li>
+<li>Teste que valida a propagação de exceções inesperadas lançadas por <code>userService.getById</code>.</li>
+<li>Testes que verificam o retorno <code>exists=false</code> para os valores extremos <code>Integer.MAX_VALUE</code> e <code>Integer.MIN_VALUE</code> quando o usuário não é encontrado.</li>
+<li>Teste que assegura que o método <code>userExists</code> não interage com o <code>externalService</code>.</li>
+<li>O arquivo atual já continha testes para <code>userExists</code> cobrindo casos de usuário presente, ausente, zero e negativo, mas não para os extremos de inteiro nem para a propagação de exceções.</li>
+<li>O contexto do repositório mostra que o método <code>userExists</code> depende exclusivamente de <code>userService.getById</code> para determinar a existência do usuário, e que <code>externalService</code> é um mock separado, não utilizado nesse método.</li>
+<li>Não há mudanças no código de produção, apenas nos testes, indicando foco em robustez e cobertura.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>A mudança não altera o comportamento funcional do sistema, pois não há alteração no código de produção.</li>
+<li>Melhora a robustez da suíte de testes, garantindo que:</li>
+<li>Exceções inesperadas em <code>userService.getById</code> sejam corretamente propagadas.</li>
+<li>Casos extremos de IDs de usuário (valores máximos e mínimos de inteiro) são tratados sem falhas e retornam <code>exists=false</code> quando o usuário não é encontrado.</li>
+<li>O método <code>userExists</code> não realiza chamadas indevidas a outros serviços (<code>externalService</code>), evitando efeitos colaterais.</li>
+<li>Facilita a detecção precoce de regressões relacionadas a tratamento de exceções e limites numéricos.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Baixo risco</strong>, pois a mudança é restrita a testes.</li>
+<li>Possível risco de <strong>falsa sensação de cobertura</strong> se o método <code>userExists</code> no código de produção não tratar corretamente os extremos de <code>int</code> ou exceções, mas isso não é evidenciado no código atual.</li>
+<li>Se o comportamento esperado para <code>Integer.MAX_VALUE</code> e <code>Integer.MIN_VALUE</code> mudar no futuro, os testes precisarão ser atualizados para refletir a nova regra.</li>
+<li>A verificação de não interação com <code>externalService</code> depende do mock estar corretamente configurado; se o mock for alterado, o teste pode falhar indevidamente.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Exceção inesperada em <code>userService.getById</code></strong>:<br />
+   - Simular uma exceção (ex: <code>RuntimeException</code>) ao chamar o endpoint que invoca <code>userExists</code>.<br />
+   - Verificar que a exceção é propagada e não é capturada silenciosamente.</li>
+<li><strong>Consulta com ID de usuário <code>Integer.MAX_VALUE</code> e <code>Integer.MIN_VALUE</code></strong>:<br />
+   - Chamar o endpoint <code>userExists</code> com esses valores.<br />
+   - Confirmar que a resposta indica <code>exists=false</code> e que não há erros.</li>
+<li><strong>Verificar que <code>userExists</code> não aciona outros serviços</strong>:<br />
+   - Monitorar logs ou usar ferramentas de tracing para garantir que <code>externalService</code> não é chamado durante a execução do endpoint <code>userExists</code>.</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li><strong>Já implementados no diff</strong>:</li>
+<li>Propagação de exceção inesperada.</li>
+<li>Retorno <code>exists=false</code> para <code>Integer.MAX_VALUE</code> e <code>Integer.MIN_VALUE</code>.</li>
+<li>Verificação de não interação com <code>externalService</code>.</li>
+<li><strong>Sugestões adicionais</strong>:</li>
+<li>Testar comportamento para valores próximos aos limites, como <code>Integer.MAX_VALUE - 1</code> e <code>Integer.MIN_VALUE + 1</code>.</li>
+<li>Testar se o método <code>userExists</code> trata corretamente valores nulos ou inválidos (se aplicável, dependendo da assinatura do método).</li>
+<li>Testar se a mensagem da exceção propagada é preservada em diferentes tipos de exceções (ex: <code>IllegalStateException</code>, <code>NullPointerException</code>).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar testes que:</li>
+<li>Enviem requisições HTTP para o endpoint REST que chama <code>userExists</code> com os valores extremos <code>Integer.MAX_VALUE</code> e <code>Integer.MIN_VALUE</code>.</li>
+<li>Validem que a resposta HTTP é 200 OK com <code>exists=false</code>.</li>
+<li>Enviem requisição que provoque erro interno (mockando o serviço para lançar exceção) e verifiquem que o erro é propagado como 500 Internal Server Error.</li>
+<li>Confirmem que chamadas ao endpoint <code>userExists</code> não geram logs ou efeitos colaterais relacionados a <code>externalService</code>.</li>
+<li>Verificar se o endpoint lida corretamente com IDs inválidos (ex: strings, nulos) e se o comportamento está documentado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li><strong>Não aplicável</strong>: não há indícios no diff ou contexto que justifiquem testes de carga ou desempenho para essa mudança.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O método <code>userExists</code> aceita valores negativos e extremos de <code>int</code>? O comportamento esperado para esses casos está documentado?</li>
+<li>Qual o comportamento esperado se <code>userService.getById</code> lançar exceções específicas além de <code>RuntimeException</code>? Deve sempre propagar ou tratar?</li>
+<li>Existe alguma dependência futura planejada para <code>userExists</code> que possa envolver <code>externalService</code> ou outros serviços? O teste que verifica não interação com <code>externalService</code> pode precisar ser revisado.</li>
+<li>O método <code>userExists</code> pode receber valores nulos ou inválidos? Se sim, há necessidade de testes para esses casos?</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança amplia a cobertura de testes unitários do método <code>userExists</code> do <code>UserController</code>, incluindo casos de exceção, limites numéricos e isolamento de serviços. Não altera código de produção, reduzindo riscos, mas melhora a robustez da suíte de testes. Recomenda-se complementar com testes de integração para validar comportamento em ambiente real e esclarecer regras de negócio para valores extremos e tratamento de exceções.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapimodeluserexistsresponsetestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/model/UserExistsResponseTest.java</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Melhoria e ampliação da cobertura de testes unitários para a classe <code>UserExistsResponse</code>.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>O diff mostra que foram adicionados vários novos testes no arquivo <code>UserExistsResponseTest.java</code>, que já continha testes básicos de criação, serialização e desserialização da classe <code>UserExistsResponse</code>.</li>
+<li>Foram criados testes para:</li>
+<li>Serialização com valor <code>false</code> (antes só havia com <code>true</code>).</li>
+<li>Desserialização com valor <code>true</code> (antes só havia com <code>false</code>).</li>
+<li>Falha na desserialização quando há campos extras no JSON.</li>
+<li>Falha na desserialização quando o JSON possui campo com nome incorreto.</li>
+<li>Testes detalhados para o contrato <code>equals</code> e <code>hashCode</code> da classe, cobrindo propriedades reflexiva, simétrica, transitiva, consistente, comparação com <code>null</code> e diferenças de valores.</li>
+<li>O conteúdo atual do arquivo confirma que os testes adicionados estão implementados e seguem boas práticas de validação.</li>
+<li>O contexto do repositório mostra que a classe <code>UserExistsResponse</code> é usada para indicar se um usuário existe, e que há testes unitários e de integração para a API que provavelmente dependem dessa classe para serialização/desserialização JSON.</li>
+<li>Não há mudanças no código de produção, apenas nos testes.</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>A mudança não altera o comportamento funcional da aplicação, pois não há alteração no código de produção.</li>
+<li>Amplia a robustez da suíte de testes, garantindo que:</li>
+<li>A serialização e desserialização JSON da classe <code>UserExistsResponse</code> funcionam corretamente para ambos os valores booleanos.</li>
+<li>A desserialização falha corretamente em casos de JSON inválido ou com campos extras, o que pode evitar erros silenciosos em produção.</li>
+<li>O contrato <code>equals</code> e <code>hashCode</code> da classe está consistente, o que é importante para uso correto em coleções e comparações.</li>
+<li>Isso aumenta a confiabilidade da classe e reduz riscos de regressão em futuras alterações.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li>Como a mudança é restrita a testes, o risco de regressão funcional é baixo.</li>
+<li>Um risco potencial é que o teste <code>shouldThrowExceptionWhenDeserializingJsonWithExtraFields</code> assume que o <code>ObjectMapper</code> está configurado para falhar em campos desconhecidos (modo estrito padrão do Jackson). Se a configuração do <code>ObjectMapper</code> mudar para permitir campos extras, esse teste passará a falhar, indicando uma possível incompatibilidade.</li>
+<li>Caso a implementação da classe <code>UserExistsResponse</code> mude (ex: renomeação do campo <code>exists</code>), os testes de serialização/desserialização precisarão ser atualizados.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<p>Embora a mudança seja em testes unitários, para garantir cobertura manual mínima, sugiro:</p>
+<ul>
+<li>Testar manualmente a API que retorna <code>UserExistsResponse</code> para verificar se o JSON retornado contém o campo <code>exists</code> com valor correto (<code>true</code> ou <code>false</code>).</li>
+<li>Enviar requisições com JSON contendo campos extras para endpoints que desserializam <code>UserExistsResponse</code> e verificar se ocorre erro de validação (caso aplicável).</li>
+<li>Enviar JSON com campos incorretos (ex: <code>existss</code>) para endpoints que usam essa classe e verificar se ocorre erro.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<p>Os testes adicionados já são bastante completos, mas para maior robustez, pode-se considerar:</p>
+<ul>
+<li>Testar serialização e desserialização com <code>null</code> (se aplicável) para o campo <code>exists</code>, para verificar comportamento.</li>
+<li>Testar o método <code>toString()</code> da classe <code>UserExistsResponse</code> (se existir) para garantir saída consistente.</li>
+<li>Testar comportamento de <code>equals</code> com objetos de outras classes para garantir que retorna <code>false</code>.</li>
+<li>Testar desserialização com JSON vazio <code>{}</code> para verificar comportamento padrão.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar um teste de integração que faça uma chamada real à API que retorna <code>UserExistsResponse</code> e valide o JSON retornado, garantindo que a serialização está correta no contexto da aplicação.</li>
+<li>Testar integração da desserialização em endpoints que recebem <code>UserExistsResponse</code> via JSON, incluindo casos com campos extras e inválidos para validar tratamento de erros.</li>
+<li>Validar que a API responde corretamente para usuários existentes e não existentes, refletindo o campo <code>exists</code> corretamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é restrita a testes unitários e não altera lógica de negócio ou performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>A configuração do <code>ObjectMapper</code> usada na aplicação é a mesma do teste? O teste assume que o <code>ObjectMapper</code> está configurado para falhar em campos desconhecidos, mas isso pode não ser verdade em produção.</li>
+<li>A classe <code>UserExistsResponse</code> possui outras propriedades ou comportamentos que não estão cobertos nos testes? (ex: validações, métodos auxiliares)</li>
+<li>Existe algum cenário de uso da classe que envolva serialização/desserialização com formatos diferentes (ex: XML, outros formatos JSON)?</li>
+<li>O contrato <code>equals</code> e <code>hashCode</code> da classe está implementado manualmente ou gerado? Há necessidade de testar casos mais complexos (ex: herança)?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança amplia significativamente a cobertura de testes unitários da classe <code>UserExistsResponse</code>, especialmente para serialização, desserialização e contrato de igualdade, aumentando a confiabilidade do código. Não há alteração funcional, mas é importante validar a configuração do <code>ObjectMapper</code> para garantir que os testes de falha em campos extras sejam válidos no ambiente real. Recomenda-se complementar com testes de integração que validem o comportamento da API usando essa classe.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
