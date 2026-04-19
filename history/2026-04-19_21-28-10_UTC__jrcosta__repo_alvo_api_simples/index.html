@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 19 Apr 2026 – 21:28:10 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-19_21-28-10_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>19 Apr 2026 – 21:28:10 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-python-apiteststest_workflow_forward_pr_commentpy">Arquivo analisado: python-api/tests/test_workflow_forward_pr_comment.py</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<ul>
+<li>Inclusão de testes unitários para simular e validar a lógica do workflow que dispara ações a partir de comentários em Pull Requests contendo a palavra "Copilot" (case sensitive para "Copilot" e "copilot").</li>
+<li>Implementação de funções auxiliares para filtragem (<code>contains_copilot</code>) e construção de payload (<code>build_payload</code>).</li>
+<li>Simulação do comportamento esperado do workflow em relação à presença do token de autenticação e construção do comando <code>curl</code>.</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O arquivo <code>python-api/tests/test_workflow_forward_pr_comment.py</code> é criado do zero, contendo 176 linhas de código focadas em testes unitários.</li>
+<li>Função <code>contains_copilot</code> implementa filtro que retorna <code>True</code> apenas se o comentário contiver exatamente "Copilot" ou "copilot" (case sensitive), ignorando outras variações como "COPILOT" ou "CoPiLoT".</li>
+<li>Testes parametrizados validam o comportamento da função <code>contains_copilot</code> com diferentes variações de texto.</li>
+<li>Função <code>build_payload</code> cria um dicionário com campos <code>comment_body</code>, <code>author</code>, <code>repo</code> e <code>pr_number</code>.</li>
+<li>Testes verificam que o payload inclui todos os campos corretamente, inclusive quando o comentário contém dados sensíveis (ex: senha embutida).</li>
+<li>Testes simulam a serialização JSON do payload, garantindo que a estrutura seja mantida.</li>
+<li>Testes simulam o contexto do evento GitHub para validar se o workflow deveria ou não ser disparado, com base na presença do PR e da palavra-chave.</li>
+<li>Testes verificam comportamento quando o comentário é em uma issue (sem PR) e quando o token de autenticação está ausente ou presente.</li>
+<li>Simulação da construção do comando <code>curl</code> para disparo do evento, validando a presença dos headers e payload corretos.</li>
+<li>Contexto do repositório indica que não há testes ou código diretamente relacionados a esse workflow, reforçando que esta é uma adição nova para cobrir essa lógica.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A mudança adiciona cobertura de testes para a lógica de disparo do workflow baseado em comentários de PR contendo "Copilot" ou "copilot".</li>
+<li>Garante que a filtragem de comentários seja feita com case sensitive restrito, evitando disparos indevidos para variações de caixa.</li>
+<li>Valida que o payload enviado para o endpoint de dispatch do GitHub contenha os dados esperados.</li>
+<li>Simula o comportamento esperado em relação à presença do token de autenticação, que é crítico para o disparo do evento.</li>
+<li>Facilita a manutenção e evolução futura do workflow, reduzindo riscos de regressão na lógica de disparo.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>A função <code>contains_copilot</code> não é case insensitive, o que pode causar falha em detectar variações legítimas da palavra "copilot" (ex: "COPILOT" ou "CoPiLoT" são ignoradas). Se o requisito for aceitar essas variações, isso pode ser um problema.</li>
+<li>O payload inclui o corpo completo do comentário, mesmo que contenha dados sensíveis (ex: senhas). Isso pode representar risco de exposição de dados sensíveis se o payload for logado ou enviado para sistemas externos.</li>
+<li>A simulação do comando <code>curl</code> não executa a chamada real, portanto não valida a resposta ou o comportamento do endpoint de dispatch.</li>
+<li>A ausência do token (<code>QAGENT_PAT</code>) é testada apenas para garantir que o valor seja <code>None</code> ou vazio, mas não há teste para o comportamento do workflow em caso de token inválido ou expirado.</li>
+<li>Não há testes que validem o comportamento com comentários vazios ou nulos explicitamente (apesar de haver um teste com string vazia para <code>contains_copilot</code>).</li>
+<li>A lógica de filtro pode gerar falsos positivos para palavras que contenham "copilot" como substring (ex: "copilots"), o que pode ou não ser desejado.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Disparo do workflow para comentário em PR contendo "Copilot" ou "copilot" exatamente:</strong><br />
+   - Criar um PR e adicionar um comentário com a palavra "Copilot" ou "copilot".<br />
+   - Verificar se o workflow é disparado corretamente.</p>
+</li>
+<li>
+<p><strong>Não disparo do workflow para variações de caixa diferentes:</strong><br />
+   - Comentar em PR com "COPILOT", "CoPiLoT" ou outras variações.<br />
+   - Confirmar que o workflow não é disparado.</p>
+</li>
+<li>
+<p><strong>Não disparo do workflow para comentários em issues (sem PR):</strong><br />
+   - Comentar em uma issue com a palavra "Copilot".<br />
+   - Confirmar que o workflow não é disparado.</p>
+</li>
+<li>
+<p><strong>Verificar que o payload enviado contém o comentário completo, mesmo com dados sensíveis:</strong><br />
+   - Comentar em PR com texto contendo dados sensíveis (ex: "Password=1234 Copilot").<br />
+   - Confirmar que o payload enviado contém o texto completo.</p>
+</li>
+<li>
+<p><strong>Comportamento quando o token de autenticação está ausente:</strong><br />
+   - Remover a variável de ambiente <code>QAGENT_PAT</code>.<br />
+   - Confirmar que o workflow não dispara ou falha silenciosamente.</p>
+</li>
+<li>
+<p><strong>Comportamento quando o token está presente:</strong><br />
+   - Definir a variável <code>QAGENT_PAT</code> com um valor válido.<br />
+   - Confirmar que o comando <code>curl</code> é construído corretamente e o evento é disparado.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>contains_copilot</code> com strings contendo variações de caixa adicionais para confirmar comportamento esperado (ex: "COPILOT", "CoPiLoT").</li>
+<li>Testar <code>contains_copilot</code> com strings contendo a palavra "copilot" como parte de outras palavras (ex: "copilots", "mycopilot") para validar se o comportamento é desejado.</li>
+<li>Testar <code>build_payload</code> com valores nulos ou vazios para os campos <code>author</code>, <code>repo</code> e <code>pr_number</code> para garantir robustez.</li>
+<li>Testar serialização e desserialização JSON do payload com caracteres especiais e unicode.</li>
+<li>Testar comportamento da função que constrói o comando <code>curl</code> para diferentes valores de token, incluindo tokens inválidos ou vazios.</li>
+<li>Testar o comportamento da função <code>contains_copilot</code> com <code>None</code> ou tipos não string para garantir que não cause erro.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar um teste de integração que simule o evento real do GitHub (webhook) com comentário em PR contendo "Copilot" e verificar se o workflow é disparado e o endpoint de dispatch recebe o payload correto.</li>
+<li>Testar o fluxo completo do disparo do evento, incluindo autenticação com token real (mockado ou ambiente controlado).</li>
+<li>Testar o comportamento do sistema quando o token está ausente ou inválido, verificando logs e respostas.</li>
+<li>Validar que comentários em issues não disparam o workflow.</li>
+<li>Validar que comentários em PR sem a palavra "Copilot" não disparam o workflow.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável. A mudança trata exclusivamente de lógica de filtragem e construção de payload para disparo de workflow, sem indícios de impacto em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o motivo da decisão de filtrar apenas as palavras "Copilot" e "copilot" com case sensitive restrito? Há necessidade de aceitar variações como "COPILOT" ou "CoPiLoT"?</li>
+<li>O payload inclui o comentário completo, mesmo que contenha dados sensíveis. Existe política ou mecanismo para evitar exposição desses dados em logs ou sistemas externos?</li>
+<li>O endpoint de dispatch do GitHub é confiável para receber payloads com dados sensíveis? Há necessidade de criptografia ou mascaramento?</li>
+<li>O comportamento esperado quando o token de autenticação está ausente é falha silenciosa? Há necessidade de alertas ou logs para esse caso?</li>
+<li>Existe algum mecanismo para evitar disparos duplicados do workflow para o mesmo comentário?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona uma suíte robusta de testes unitários para a lógica de disparo do workflow baseado em comentários de PR contendo "Copilot" ou "copilot". A filtragem é case sensitive e restrita, o que pode ser um ponto de atenção. O payload inclui dados sensíveis sem mascaramento, o que pode representar risco. Os testes simulam o ambiente e comportamento esperado, mas não executam chamadas reais ao endpoint. Recomenda-se validar os pontos de segurança e possíveis variações de filtro, além de implementar testes de integração para o fluxo completo.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
