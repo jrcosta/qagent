@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 19 Apr 2026 – 22:34:14 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-19_22-34-14_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>19 Apr 2026 – 22:34:14 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerintegrationtestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Refatoração e ampliação da suíte de testes de integração para o controlador de usuários (<code>UserControllerIntegrationTest</code>), com:</p>
+<ul>
+<li>Remoção de testes antigos focados em endpoint <code>/users/names</code>.</li>
+<li>Inclusão de novos testes para múltiplos endpoints REST da API Java.</li>
+<li>Melhoria na verificação do conteúdo JSON retornado (validação de campos e valores).</li>
+<li>Inclusão de testes para cenários de sucesso e erro (ex: criação de usuário com email duplicado).</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff mostra que os testes originais focados em <code>/users/names</code> foram removidos e substituídos por testes para endpoints como <code>/health</code>, <code>/users</code>, <code>/users/count</code>, <code>/users/search</code>, <code>/users/duplicates</code>, <code>/users/{id}</code>, e <code>POST /users</code>.</li>
+<li>Os novos testes usam <code>jsonPath</code> para validar campos específicos no JSON retornado, por exemplo, <code>$.status</code>, <code>$.id</code>, <code>$.name</code>, <code>$.email</code>.</li>
+<li>O teste de criação de usuário (<code>POST /users</code>) agora valida o corpo da resposta para garantir que o usuário criado tem os dados esperados.</li>
+<li>Foi adicionado um teste para verificar o retorno 409 (conflito) ao tentar criar usuário com email já existente.</li>
+<li>O uso de <code>@DirtiesContext</code> no teste de criação indica que o contexto do Spring é reiniciado para evitar interferência entre testes.</li>
+<li>O contexto adicional do repositório confirma que a API Java expõe os endpoints testados e que a estrutura dos testes segue o padrão esperado para integração com Spring Boot e MockMvc.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A cobertura de testes de integração do <code>UserController</code> foi ampliada e modernizada, cobrindo mais endpoints e cenários.</li>
+<li>A remoção dos testes antigos de <code>/users/names</code> indica que esse endpoint pode ter sido removido ou alterado na API, ou que o foco dos testes mudou para endpoints mais relevantes.</li>
+<li>A validação mais detalhada dos campos JSON e dos códigos HTTP aumenta a confiabilidade dos testes para detectar regressões.</li>
+<li>A inclusão do teste para conflito na criação de usuário ajuda a garantir a integridade dos dados e o tratamento correto de erros.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Se o endpoint <code>/users/names</code> ainda existir na API, sua remoção dos testes pode deixar essa funcionalidade sem cobertura, aumentando risco de regressão.</li>
+<li>A dependência do estado do banco de dados para testes como <code>GET /users/1</code> e criação de usuários pode causar instabilidade se o banco não estiver em estado esperado (embora o uso de <code>@DirtiesContext</code> minimize isso).</li>
+<li>O teste de busca <code>/users/search?q=ana</code> assume que há usuários com "ana" no nome; se os dados de teste mudarem, o teste pode falhar.</li>
+<li>O teste de duplicatas <code>/users/duplicates</code> não valida conteúdo específico, apenas estrutura, o que pode permitir que erros lógicos passem despercebidos.</li>
+<li>A criação de usuário com email fixo pode falhar se o teste for executado múltiplas vezes sem resetar o contexto, apesar do uso de <code>@DirtiesContext</code>.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li><strong>Verificar saúde da API:</strong> Acessar <code>GET /health</code> e confirmar retorno 200 com JSON <code>{"status":"ok"}</code>.</li>
+<li><strong>Listar usuários:</strong> Acessar <code>GET /users</code> e validar que a lista não está vazia e que cada usuário tem <code>id</code>, <code>name</code> e <code>email</code>.</li>
+<li><strong>Contar usuários:</strong> Acessar <code>GET /users/count</code> e verificar que o campo <code>count</code> é um inteiro ≥ 0.</li>
+<li><strong>Buscar usuários por query:</strong> Acessar <code>GET /users/search?q=ana</code> e confirmar que todos os usuários retornados têm "ana" no nome (case insensitive).</li>
+<li><strong>Listar usuários com emails duplicados:</strong> Acessar <code>GET /users/duplicates</code> e verificar que os usuários retornados têm os campos esperados.</li>
+<li><strong>Buscar usuário por ID existente:</strong> Acessar <code>GET /users/1</code> e validar os dados do usuário.</li>
+<li><strong>Buscar usuário por ID inexistente:</strong> Acessar <code>GET /users/9999</code> e confirmar retorno 404.</li>
+<li><strong>Criar usuário novo:</strong> Enviar <code>POST /users</code> com JSON válido e verificar retorno 201 e dados do usuário criado.</li>
+<li><strong>Criar usuário com email duplicado:</strong> Enviar <code>POST /users</code> com email já existente e verificar retorno 409.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar o método do controller que trata a criação de usuário para garantir que retorna 201 e o objeto correto quando o email é novo.</li>
+<li>Testar o método do controller para criação de usuário que retorna 409 quando o email já existe.</li>
+<li>Testar o método que busca usuários por query para garantir que filtra corretamente os nomes.</li>
+<li>Testar o método que retorna usuários duplicados para garantir que a lógica de detecção está correta.</li>
+<li>Testar o método que retorna o count de usuários para garantir que o valor é consistente com a lista de usuários.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o fluxo completo de criação → busca por ID → busca por query → listagem → contagem → duplicatas para garantir consistência.</li>
+<li>Testar a criação de múltiplos usuários com emails diferentes e verificar se a listagem e contagem refletem as mudanças.</li>
+<li>Testar a criação de usuário com dados inválidos (ex: email mal formatado, nome vazio) para validar tratamento de erros (não coberto no diff).</li>
+<li>Testar concorrência na criação de usuários com o mesmo email para verificar se o 409 é corretamente retornado em condições de corrida.</li>
+<li>Testar endpoints com diferentes headers <code>Accept</code> para validar conteúdo retornado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência no diff ou contexto que justifique testes de carga ou desempenho específicos para essa mudança.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O endpoint <code>/users/names</code> foi removido da API? A remoção dos testes indica isso, mas não há confirmação explícita.</li>
+<li>Qual o estado esperado do banco de dados para os testes? Há dados pré-carregados (ex: usuário com id=1 e email "ana@example.com")? Isso é importante para garantir estabilidade dos testes.</li>
+<li>O endpoint <code>/users/duplicates</code> pode retornar lista vazia ou com dados; há regras de negócio para o que é considerado duplicado? O teste atual só valida estrutura, não conteúdo.</li>
+<li>Há validação de payload para criação de usuário (ex: formato de email, campos obrigatórios)? Não há testes para esses casos.</li>
+<li>O uso de <code>@DirtiesContext</code> está restrito ao teste de criação; seria necessário para outros testes que alteram estado?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança amplia e moderniza a suíte de testes de integração do <code>UserController</code>, cobrindo mais endpoints e cenários, com validações mais precisas do JSON retornado e códigos HTTP. A remoção dos testes antigos de <code>/users/names</code> sugere alteração ou remoção desse endpoint, o que deve ser confirmado para evitar perda de cobertura. Os testes criados melhoram a garantia de qualidade, mas alguns riscos relacionados ao estado do banco e à cobertura de casos de erro permanecem. Recomenda-se complementar com testes para payload inválido e confirmar o estado do banco para evitar instabilidade.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerUnitTest.java</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<ul>
+<li><strong>Ampliação e reorganização dos testes unitários do <code>UserController</code></strong>  </li>
+<li><strong>Cobertura ampliada para novos métodos e cenários de erro</strong>  </li>
+<li><strong>Refatoração dos testes antigos para refletir mudanças na API do controller (ex: <code>listUserNames</code> removido, substituído por <code>listUsers</code>)</strong></li>
+</ul>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff mostra que os testes originais focados em <code>listUserNames</code> foram removidos e substituídos por testes para métodos como <code>listUsers</code>, <code>usersCount</code>, <code>createUser</code>, <code>firstUserEmail</code>, <code>getUserEmail</code>, <code>getUser</code>, <code>getUserAgeEstimate</code>, <code>findDuplicateUsers</code> e <code>searchUsers</code>.</li>
+<li>Novos testes cobrem cenários positivos e negativos, incluindo exceções lançadas com códigos HTTP específicos (<code>409 CONFLICT</code>, <code>404 NOT_FOUND</code>).</li>
+<li>Uso de mocks para <code>UserService</code> e <code>ExternalService</code> para simular comportamentos e validar interações.</li>
+<li>O arquivo atual contém testes detalhados para cada endpoint/metodo do controller, com verificação de chamadas ao serviço e validação dos retornos.</li>
+<li>Contexto adicional mostra que há testes de integração e testes para a API Python, mas o foco aqui é o controller Java.</li>
+<li>Testes anteriores que lidavam com ordenação e nomes duplicados foram removidos, indicando possível mudança na API ou foco dos testes.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li><strong>Melhoria na cobertura dos testes unitários do <code>UserController</code></strong>, incluindo validação de fluxos de sucesso e falha para criação de usuário, busca por usuário, contagem, duplicatas e estimativa de idade.</li>
+<li><strong>Maior robustez na validação de erros HTTP</strong>, garantindo que o controller lança exceções apropriadas para casos como usuário não encontrado ou email duplicado.</li>
+<li><strong>Mudança no comportamento testado para listagem de usuários</strong>, agora com paginação (<code>limit</code> e <code>offset</code>) em vez de lista simples de nomes.</li>
+<li><strong>Validação da integração com <code>ExternalService</code> para estimativa de idade</strong>, incluindo verificação de que não há chamadas quando usuário não existe.</li>
+<li><strong>Cobertura de busca por usuários com filtro de nome</strong>, que não existia antes.</li>
+<li><strong>Remoção de testes que lidavam com ordenação e nomes nulos/duplicados na listagem simples</strong>, o que pode indicar mudança na implementação ou descontinuação dessas funcionalidades.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Possível regressão na ordenação e tratamento de nomes nulos ou duplicados na listagem de usuários</strong>, pois os testes que cobriam esses casos foram removidos. Se a funcionalidade ainda existir, pode estar sem cobertura.</li>
+<li><strong>Dependência da correta implementação do método <code>listUsers(limit, offset)</code> no serviço</strong>, pois os testes agora assumem paginação; se o serviço não tratar corretamente limites e offsets, pode haver problemas não detectados.</li>
+<li><strong>Tratamento de exceções baseado em <code>ResponseStatusException</code> com status HTTP específicos</strong>, se a implementação do controller mudar, os testes podem ficar desatualizados.</li>
+<li><strong>Cobertura para casos de erro no serviço externo (<code>ExternalService</code>) não está presente</strong>, por exemplo, falhas de comunicação ou respostas inválidas não são testadas.</li>
+<li><strong>Testes focam em comportamento esperado, mas não validam mensagens de erro detalhadas ou conteúdo do corpo das exceções</strong>, o que pode ser importante para clientes da API.</li>
+<li><strong>Não há testes para inputs inválidos (ex: <code>null</code> ou campos vazios em <code>UserCreateRequest</code>)</strong>, o que pode deixar brechas para erros não tratados.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuário com email novo → deve retornar 201 e dados do usuário criado.</li>
+<li>Criar usuário com email já existente → deve retornar 409 CONFLICT.</li>
+<li>Listar usuários com diferentes valores de <code>limit</code> e <code>offset</code> → deve retornar lista paginada correta.</li>
+<li>Obter contagem total de usuários → deve retornar número correto.</li>
+<li>Buscar usuário por ID existente → deve retornar dados do usuário.</li>
+<li>Buscar usuário por ID inexistente → deve retornar 404 NOT FOUND.</li>
+<li>Obter email de usuário existente → deve retornar email correto.</li>
+<li>Obter email de usuário inexistente → deve retornar 404 NOT FOUND.</li>
+<li>Obter primeiro usuário quando lista não está vazia → deve retornar o primeiro usuário.</li>
+<li>Obter primeiro usuário quando lista está vazia → deve retornar 404 NOT FOUND.</li>
+<li>Obter estimativa de idade para usuário existente → deve retornar dados da estimativa.</li>
+<li>Obter estimativa de idade para usuário inexistente → deve retornar 404 NOT FOUND.</li>
+<li>Buscar usuários duplicados por email → deve retornar lista com usuários que possuem emails duplicados.</li>
+<li>Buscar usuários por termo de pesquisa no nome (case-insensitive) → deve retornar usuários cujo nome contenha o termo.</li>
+<li>Validar que chamadas ao serviço externo não ocorrem quando usuário não existe (ex: estimativa de idade).</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar criação de usuário com campos inválidos (nome ou email nulos/vazios) e validar que exceção apropriada é lançada.</li>
+<li>Testar comportamento do método <code>listUsers</code> com valores limite (ex: <code>limit=0</code>, <code>offset</code> negativo) para garantir que o controller trata corretamente.</li>
+<li>Testar falha na chamada ao <code>externalService.estimateAge</code> (ex: lançar exceção) e validar que o controller trata ou propaga corretamente.</li>
+<li>Testar que o método <code>findDuplicateUsers</code> retorna lista vazia quando não há duplicatas.</li>
+<li>Testar que o método <code>searchUsers</code> retorna lista vazia quando não há correspondência.</li>
+<li>Testar que o método <code>firstUserEmail</code> retorna o usuário correto quando há múltiplos usuários.</li>
+<li>Testar que o método <code>createUser</code> não chama <code>userService.create</code> se <code>findByEmail</code> lançar exceção inesperada.</li>
+<li>Testar comportamento do controller quando <code>userService</code> lança exceções inesperadas (ex: runtime exceptions).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo de criação de usuário via API REST, incluindo tentativa de duplicação e validação do código HTTP retornado.</li>
+<li>Testar paginação da listagem de usuários via endpoint REST, validando limites e offsets.</li>
+<li>Testar busca de usuários via endpoint REST com query string, validando filtro case-insensitive.</li>
+<li>Testar endpoint de duplicatas para garantir que usuários com emails repetidos são retornados.</li>
+<li>Testar endpoint de estimativa de idade, incluindo casos de usuário inexistente e resposta do serviço externo.</li>
+<li>Testar tratamento de erros HTTP (404, 409) via chamadas REST para garantir que mensagens e status estão corretos.</li>
+<li>Testar integração com serviço externo simulando falhas e respostas inválidas para validar resiliência.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Nenhuma evidência no diff ou contexto justifica testes de carga ou desempenho para esta mudança.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>A funcionalidade original de listagem de nomes ordenados e tratamento de nomes nulos/duplicados foi removida dos testes. Essa funcionalidade foi removida do controller ou está sendo testada em outro lugar?</li>
+<li>O controller lança <code>ResponseStatusException</code> com status HTTP, mas as mensagens de erro não são validadas nos testes. Qual o padrão esperado para mensagens de erro? É importante validar para garantir consistência na API.</li>
+<li>O que acontece se o <code>externalService.estimateAge</code> falhar (ex: timeout, erro 500)? O controller deve tratar ou propagar? Não há testes cobrindo esse cenário.</li>
+<li>Há validação de entrada para os objetos <code>UserCreateRequest</code>? Os testes não cobrem casos de dados inválidos (ex: email mal formatado, nome vazio).</li>
+<li>O método <code>searchUsers</code> filtra apenas por nome? Há necessidade de filtrar por outros campos (ex: email)?</li>
+<li>O método <code>findDuplicateUsers</code> considera apenas duplicidade por email. Isso está alinhado com a regra de negócio atual?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança amplia significativamente a cobertura dos testes unitários do <code>UserController</code>, adicionando testes para novos métodos e cenários de erro, com foco em validação de respostas e exceções HTTP. A remoção dos testes antigos de listagem simples sugere mudança na API. Riscos reais envolvem possíveis regressões na ordenação e tratamento de nomes, ausência de testes para falhas do serviço externo e validação de entradas inválidas. Recomenda-se complementar com testes para esses casos e validar pontos de negócio pendentes.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
