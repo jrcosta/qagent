@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 19 Apr 2026 – 22:12:17 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-19_22-12-17_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>19 Apr 2026 – 22:12:17 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerintegrationtestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Refatoração e melhoria dos testes de integração do endpoint <code>GET /users/names</code> no <code>UserControllerIntegrationTest</code>.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O teste original <code>healthShouldReturnOk</code> foi removido, assim como outros testes relacionados a endpoints diferentes (<code>/health</code>, <code>/users/count</code>, <code>/users</code>, <code>/users/search</code>, <code>/users/{id}/email</code>, <code>/users/{id}/exists</code>).</li>
+<li>O foco dos testes foi centralizado no endpoint <code>/users/names</code>, com múltiplos testes que validam:</li>
+<li>Retorno HTTP 200 e formato JSON array de strings.</li>
+<li>Ordenação dos nomes ignorando case.</li>
+<li>Retorno de um array plano de strings, não objetos JSON.</li>
+<li>Inclusão de um usuário recém-criado via <code>POST /users</code> refletida na lista de nomes.</li>
+<li>Uso do <code>ObjectMapper</code> com <code>TypeReference&lt;List&lt;String&gt;&gt;</code> para desserializar a resposta JSON em lista de strings.</li>
+<li>Inclusão da anotação <code>@DisplayName</code> para melhor descrição dos testes.</li>
+<li>Inclusão da anotação <code>@DirtiesContext</code> no teste que cria usuário para garantir isolamento do contexto Spring.</li>
+<li>Remoção do uso de <code>jsonPath</code> e substituição por parsing direto do JSON para validações mais precisas.</li>
+<li>Remoção de testes que validavam fluxos de criação de usuário e duplicidade de email, que não estão mais presentes neste arquivo.</li>
+<li>O contexto adicional mostra que a API Java expõe o endpoint <code>/users/names</code> que retorna uma lista de nomes de usuários, e que testes anteriores cobriam outros endpoints.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A mudança foca em melhorar a qualidade e a cobertura dos testes de integração para o endpoint <code>/users/names</code>.</li>
+<li>A refatoração elimina testes redundantes ou que estavam fora do escopo do arquivo, concentrando a suíte em validar o formato, conteúdo e ordenação da lista de nomes.</li>
+<li>A inclusão do teste que cria um usuário e verifica sua presença na lista garante que o endpoint reflete dados atualizados, aumentando a confiabilidade do sistema.</li>
+<li>A remoção dos testes de outros endpoints pode indicar que esses testes foram movidos para outros arquivos ou que a cobertura desses endpoints está sendo tratada em outro lugar, o que pode impactar a cobertura geral se não houver testes equivalentes.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li><strong>Cobertura reduzida para outros endpoints:</strong> A exclusão dos testes para <code>/health</code>, <code>/users/count</code>, <code>/users/search</code>, <code>/users/{id}/email</code> e <code>/users/{id}/exists</code> pode deixar esses endpoints sem cobertura de integração, a menos que estejam testados em outros arquivos. Isso pode permitir regressões não detectadas nesses endpoints.</li>
+<li><strong>Dependência do estado do banco:</strong> O teste que cria um usuário e verifica sua presença usa <code>@DirtiesContext</code> para isolar o contexto, mas se o banco de dados não for resetado corretamente entre testes, pode haver interferência.</li>
+<li><strong>Validação limitada do conteúdo:</strong> Os testes validam que o JSON é um array de strings e que os nomes não são nulos ou vazios, mas não validam conteúdo específico além do nome criado no teste. Pode haver casos de nomes duplicados, vazios ou inválidos não cobertos.</li>
+<li><strong>Ordenação sensível a caracteres especiais:</strong> O teste de ordenação ignora case, mas não valida comportamento com caracteres acentuados ou especiais, o que pode ser relevante dependendo da localidade.</li>
+<li><strong>Ausência de testes para erros ou respostas vazias:</strong> Não há testes que validem comportamento do endpoint quando não há usuários cadastrados ou quando ocorre erro no servidor.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Executar <code>GET /users/names</code> e verificar que o retorno é HTTP 200 com um array JSON plano de strings, sem objetos aninhados.</li>
+<li>Verificar manualmente que a lista de nomes está ordenada alfabeticamente ignorando maiúsculas/minúsculas.</li>
+<li>Criar um novo usuário via <code>POST /users</code> com nome e email únicos e depois executar <code>GET /users/names</code> para confirmar que o novo nome aparece na lista.</li>
+<li>Testar o endpoint com o banco vazio (sem usuários) para verificar se retorna um array vazio e não erro.</li>
+<li>Testar o endpoint com nomes contendo caracteres especiais, acentos e espaços para verificar ordenação e formato.</li>
+<li>Testar o endpoint em caso de falha do servidor (ex: banco desconectado) para verificar resposta adequada (500 ou similar).</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar o método do controller que retorna a lista de nomes para garantir que ele:</li>
+<li>Retorna uma lista ordenada ignorando case.</li>
+<li>Retorna lista vazia quando não há usuários.</li>
+<li>Trata nomes nulos ou vazios sem lançar exceção.</li>
+<li>Testar o serviço que fornece os nomes para garantir que ele:</li>
+<li>Ordena corretamente nomes com caracteres especiais e acentos.</li>
+<li>Preserva nomes duplicados.</li>
+<li>Testar o método que cria usuários para garantir que após criação o nome aparece na lista de nomes.</li>
+<li>Testar o comportamento do controller quando o serviço lança exceção para garantir tratamento adequado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Reintroduzir testes para os endpoints removidos, como <code>/health</code>, <code>/users/count</code>, <code>/users/search</code>, <code>/users/{id}/email</code>, <code>/users/{id}/exists</code>, para garantir cobertura completa da API.</li>
+<li>Testar o endpoint <code>/users/names</code> com diferentes volumes de dados para validar consistência e ordenação.</li>
+<li>Testar criação de usuário com email duplicado para garantir que não afeta a lista de nomes.</li>
+<li>Testar o endpoint <code>/users/names</code> com usuários criados em diferentes ordens para validar ordenação consistente.</li>
+<li>Testar o endpoint com usuários contendo nomes com caracteres especiais, espaços e acentos.</li>
+<li>Testar o endpoint após deleção de usuários (se aplicável) para garantir atualização da lista.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidências na mudança que justifiquem testes de carga ou desempenho específicos para o endpoint <code>/users/names</code>.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Por que os testes para outros endpoints foram removidos? Eles foram movidos para outro arquivo ou a cobertura desses endpoints será feita de outra forma?</li>
+<li>O endpoint <code>/users/names</code> deve garantir ordenação considerando caracteres acentuados e especiais? Atualmente o teste valida apenas ordenação case-insensitive simples.</li>
+<li>Existe algum requisito para o tamanho máximo da lista retornada por <code>/users/names</code>? Caso sim, testes de paginação ou limites seriam necessários.</li>
+<li>O uso de <code>@DirtiesContext</code> no teste de criação pode impactar o tempo de execução dos testes. Há estratégia para otimizar isso?</li>
+<li>O sistema permite nomes duplicados? O teste de ordenação não cobre duplicatas explicitamente.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança refatora e melhora os testes de integração para o endpoint <code>/users/names</code>, focando em validar formato, ordenação e atualização da lista após criação de usuário. Entretanto, remove testes para outros endpoints, o que pode impactar a cobertura geral. Recomenda-se reintroduzir testes para os endpoints removidos e ampliar a cobertura para casos de borda e erros.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerUnitTest.java</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Refatoração e substituição do escopo de testes unitários do <code>UserControllerUnitTest</code> focados em <code>userExists</code> para testes focados no método <code>listUserNames</code> do <code>UserController</code>.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff mostra remoção completa dos testes relacionados ao método <code>userExists(int userId)</code> do <code>UserController</code> e substituição por testes para o método <code>listUserNames()</code>.</li>
+<li>Remoção das anotações <code>@Mock</code> e <code>@InjectMocks</code> do Mockito, substituídas por mocks criados manualmente via <code>mock()</code> no método <code>setup()</code>.</li>
+<li>Os testes antigos verificavam comportamento de <code>userExists</code> com diferentes IDs, incluindo casos de exceção, valores negativos e zero, e verificações de interação com <code>userService.getById</code>.</li>
+<li>Os novos testes focam em:</li>
+<li>Verificar se <code>listUserNames</code> chama <code>userService.listAllUsers()</code> exatamente uma vez.</li>
+<li>Verificar ordenação case-insensitive dos nomes retornados.</li>
+<li>Verificar retorno de lista vazia quando não há usuários.</li>
+<li>Preservação de nomes duplicados.</li>
+<li>Tratamento de nomes vazios (string vazia) sem lançar exceção.</li>
+<li>Comportamento esperado de lançar <code>NullPointerException</code> quando algum usuário tem nome <code>null</code>.</li>
+<li>O conteúdo atual do arquivo confirma que os testes agora são exclusivamente para <code>listUserNames</code>.</li>
+<li>O contexto adicional mostra que o <code>UserController</code> tem métodos <code>userExists</code> e <code>listUserNames</code>, e que há testes unitários e de integração para ambos, mas este arquivo foi modificado para focar em <code>listUserNames</code>.</li>
+<li>O método <code>listUserNames</code> depende de <code>userService.listAllUsers()</code> que retorna <code>List&lt;UserResponse&gt;</code>, e o método retorna uma lista de nomes ordenados.</li>
+<li>A exceção <code>NullPointerException</code> para nomes nulos é documentada no teste, indicando que o comportamento atual do código não trata nomes nulos.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>O escopo dos testes unitários do <code>UserControllerUnitTest</code> mudou completamente, deixando de testar o método <code>userExists</code> e passando a testar o método <code>listUserNames</code>.</li>
+<li>Isso pode indicar que o método <code>userExists</code> foi removido, movido para outro teste, ou que o foco do arquivo mudou.</li>
+<li>A cobertura de testes para <code>userExists</code> neste arquivo foi perdida, o que pode impactar a detecção de regressões nesse método.</li>
+<li>Os testes para <code>listUserNames</code> agora cobrem aspectos importantes como chamada ao serviço, ordenação, duplicatas, nomes vazios e tratamento de nomes nulos.</li>
+<li>A ausência de tratamento para nomes nulos no método <code>listUserNames</code> está explicitamente testada e documentada como uma exceção esperada, o que pode ser um ponto de atenção para robustez do código.</li>
+<li>A mudança de uso do Mockito de anotações para mocks manuais não altera o comportamento, mas simplifica a configuração dos testes.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Perda de cobertura para <code>userExists</code></strong>: A remoção dos testes para <code>userExists</code> pode deixar essa funcionalidade sem testes unitários neste arquivo, aumentando risco de regressão.</li>
+<li><strong>Exceção para nomes nulos</strong>: O método <code>listUserNames</code> lança <code>NullPointerException</code> se algum usuário tiver nome <code>null</code>. Isso pode causar falhas inesperadas em produção se não for tratado.</li>
+<li><strong>Mudança no estilo de mocking</strong>: Embora não seja um risco funcional, a mudança para mocks manuais pode levar a inconsistências se não for adotada uniformemente.</li>
+<li><strong>Dependência da ordenação case-insensitive</strong>: A ordenação é feita usando <code>String::compareToIgnoreCase</code>, que não trata <code>null</code>, o que pode ser um problema se dados inconsistentes forem inseridos.</li>
+<li><strong>Duplicidade de nomes preservada</strong>: Pode ser desejado ou não, mas a presença de duplicatas na lista de nomes pode impactar consumidores da API que esperam nomes únicos.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Chamada ao endpoint/listUserNames com usuários existentes</strong><br />
+   Verificar se a lista de nomes retornada está ordenada case-insensitivamente, preservando duplicatas e incluindo nomes vazios.</p>
+</li>
+<li>
+<p><strong>Chamada ao endpoint/listUserNames com lista vazia de usuários</strong><br />
+   Confirmar que a resposta é uma lista vazia sem erros.</p>
+</li>
+<li>
+<p><strong>Chamada ao endpoint/listUserNames com usuário com nome vazio</strong><br />
+   Confirmar que o nome vazio aparece na lista sem causar erro.</p>
+</li>
+<li>
+<p><strong>Chamada ao endpoint/listUserNames com usuário com nome nulo</strong><br />
+   Verificar se ocorre erro (provavelmente 500) devido a <code>NullPointerException</code>.</p>
+</li>
+<li>
+<p><strong>Verificar que <code>userService.listAllUsers()</code> é chamado exatamente uma vez por requisição</strong><br />
+   Confirmar que não há chamadas extras ou desnecessárias.</p>
+</li>
+<li>
+<p><strong>Verificar comportamento com nomes duplicados</strong><br />
+   Confirmar que nomes duplicados aparecem na lista na ordem correta.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar comportamento de <code>listUserNames</code> quando <code>userService.listAllUsers()</code> retorna <code>null</code> (se possível), para verificar robustez.</li>
+<li>Testar comportamento quando <code>userService.listAllUsers()</code> lança exceção, para garantir propagação ou tratamento adequado.</li>
+<li>Testar explicitamente que a lista retornada contém nomes na ordem correta mesmo com mistura de maiúsculas e minúsculas.</li>
+<li>Testar que nomes com espaços em branco são preservados e ordenados corretamente.</li>
+<li>Testar que a lista retornada não contém <code>null</code> (além do caso já testado que lança exceção).</li>
+<li>Testar que o método não chama <code>externalService</code> (como era verificado nos testes antigos para <code>userExists</code>).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o endpoint HTTP que expõe <code>listUserNames</code> para garantir que a resposta JSON contenha a lista de nomes ordenada e com duplicatas preservadas.</li>
+<li>Testar integração com banco/dados reais para verificar comportamento com nomes vazios e duplicados.</li>
+<li>Testar cenário onde algum usuário tem nome <code>null</code> para verificar resposta HTTP e tratamento do erro.</li>
+<li>Testar que a chamada ao endpoint não afeta estado do sistema (idempotência).</li>
+<li>Testar que o endpoint não expõe dados além dos nomes (ex: não retorna objetos completos).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança não indica impacto em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O método <code>userExists</code> foi removido dos testes deste arquivo. Ele foi movido para outro arquivo? Está sendo testado em outro lugar? Há risco de perda de cobertura?</li>
+<li>O comportamento atual de lançar <code>NullPointerException</code> para nomes nulos é intencional? Há planos para tratar esse caso para evitar falhas em produção?</li>
+<li>A preservação de nomes duplicados é desejada? Ou deveria haver algum filtro para nomes únicos?</li>
+<li>O método <code>listUserNames</code> aceita nomes vazios? Há algum impacto esperado para consumidores da API?</li>
+<li>A mudança de uso do Mockito para mocks manuais é padrão para o projeto? Há guideline para isso?</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança substituiu completamente os testes unitários do método <code>userExists</code> por testes para o método <code>listUserNames</code> no <code>UserControllerUnitTest</code>. Os novos testes cobrem chamadas ao serviço, ordenação case-insensitive, duplicatas, nomes vazios e comportamento com nomes nulos (que lança exceção). A perda dos testes para <code>userExists</code> neste arquivo pode indicar risco de regressão se não houver cobertura equivalente em outro lugar. O comportamento de lançar <code>NullPointerException</code> para nomes nulos deve ser avaliado para robustez. Recomenda-se testes manuais e de integração focados em ordenação, duplicatas, nomes vazios e tratamento de nomes nulos, além de esclarecer o destino dos testes de <code>userExists</code> e a política de tratamento de nomes nulos.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
