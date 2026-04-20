@@ -10,9 +10,11 @@ posta automaticamente o comentário:
 Quando o Copilot (ou um revisor) responde com observações, um workflow no
 repo alvo encaminha esse comentário para o repositório `qagent` via
 `repository_dispatch`. No `qagent`, um **agente sumarizador** (CrewAI) extrai
-as lições aprendidas e as persiste em `data/memories.db` (SQLite).
+as lições aprendidas e as persiste utilizando um banco vetorial com **LanceDB** na 
+pasta `data/lancedb`, com auxílio de sentence-transformers.
 
-Na próxima execução do gerador de testes, essas lições são consultadas e
+Na próxima execução do gerador de testes, essas lições são consultadas via buscas
+de similaridade nos embeddings vetoriais e repassadas ao prompt,
 injetadas no prompt, evitando que os mesmos erros se repitam.
 
 ## Arquitetura
