@@ -11,6 +11,21 @@ IGNORED_EXTENSIONS = {
     ".gif",
     ".svg",
     ".lock",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".xml",
+    ".ini",
+    ".cfg",
+    ".toml",
+}
+
+IGNORED_FILES = {
+    ".gitignore",
+    ".dockerignore",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
 }
 
 IGNORED_DIRECTORIES = {
@@ -100,6 +115,9 @@ def should_analyze_file(file_path: str, repo_path: Path) -> bool:
         return False
 
     if any(part in IGNORED_DIRECTORIES for part in path.parts):
+        return False
+
+    if path.name in IGNORED_FILES:
         return False
 
     if path.suffix.lower() in IGNORED_EXTENSIONS:
