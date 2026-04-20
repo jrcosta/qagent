@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 20 Apr 2026 – 02:06:46 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-20_02-06-46_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>20 Apr 2026 – 02:06:46 UTC</span></div>
+    </div>
+    <article class="report">
+      <h1 id="arquivo-analisado-javascript-apigitignore">Arquivo analisado: javascript-api/.gitignore</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<ul>
+<li>Inclusão de arquivo de configuração (<code>.gitignore</code>) para o subdiretório <code>javascript-api</code>.</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/.gitignore</code> contendo a única linha <code>node_modules/</code>.</li>
+<li>O conteúdo atual do arquivo confirma que o <code>.gitignore</code> criado ignora a pasta <code>node_modules/</code> dentro do diretório <code>javascript-api</code>.</li>
+<li>No contexto do repositório, não há outros arquivos <code>.gitignore</code> dentro do <code>javascript-api</code>, nem arquivos de código ou testes relacionados a essa pasta.</li>
+<li>O repositório possui outras APIs (java-api, python-api) com seus próprios testes e configurações, mas nada relacionado diretamente ao <code>javascript-api</code>.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A inclusão do <code>.gitignore</code> com a regra <code>node_modules/</code> no diretório <code>javascript-api</code> tem como objetivo evitar que a pasta <code>node_modules</code> (onde ficam as dependências instaladas via npm/yarn) seja versionada no Git.</li>
+<li>Isso ajuda a manter o repositório limpo, reduzindo o volume de arquivos desnecessários no controle de versão.</li>
+<li>Não há alteração funcional no código da aplicação, pois o arquivo <code>.gitignore</code> não afeta a execução do software.</li>
+<li>Pode impactar o fluxo de desenvolvimento local, garantindo que desenvolvedores não comitem acidentalmente dependências instaladas localmente.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Risco baixo, pois a mudança é apenas um arquivo de configuração para ignorar arquivos no Git.</li>
+<li>Possível risco se houver alguma dependência ou configuração que dependa de arquivos dentro de <code>node_modules</code> serem versionados (o que é incomum e não recomendado).</li>
+<li>Se o diretório <code>javascript-api</code> for usado para desenvolvimento local de código JavaScript/Node.js, a ausência do <code>.gitignore</code> poderia levar a commits acidentais de dependências, mas agora isso está mitigado.</li>
+<li>Nenhum impacto direto nos testes ou na execução da aplicação foi identificado.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<p>Como a mudança é de configuração do Git e não altera código executável, testes manuais funcionais não são aplicáveis diretamente. Porém, para validar o efeito da mudança:</p>
+<ul>
+<li>Na máquina local, dentro do diretório <code>javascript-api</code>, executar <code>git status</code> após instalar dependências (<code>npm install</code> ou <code>yarn install</code>) e verificar que a pasta <code>node_modules</code> não aparece como arquivo não rastreado.</li>
+<li>Tentar adicionar manualmente arquivos dentro de <code>node_modules</code> ao Git e confirmar que o Git os ignora.</li>
+<li>Confirmar que o <code>.gitignore</code> está presente no repositório remoto e que outros desenvolvedores ao puxar o código também não veem <code>node_modules</code> no controle de versão.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Não aplicável, pois não há código funcional alterado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Não aplicável, pois não há integração de código alterada.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Confirmar se o diretório <code>javascript-api</code> é um projeto Node.js padrão que utiliza <code>node_modules</code> para dependências, para garantir que a regra <code>.gitignore</code> está correta e suficiente.</li>
+<li>Verificar se há necessidade de ignorar outros arquivos temporários ou de build dentro do <code>javascript-api</code> (ex: arquivos de log, diretórios de build, arquivos de lock como <code>package-lock.json</code> ou <code>yarn.lock</code>), pois atualmente só está ignorando <code>node_modules/</code>.</li>
+<li>Confirmar se não há políticas específicas no repositório que exijam versionar algum conteúdo dentro de <code>node_modules</code> (prática incomum, mas possível em casos específicos).</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona um <code>.gitignore</code> para o diretório <code>javascript-api</code> com a regra para ignorar <code>node_modules/</code>. Isso é uma prática padrão para projetos Node.js e não altera comportamento funcional do software. O risco é baixo e a principal recomendação é validar localmente que o Git está ignorando corretamente a pasta de dependências. Não há necessidade de testes funcionais, unitários ou de integração para esta mudança.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apipackage-lockjson">Arquivo analisado: javascript-api/package-lock.json</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<ul>
+<li>Inclusão de arquivo de lock (<code>package-lock.json</code>) para o projeto <code>javascript-api</code>.</li>
+</ul>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/package-lock.json</code> do zero, com 5323 linhas.</li>
+<li>O arquivo contém a estrutura típica de um <code>package-lock.json</code> gerado pelo npm, incluindo versões exatas, integridades, dependências e metadados.</li>
+<li>As dependências listadas incluem bibliotecas como <code>axios</code>, <code>cors</code>, <code>dotenv</code>, <code>express</code> e ferramentas de desenvolvimento como <code>jest</code>, <code>nodemon</code> e <code>supertest</code>.</li>
+<li>O contexto adicional do repositório indica que o projeto possui APIs em Python e Java, mas não há código JavaScript ou testes relacionados diretamente ao <code>javascript-api</code>.</li>
+<li>Não há outros arquivos alterados relacionados a esta mudança, nem evidências de alterações no código fonte ou testes do <code>javascript-api</code>.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>A inclusão do <code>package-lock.json</code> fixa as versões exatas das dependências do projeto <code>javascript-api</code>, garantindo reprodutibilidade e consistência nas instalações.</li>
+<li>Isso pode impactar o ambiente de desenvolvimento, build e deploy, pois agora as versões das dependências estarão travadas.</li>
+<li>Pode melhorar a estabilidade do projeto ao evitar atualizações automáticas de dependências que poderiam introduzir bugs.</li>
+<li>Não há alteração direta no código fonte ou na lógica da aplicação, portanto, o comportamento funcional da API não deve ser alterado.</li>
+<li>Pode afetar o processo de instalação e testes do <code>javascript-api</code> se houver divergências entre versões previamente usadas e as travadas no lockfile.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li>Se o <code>package-lock.json</code> não estiver sincronizado com o <code>package.json</code> (não visível no diff), pode haver conflitos ou erros na instalação das dependências.</li>
+<li>Dependências opcionais ou específicas de plataforma podem causar problemas em ambientes diferentes se não forem corretamente gerenciadas.</li>
+<li>Caso o lockfile contenha versões com vulnerabilidades conhecidas, isso pode introduzir riscos de segurança.</li>
+<li>Ausência de testes automatizados para o <code>javascript-api</code> no repositório pode dificultar a detecção precoce de problemas relacionados a dependências.</li>
+<li>Se o ambiente de produção não usar o lockfile, pode haver inconsistência entre ambientes.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li><strong>Instalação das dependências:</strong> Executar <code>npm ci</code> ou <code>npm install</code> no diretório <code>javascript-api</code> para garantir que as dependências são instaladas corretamente conforme o lockfile.</li>
+<li><strong>Build e execução da API:</strong> Se existir script de build ou start, executar para verificar que a aplicação inicia sem erros.</li>
+<li><strong>Testes básicos de API:</strong> Se houver endpoints expostos, realizar chamadas básicas para verificar funcionamento esperado (ex: healthcheck).</li>
+<li><strong>Verificação de versões:</strong> Confirmar que as versões instaladas das dependências correspondem às especificadas no lockfile.</li>
+<li><strong>Ambientes diferentes:</strong> Testar instalação e execução em ambientes distintos (desenvolvimento, CI, produção) para garantir compatibilidade.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Como não há alteração de código fonte, não há testes unitários específicos para esta mudança.</li>
+<li>Recomenda-se garantir que os testes unitários existentes do <code>javascript-api</code> (se houver) rodem com as dependências travadas.</li>
+<li>Caso o projeto <code>javascript-api</code> não possua testes, sugerir a criação de testes unitários básicos para funcionalidades principais da API.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Validar integração da API <code>javascript-api</code> com serviços externos, se aplicável, usando as versões travadas das dependências.</li>
+<li>Testar fluxos completos de uso da API para garantir que nenhuma dependência introduzida no lockfile cause regressão.</li>
+<li>Se o <code>javascript-api</code> interage com outras partes do sistema (ex: backend Java ou Python), validar comunicação e contratos.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há indicação no diff ou contexto que justifique testes de carga ou desempenho específicos para esta mudança.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O projeto <code>javascript-api</code> não possui código fonte ou testes visíveis no repositório; qual o escopo funcional e cobertura atual deste módulo?</li>
+<li>O <code>package.json</code> do <code>javascript-api</code> foi alterado? Se sim, qual a relação com este lockfile?</li>
+<li>Como é o processo de build, deploy e execução do <code>javascript-api</code>? O lockfile será utilizado em produção?</li>
+<li>Existem testes automatizados para o <code>javascript-api</code>? Se não, há planos para implementá-los?</li>
+<li>Há políticas de atualização e auditoria de dependências para evitar vulnerabilidades?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong><br />
+Esta mudança adiciona o arquivo <code>package-lock.json</code> para o projeto <code>javascript-api</code>, travando as versões das dependências. Não há alteração de código fonte ou lógica, portanto o impacto funcional direto é nulo. O principal benefício é garantir consistência na instalação das dependências. Riscos estão relacionados a possíveis incompatibilidades de versões e ausência de testes automatizados para este módulo. Recomenda-se validar instalação, build e execução da API, além de esclarecer o contexto do <code>javascript-api</code> no repositório.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apipackagejson">Arquivo analisado: javascript-api/package.json</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<ul>
+<li>Inclusão inicial de arquivo de configuração do projeto Node.js (<code>package.json</code>) para o módulo <code>javascript-api</code>.</li>
+</ul>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/package.json</code> com conteúdo completo, incluindo metadados do projeto, scripts e dependências.</li>
+<li>O arquivo define scripts para iniciar o servidor (<code>start</code>), rodar em modo desenvolvimento com <code>nodemon</code> (<code>dev</code>) e executar testes com <code>jest</code> (<code>test</code>).</li>
+<li>Dependências principais: <code>axios</code>, <code>cors</code>, <code>dotenv</code>, <code>express</code> (versões recentes).</li>
+<li>Dependências de desenvolvimento: <code>jest</code> (testes), <code>nodemon</code> (reload automático), <code>supertest</code> (testes de API HTTP).</li>
+<li>Contexto adicional mostra que o projeto <code>javascript-api</code> já possui um <code>package-lock.json</code> e código fonte em <code>src/server.js</code>.</li>
+<li>Não há evidência de que este arquivo existisse antes, portanto é uma adição inicial para o projeto Node.js.</li>
+<li>O repositório contém outras APIs (Java, Python) com testes bem estruturados, mas não há evidência de testes existentes para <code>javascript-api</code>.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Esta mudança configura o ambiente básico para desenvolvimento, execução e testes da API JavaScript.</li>
+<li>Permite rodar o servidor via <code>npm start</code> e <code>npm run dev</code>.</li>
+<li>Permite rodar testes automatizados via <code>npm test</code> com Jest.</li>
+<li>Facilita a instalação das dependências necessárias para o funcionamento da API.</li>
+<li>Provavelmente habilita o desenvolvimento e integração contínua da API JavaScript, que antes não tinha configuração formal.</li>
+<li>Não altera comportamento da aplicação em si, mas é pré-requisito para execução e testes.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li>Como é uma adição inicial, o risco de regressão funcional é baixo, pois não altera código existente.</li>
+<li>Risco de incompatibilidade de versões das dependências com o código existente em <code>src/server.js</code> (não fornecido).</li>
+<li>Risco de scripts mal configurados que podem não iniciar o servidor corretamente.</li>
+<li>Risco de falta de testes automatizados para validar a configuração e o funcionamento da API.</li>
+<li>Risco de inconsistência entre versões declaradas e versões efetivamente instaladas (lockfile deve ser mantido sincronizado).</li>
+<li>Risco de falta de documentação para uso dos scripts e dependências.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ul>
+<li>Executar <code>npm install</code> dentro da pasta <code>javascript-api</code> e verificar se todas as dependências são instaladas sem erros.</li>
+<li>Rodar <code>npm start</code> e verificar se o servidor inicia corretamente e responde a requisições básicas (ex: <code>GET /health</code>).</li>
+<li>Rodar <code>npm run dev</code> e verificar se o servidor reinicia automaticamente ao alterar arquivos fonte.</li>
+<li>Rodar <code>npm test</code> e verificar se os testes são executados e passam (ou se há testes configurados).</li>
+<li>Verificar se variáveis de ambiente são carregadas corretamente via <code>dotenv</code> (ex: criar <code>.env</code> e validar).</li>
+<li>Testar endpoints básicos da API para garantir que o ambiente está funcional.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Criar testes unitários para validar que o servidor inicia corretamente com <code>src/server.js</code>.</li>
+<li>Testar handlers de rotas usando Jest e Supertest para garantir respostas esperadas.</li>
+<li>Testar integração com <code>axios</code> para chamadas externas simuladas.</li>
+<li>Testar middleware <code>cors</code> e carregamento de variáveis de ambiente via <code>dotenv</code>.</li>
+<li>Testar scripts definidos no <code>package.json</code> para garantir que executam os comandos corretos (ex: mockar <code>child_process</code>).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar testes de integração que iniciem o servidor real e façam chamadas HTTP para os endpoints expostos.</li>
+<li>Validar comportamento completo da API JavaScript, incluindo autenticação, rotas, erros e respostas.</li>
+<li>Testar integração com serviços externos via <code>axios</code>.</li>
+<li>Validar que o ambiente de desenvolvimento com <code>nodemon</code> funciona corretamente em integração.</li>
+<li>Testar fluxo completo de criação, leitura, atualização e deleção (CRUD) se aplicável.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável nesta mudança, pois não há alteração de código funcional nem evidência de impacto em performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O código fonte da API (<code>src/server.js</code> e demais arquivos) não foi fornecido; qual é o escopo funcional da API JavaScript?</li>
+<li>Existem testes automatizados já implementados para esta API? Se não, há planos para criação?</li>
+<li>Qual o ambiente alvo para execução (Node.js versão, sistema operacional)?</li>
+<li>Há necessidade de configurar scripts adicionais (ex: lint, build, deploy) no <code>package.json</code>?</li>
+<li>Como será feita a integração desta API JavaScript com as outras APIs do repositório (Java, Python)?</li>
+<li>Existe documentação para uso dos scripts e dependências declaradas?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona o arquivo <code>package.json</code> para o módulo <code>javascript-api</code>, configurando dependências, scripts e metadados básicos para desenvolvimento e testes. Não altera código funcional, mas é fundamental para o setup do ambiente Node.js. Riscos são principalmente relacionados à compatibilidade e ausência de testes. Recomenda-se validar instalação, execução e testes via scripts, além de criar testes unitários e de integração para garantir funcionamento correto da API.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcappjs">Arquivo analisado: javascript-api/src/app.js</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p><em>Inclusão inicial de módulo</em> — criação do arquivo <code>app.js</code> que configura a aplicação Express para a API JavaScript.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/src/app.js</code> com 16 linhas, contendo a configuração básica de um servidor Express.</li>
+<li>O arquivo importa <code>express</code>, <code>cors</code> e um módulo de rotas <code>./routes/users</code>.</li>
+<li>Configura o middleware CORS e JSON parsing.</li>
+<li>Define um endpoint <code>/health</code> que retorna <code>{ status: 'ok' }</code>.</li>
+<li>Monta o roteador <code>userRoutes</code> na rota <code>/users</code>.</li>
+<li>Exporta o objeto <code>app</code> do Express.</li>
+<li>No contexto do repositório, não há menção direta a uma API JavaScript, mas há uma estrutura para APIs Python e Java.</li>
+<li>O arquivo <code>app.js</code> parece ser a entrada da API JavaScript, equivalente ao <code>main.py</code> do Python e ao <code>UserController</code> do Java.</li>
+<li>O endpoint <code>/health</code> está documentado no README.md como healthcheck.</li>
+<li>A rota <code>/users</code> é a base para operações relacionadas a usuários, conforme documentação dos endpoints.</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>Introdução da base da API JavaScript, que provavelmente será usada para expor endpoints REST relacionados a usuários.</li>
+<li>Disponibilização do endpoint <code>/health</code> para monitoramento da saúde da aplicação.</li>
+<li>Habilitação de CORS e JSON parsing para todas as rotas, permitindo chamadas cross-origin e requisições com payload JSON.</li>
+<li>Montagem do roteador de usuários, que deve conter as operações CRUD e consultas relacionadas a usuários.</li>
+<li>Esta mudança é fundamental para o funcionamento da API JavaScript, servindo como ponto central de roteamento e middleware.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li><strong>Ausência de tratamento de erros global:</strong> O arquivo não configura middleware para tratamento de erros, o que pode levar a respostas não padronizadas em caso de exceções.</li>
+<li><strong>Dependência do módulo <code>./routes/users</code>:</strong> Se este módulo não estiver implementado corretamente, a rota <code>/users</code> pode falhar ou causar erros.</li>
+<li><strong>Configuração CORS genérica:</strong> O uso de <code>cors()</code> sem opções pode expor a API a requisições de qualquer origem, o que pode ser um risco de segurança dependendo do contexto.</li>
+<li><strong>Falta de logs ou monitoramento:</strong> Não há configuração para logs de requisições ou erros, dificultando diagnóstico em produção.</li>
+<li><strong>Nenhuma configuração de timeout ou limite de payload:</strong> Pode haver risco de ataques DoS ou requisições muito grandes.</li>
+<li><strong>Não há definição de porta ou servidor HTTP:</strong> O arquivo apenas exporta o app, presumivelmente o servidor será criado em outro lugar; se não for, a API não estará acessível.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ul>
+<li><strong>Teste do endpoint <code>/health</code>:</strong></li>
+<li>Enviar requisição GET para <code>/health</code>.</li>
+<li>Verificar se retorna status 200 e JSON <code>{ "status": "ok" }</code>.</li>
+<li><strong>Teste básico da rota <code>/users</code>:</strong></li>
+<li>Enviar requisição GET para <code>/users</code>.</li>
+<li>Verificar se a resposta está conforme esperado (lista de usuários ou erro se rota não implementada).</li>
+<li><strong>Teste de CORS:</strong></li>
+<li>Fazer requisição AJAX de um domínio diferente e verificar se o cabeçalho CORS está presente e permite a requisição.</li>
+<li><strong>Teste de envio de JSON:</strong></li>
+<li>Enviar requisição POST para <code>/users</code> com payload JSON válido.</li>
+<li>Verificar se o corpo é interpretado corretamente (depende da implementação do roteador).</li>
+<li><strong>Teste de comportamento com rota inexistente:</strong></li>
+<li>Enviar requisição para rota não definida e verificar resposta (deve ser 404).</li>
+<li><strong>Teste de falha no roteador <code>/users</code>:</strong></li>
+<li>Simular erro no módulo <code>userRoutes</code> (se possível) e verificar se a aplicação responde adequadamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li><strong>Teste de configuração do app:</strong></li>
+<li>Verificar se o middleware CORS está aplicado.</li>
+<li>Verificar se o middleware <code>express.json()</code> está aplicado.</li>
+<li>Verificar se o endpoint <code>/health</code> responde com status 200 e JSON correto.</li>
+<li>Verificar se o roteador <code>userRoutes</code> está montado na rota <code>/users</code>.</li>
+<li><strong>Teste isolado do endpoint <code>/health</code>:</strong></li>
+<li>Simular requisição GET e validar resposta.</li>
+<li><strong>Mock do roteador <code>userRoutes</code>:</strong></li>
+<li>Testar se o app delega corretamente as requisições para <code>/users</code> ao roteador importado.</li>
+<li><strong>Teste de exportação do app:</strong></li>
+<li>Verificar se o módulo exporta o objeto <code>app</code> do Express.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li><strong>Teste end-to-end da API JavaScript:</strong></li>
+<li>Subir a aplicação (com servidor HTTP) e testar o fluxo completo de usuários via <code>/users</code> (listagem, criação, busca).</li>
+<li><strong>Teste de integração do endpoint <code>/health</code>:</strong></li>
+<li>Verificar se o healthcheck está acessível e responde corretamente.</li>
+<li><strong>Teste de CORS em ambiente real:</strong></li>
+<li>Fazer requisições cross-origin para verificar se o CORS está habilitado e configurado.</li>
+<li><strong>Teste de integração com o roteador <code>userRoutes</code>:</strong></li>
+<li>Validar se as rotas definidas em <code>./routes/users</code> respondem corretamente quando acessadas via o app.</li>
+<li><strong>Teste de comportamento em caso de erro no roteador:</strong></li>
+<li>Forçar erro no roteador e verificar se a aplicação responde com erro adequado (idealmente 500).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é apenas a criação da configuração básica do app Express, sem alterações específicas que impactem performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>
+<p><strong>Onde e como o servidor HTTP é iniciado?</strong><br />
+  O arquivo apenas exporta o app Express, mas não há código para criar o servidor (ex: <code>app.listen</code>). É importante saber onde isso ocorre para garantir que a aplicação esteja acessível.</p>
+</li>
+<li>
+<p><strong>Qual a configuração desejada para CORS?</strong><br />
+  O uso de <code>cors()</code> sem parâmetros permite todas as origens. Isso é intencional? Há necessidade de restringir origens para segurança?</p>
+</li>
+<li>
+<p><strong>Existe tratamento global de erros?</strong><br />
+  Não há middleware para captura e formatação de erros. Isso será implementado em outro lugar?</p>
+</li>
+<li>
+<p><strong>O módulo <code>./routes/users</code> está implementado e testado?</strong><br />
+  A funcionalidade da API depende dele. É importante confirmar sua cobertura e estabilidade.</p>
+</li>
+<li>
+<p><strong>Há planos para logs e monitoramento?</strong><br />
+  Atualmente não há logs configurados, o que pode dificultar a operação em produção.</p>
+</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança introduz a configuração inicial da API JavaScript com Express, incluindo CORS, JSON parsing, healthcheck e roteamento para usuários. É uma base essencial para a API, mas ainda incompleta em termos de tratamento de erros, segurança e operação. Os testes devem focar na validação do endpoint <code>/health</code>, na correta montagem do roteador <code>/users</code> e na configuração dos middlewares. Riscos reais envolvem exposição excessiva via CORS e ausência de tratamento de erros. Pontos de esclarecimento são necessários para entender a inicialização do servidor e políticas de segurança.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcroutesusersjs">Arquivo analisado: javascript-api/src/routes/users.js</h1>
+<h1 id="tipo-da-mudanca_4">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: Inclusão completa de um novo módulo de rotas REST para gerenciamento de usuários na API JavaScript (<code>javascript-api/src/routes/users.js</code>).</li>
+</ul>
+<h1 id="evidencias-observadas_4">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>users.js</code> com 113 linhas, contendo múltiplos endpoints REST para operações CRUD e consultas relacionadas a usuários.</li>
+<li>O arquivo atual confirma a presença desses endpoints, todos implementados com Express.js, usando <code>userService</code> para lógica de negócio e <code>externalService</code> para integração externa.</li>
+<li>O contexto do repositório indica que a API JavaScript é uma das implementações da mesma API já existente em Python e Java, com endpoints equivalentes.</li>
+<li>Testes existentes em <code>javascript-api/tests/users.test.js</code> cobrem parcialmente criação e listagem de usuários, mas não todos os novos endpoints.</li>
+<li>Documentação no README e docs/endpoints.md indicam que esses endpoints são esperados na API, incluindo <code>/users/count</code>, <code>/users/search</code>, <code>/users/duplicates</code>, <code>/users/{id}/age-estimate</code>, etc.</li>
+</ul>
+<h1 id="impacto-provavel_4">Impacto provável</h1>
+<ul>
+<li>Introdução de um conjunto completo de rotas para manipulação e consulta de usuários na API JavaScript, permitindo:</li>
+<li>Criação de usuários com validação básica (nome e email obrigatórios, email único).</li>
+<li>Listagem paginada de usuários.</li>
+<li>Consultas específicas como contagem total, busca por nome, detecção de emails duplicados, listagem de domínios de email.</li>
+<li>Recuperação de dados específicos por usuário (email, estimativa de idade via serviço externo).</li>
+<li>A API passa a suportar funcionalidades equivalentes às implementações Python e Java, aumentando a cobertura funcional do projeto.</li>
+<li>Possível impacto na estabilidade da API caso haja inconsistências na lógica de validação, paginação ou integração externa.</li>
+</ul>
+<h1 id="riscos-identificados_4">Riscos identificados</h1>
+<ul>
+<li><strong>Validação de entrada limitada</strong>: Apenas verifica presença de <code>name</code> e <code>email</code> no POST, sem validação de formato de email ou sanitização, o que pode permitir dados inválidos.</li>
+<li><strong>Busca e filtros case-insensitive</strong>: Implementação simples de busca por nome pode não cobrir caracteres especiais ou acentuação, podendo gerar resultados inesperados.</li>
+<li><strong>Paginação sem sanitização rigorosa</strong>: <code>limit</code> e <code>offset</code> são convertidos com <code>parseInt</code> e default para 100 e 0, mas não há validação para valores negativos ou muito grandes, podendo causar comportamento inesperado.</li>
+<li><strong>Dependência de <code>userService</code> e <code>externalService</code></strong>: Se esses serviços não lidarem corretamente com erros ou estados inconsistentes, pode haver falhas não tratadas (ex: <code>externalService.estimateAge</code> é assíncrono, mas não há tratamento de erro explícito).</li>
+<li><strong>Endpoint <code>/broken</code> parece redundante e inconsistente</strong>: Retorna <code>{ total: users.length }</code> enquanto <code>/count</code> retorna <code>{ count: ... }</code>. Pode causar confusão ou erros em clientes.</li>
+<li><strong>Rota dinâmica <code>/:user_id</code> pode conflitar com rotas estáticas</strong>: Embora a ordem das rotas minimize isso, a presença de rotas estáticas e dinâmicas próximas pode causar problemas se novas rotas forem adicionadas.</li>
+<li><strong>Ausência de tratamento de erros para chamadas assíncronas</strong>: No endpoint <code>/users/:user_id/age-estimate</code>, se <code>externalService.estimateAge</code> falhar, não há catch para enviar resposta adequada.</li>
+<li><strong>Possível exposição de dados sensíveis</strong>: Retorno direto do objeto <code>newUser</code> e usuários listados pode expor campos não desejados se <code>userService</code> não filtrar dados sensíveis.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_4">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Criação de usuário com dados válidos</strong><br />
+   - Enviar POST <code>/users</code> com <code>name</code> e <code>email</code> válidos.<br />
+   - Verificar resposta 201 e dados do usuário criado.</li>
+<li><strong>Criação de usuário com dados faltantes</strong><br />
+   - Enviar POST <code>/users</code> sem <code>name</code> ou <code>email</code>.<br />
+   - Verificar resposta 422 com mensagem adequada.</li>
+<li><strong>Criação de usuário com email duplicado</strong><br />
+   - Criar usuário com email existente.<br />
+   - Verificar resposta 409 com mensagem de conflito.</li>
+<li><strong>Listagem paginada de usuários</strong><br />
+   - GET <code>/users?limit=2&amp;offset=1</code><br />
+   - Verificar que retorna exatamente 2 usuários a partir do segundo.</li>
+<li><strong>Contagem total de usuários</strong><br />
+   - GET <code>/users/count</code><br />
+   - Verificar que o número corresponde ao total esperado.</li>
+<li><strong>Busca por nome com query</strong><br />
+   - GET <code>/users/search?q=ana</code><br />
+   - Verificar que retorna usuários cujo nome contenha "ana" (case-insensitive).</li>
+<li><strong>Busca por nome sem query</strong><br />
+   - GET <code>/users/search</code><br />
+   - Verificar que retorna array vazio.</li>
+<li><strong>Listagem de usuários com emails duplicados</strong><br />
+   - Criar usuários com emails repetidos.<br />
+   - GET <code>/users/duplicates</code><br />
+   - Verificar que retorna apenas usuários com emails duplicados.</li>
+<li><strong>Listagem de domínios de email</strong><br />
+   - GET <code>/users/email-domains</code><br />
+   - Verificar que retorna lista ordenada de domínios com contagem correta.</li>
+<li><strong>Recuperar email por ID</strong><ul>
+<li>GET <code>/users/{user_id}/email</code> com ID válido e inválido.</li>
+<li>Verificar respostas 200 e 404.</li>
+</ul>
+</li>
+<li><strong>Estimativa de idade por ID</strong><ul>
+<li>GET <code>/users/{user_id}/age-estimate</code> com ID válido e inválido.</li>
+<li>Verificar resposta 200 com dados da API externa e 404 para usuário não encontrado.</li>
+</ul>
+</li>
+<li><strong>Verificar endpoint <code>/broken</code></strong><ul>
+<li>GET <code>/users/broken</code></li>
+<li>Confirmar que retorna <code>{ total: &lt;número&gt; }</code> e comparar com <code>/users/count</code>.</li>
+</ul>
+</li>
+<li><strong>Testar limites e offsets negativos ou inválidos</strong><ul>
+<li>GET <code>/users?limit=-1&amp;offset=-10</code></li>
+<li>Verificar comportamento e se há tratamento adequado.</li>
+</ul>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_4">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>POST /users</code>:</li>
+<li>Validação de campos obrigatórios (falta de <code>name</code> ou <code>email</code>).</li>
+<li>Rejeição de email duplicado.</li>
+<li>Criação bem-sucedida com dados válidos.</li>
+<li>Testar <code>GET /users/count</code>:</li>
+<li>Retorna número correto de usuários.</li>
+<li>Testar <code>GET /users/search</code>:</li>
+<li>Retorna resultados corretos para query válida.</li>
+<li>Retorna array vazio para query ausente.</li>
+<li>Testar <code>GET /users/duplicates</code>:</li>
+<li>Detecta corretamente usuários com emails duplicados.</li>
+<li>Retorna array vazio quando não há duplicatas.</li>
+<li>Testar <code>GET /users/email-domains</code>:</li>
+<li>Conta e ordena domínios corretamente.</li>
+<li>Testar <code>GET /users/:user_id/email</code>:</li>
+<li>Retorna email correto para usuário existente.</li>
+<li>Retorna 404 para usuário inexistente.</li>
+<li>Testar <code>GET /users/:user_id/age-estimate</code>:</li>
+<li>Retorna dados da API externa mockada.</li>
+<li>Retorna 404 para usuário inexistente.</li>
+<li>Testar tratamento de erro na chamada assíncrona (mock de falha).</li>
+<li>Testar paginação em <code>GET /users</code>:</li>
+<li>Respeita <code>limit</code> e <code>offset</code>.</li>
+<li>Comportamento com valores negativos ou não numéricos.</li>
+<li>Testar endpoint <code>/broken</code> para garantir consistência ou documentar comportamento.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_4">Sugestões de testes de integração</h1>
+<ul>
+<li>Fluxo completo de criação → listagem → busca → duplicatas → email → idade.</li>
+<li>Testar concorrência na criação de usuários com mesmo email para verificar condição de corrida.</li>
+<li>Testar integração com <code>externalService.estimateAge</code> com mock para simular sucesso e falha.</li>
+<li>Testar comportamento da API com base de dados vazia (sem usuários).</li>
+<li>Testar rotas estáticas vs dinâmicas para garantir que <code>/users/count</code> não seja capturado por <code>/users/:user_id</code>.</li>
+<li>Testar respostas JSON para garantir que não exponham dados sensíveis.</li>
+<li>Testar limites de paginação para grandes volumes (se possível).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_4">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos.</li>
+<li>Caso a base de usuários cresça muito, pode ser necessário avaliar performance das operações de listagem, busca e duplicatas, mas isso não é indicado diretamente pelo diff.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_4">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Validação de email</strong>: Há alguma regra para validar formato de email no <code>userService</code>? O endpoint atual aceita qualquer string.</li>
+<li><strong>Tratamento de erros na chamada assíncrona <code>externalService.estimateAge</code></strong>: Como deve ser o comportamento se a API externa falhar ou demorar? Atualmente não há tratamento explícito.</li>
+<li><strong>Endpoint <code>/broken</code></strong>: Qual o propósito real deste endpoint? Ele parece redundante e inconsistente com <code>/count</code>.</li>
+<li><strong>Campos retornados nos objetos usuário</strong>: Há campos sensíveis que devem ser omitidos? O código retorna diretamente o objeto do serviço.</li>
+<li><strong>Limites máximos para paginação</strong>: Existe um limite máximo para <code>limit</code>? Atualmente não há restrição.</li>
+<li><strong>Comportamento esperado para buscas com caracteres especiais ou acentuação</strong>: A busca é simples <code>toLowerCase().includes()</code>, isso é suficiente?</li>
+<li><strong>Política para emails duplicados</strong>: Apenas rejeita na criação, mas usuários duplicados podem existir via outros meios? Endpoint <code>/duplicates</code> retorna todos os usuários com emails repetidos, mas não há ação para resolver.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança introduz um módulo completo de rotas para usuários na API JavaScript, alinhando-a funcionalmente com as outras implementações do projeto. A implementação cobre criação, listagem, busca, consultas específicas e integração externa. Os principais riscos estão na validação limitada, tratamento de erros assíncronos e possíveis inconsistências em rotas e dados expostos. Recomenda-se testes manuais e automatizados focados em validação, paginação, busca, duplicatas e integração externa, além de esclarecer pontos de negócio e tratamento de erros.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcserverjs">Arquivo analisado: javascript-api/src/server.js</h1>
+<h1 id="tipo-da-mudanca_5">Tipo da mudança</h1>
+<ul>
+<li><strong>Inclusão de arquivo</strong>: criação do arquivo <code>server.js</code> que inicializa o servidor Express da API JavaScript.</li>
+</ul>
+<h1 id="evidencias-observadas_5">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/src/server.js</code> com o seguinte conteúdo:</li>
+</ul>
+<pre><code class="language-javascript">const app = require('./app');
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () =&gt; {
+  console.log(`Server running on port ${PORT}`);
+});
+</code></pre>
+<ul>
+<li>
+<p>O arquivo importa o módulo <code>app</code> (presumivelmente uma instância do Express configurada em <code>./app.js</code>), define a porta a partir da variável de ambiente <code>PORT</code> ou usa 3000 como padrão, e inicia o servidor escutando nesta porta.</p>
+</li>
+<li>
+<p>No contexto do repositório, o <code>package.json</code> da pasta <code>javascript-api</code> define o script <code>"start": "node src/server.js"</code>, indicando que este arquivo é o ponto de entrada para iniciar a API JavaScript.</p>
+</li>
+<li>
+<p>Não há outros arquivos <code>server.js</code> no repositório, e o arquivo criado não altera código existente, apenas adiciona a inicialização do servidor.</p>
+</li>
+</ul>
+<h1 id="impacto-provavel_5">Impacto provável</h1>
+<ul>
+<li>
+<p>Esta mudança adiciona o ponto de entrada para a API JavaScript, permitindo que o servidor Express seja iniciado e escute requisições HTTP.</p>
+</li>
+<li>
+<p>Provavelmente, antes desta mudança, o servidor não era iniciado ou era iniciado por outro meio (não evidenciado no contexto).</p>
+</li>
+<li>
+<p>Com esta inclusão, a API JavaScript passa a estar operacional para receber requisições na porta configurada.</p>
+</li>
+<li>
+<p>Não há alteração funcional na lógica da API, apenas a ativação do servidor.</p>
+</li>
+</ul>
+<h1 id="riscos-identificados_5">Riscos identificados</h1>
+<ul>
+<li>
+<p><strong>Nenhum risco funcional direto</strong>: o código é simples e padrão para inicialização de servidor Express.</p>
+</li>
+<li>
+<p><strong>Risco de porta em uso</strong>: se a porta 3000 (ou a definida em <code>process.env.PORT</code>) já estiver ocupada, o servidor não iniciará, mas isso é comportamento padrão do Node.js.</p>
+</li>
+<li>
+<p><strong>Ausência de tratamento de erros na inicialização</strong>: o código não captura erros no <code>listen</code>, o que pode dificultar diagnóstico em caso de falha.</p>
+</li>
+<li>
+<p><strong>Ausência de newline no final do arquivo</strong>: não é um risco funcional, mas pode gerar warnings em alguns linters.</p>
+</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_5">Cenários de testes manuais</h1>
+<ul>
+<li>
+<p>Iniciar a aplicação com a variável de ambiente <code>PORT</code> definida para um valor válido (ex: 4000) e verificar se o servidor inicia na porta correta, exibindo no console a mensagem <code>Server running on port 4000</code>.</p>
+</li>
+<li>
+<p>Iniciar a aplicação sem definir <code>PORT</code> e verificar se o servidor inicia na porta 3000.</p>
+</li>
+<li>
+<p>Tentar iniciar a aplicação com a porta já ocupada e observar se o processo falha (esperado).</p>
+</li>
+<li>
+<p>Realizar uma requisição HTTP simples (ex: <code>GET /health</code> se existir no app) para confirmar que o servidor está respondendo.</p>
+</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_5">Sugestões de testes unitários</h1>
+<ul>
+<li>
+<p>Como o arquivo apenas inicia o servidor, testes unitários diretos são limitados, mas pode-se:</p>
+</li>
+<li>
+<p>Mockar o objeto <code>app</code> e verificar se o método <code>listen</code> é chamado com a porta correta e a função callback.</p>
+</li>
+<li>
+<p>Testar que a variável <code>PORT</code> é corretamente atribuída a partir de <code>process.env.PORT</code> ou fallback para 3000.</p>
+</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_5">Sugestões de testes de integração</h1>
+<ul>
+<li>
+<p>Testar o fluxo completo de inicialização do servidor e resposta a requisições HTTP, por exemplo:</p>
+</li>
+<li>
+<p>Usar um framework de teste (ex: Jest com Supertest) para iniciar o servidor via <code>server.js</code> e enviar requisições para endpoints expostos pelo <code>app</code>.</p>
+</li>
+<li>
+<p>Verificar se o servidor responde corretamente a endpoints básicos (ex: <code>/health</code>), confirmando que o <code>app</code> está corretamente importado e o servidor está ativo.</p>
+</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_5">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança não altera lógica de negócio nem performance, apenas adiciona inicialização do servidor.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_5">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>
+<p>Qual o conteúdo e configuração do módulo <code>./app</code>? Ele está corretamente configurado para ser usado como servidor Express?</p>
+</li>
+<li>
+<p>Existe algum mecanismo para tratamento de erros na inicialização do servidor (ex: porta ocupada) que deveria ser implementado?</p>
+</li>
+<li>
+<p>Há necessidade de logs mais detalhados ou monitoramento na inicialização do servidor?</p>
+</li>
+<li>
+<p>O arquivo <code>server.js</code> será o único ponto de entrada para a API JavaScript? Há planos para suportar múltiplos ambientes (dev, prod) com configurações diferentes?</p>
+</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona o arquivo <code>server.js</code> que inicia o servidor Express da API JavaScript na porta configurada. É uma inclusão padrão e necessária para disponibilizar a API. Os riscos são mínimos, relacionados principalmente à ausência de tratamento de erros na inicialização. Recomenda-se testes manuais para validar a inicialização e resposta do servidor, além de testes unitários simples para garantir a correta atribuição da porta e chamada do método <code>listen</code>. Testes de integração devem validar o funcionamento do servidor com o <code>app</code> importado.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcservicesexternalservicejs">Arquivo analisado: javascript-api/src/services/externalService.js</h1>
+<h1 id="tipo-da-mudanca_6">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: Inclusão de um novo serviço externo para estimar idade com base no nome, consumindo a API pública <code>agify.io</code>.</li>
+</ul>
+<h1 id="evidencias-observadas_6">Evidências observadas</h1>
+<ul>
+<li>O arquivo <code>javascript-api/src/services/externalService.js</code> foi criado do zero, contendo a classe <code>ExternalService</code> com o método assíncrono <code>estimateAge(name)</code>.</li>
+<li>O método faz uma requisição HTTP GET para <code>https://api.agify.io?name=...</code> usando <code>axios</code>.</li>
+<li>O método trata o caso de sucesso retornando um objeto com <code>name</code>, <code>age</code> e <code>count</code> quando <code>age</code> não é nulo.</li>
+<li>Em caso de erro na requisição ou ausência de <code>age</code>, retorna <code>{ name, age: null, count: 0 }</code>.</li>
+<li>No contexto do repositório, o serviço é consumido em <code>javascript-api/src/routes/users.js</code> na rota <code>GET /:user_id/age-estimate</code>, que busca o usuário pelo ID e chama <code>externalService.estimateAge(user.name)</code>.</li>
+<li>Há testes existentes em <code>python-api/tests/test_external.py</code> que validam o comportamento da rota <code>/users/{id}/age-estimate</code> com mocks da resposta da API externa.</li>
+<li>O serviço é exportado como uma instância única (<code>module.exports = new ExternalService()</code>).</li>
+</ul>
+<h1 id="impacto-provavel_6">Impacto provável</h1>
+<ul>
+<li>Introdução de uma dependência externa (API agify.io) para estimar idade com base no nome do usuário.</li>
+<li>Nova funcionalidade exposta via rota REST para obter estimativa de idade de um usuário pelo seu ID.</li>
+<li>Possível impacto na experiência do usuário ao consultar essa rota, dependendo da disponibilidade e latência da API externa.</li>
+<li>Tratamento de erros interno que evita falhas na aplicação caso a API externa esteja indisponível, retornando valores nulos para idade e contagem.</li>
+<li>Nenhuma alteração direta em outras funcionalidades ou dados persistidos, pois o serviço apenas consulta e retorna dados externos.</li>
+</ul>
+<h1 id="riscos-identificados_6">Riscos identificados</h1>
+<ul>
+<li><strong>Dependência externa</strong>: A API agify.io pode estar indisponível, lenta ou retornar dados inesperados, impactando a resposta da rota.</li>
+<li><strong>Falha silenciosa</strong>: O método captura erros e retorna valores nulos, o que pode mascarar problemas reais na integração.</li>
+<li><strong>Validação insuficiente dos dados retornados</strong>: O código verifica apenas se <code>response.data.age != null</code>, mas não valida se <code>name</code> e <code>count</code> existem ou são do tipo esperado.</li>
+<li><strong>Ausência de timeout configurado no axios</strong>: Pode haver bloqueio ou demora excessiva na requisição HTTP.</li>
+<li><strong>Ausência de cache</strong>: Requisições repetidas para o mesmo nome sempre consultam a API externa, podendo gerar latência e custo desnecessário.</li>
+<li><strong>Ausência de sanitização do parâmetro <code>name</code> além do encodeURIComponent</strong>: Embora o encode seja adequado, nomes muito longos ou inválidos podem gerar problemas na API externa.</li>
+<li><strong>Ausência de testes unitários no código JavaScript</strong>: O arquivo novo não possui testes unitários próprios para o serviço.</li>
+<li><strong>Possível impacto na rota <code>/users/:user_id/age-estimate</code></strong>: Se o serviço externo falhar, a rota ainda responde com sucesso, mas com dados nulos, o que pode não ser o comportamento esperado.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_6">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Consulta de idade para nome válido</strong><br />
+   - Chamar a rota <code>/users/{user_id}/age-estimate</code> para um usuário existente com nome comum.<br />
+   - Verificar que a resposta contém <code>name</code>, <code>age</code> (número) e <code>count</code> (número).</li>
+<li><strong>Consulta para usuário inexistente</strong><br />
+   - Chamar a rota com <code>user_id</code> que não existe.<br />
+   - Verificar que retorna HTTP 404 com mensagem "Usuário não encontrado".</li>
+<li><strong>Consulta para nome que a API externa não reconhece</strong><br />
+   - Criar usuário com nome incomum ou inexistente.<br />
+   - Chamar a rota e verificar que <code>age</code> é <code>null</code> e <code>count</code> é <code>0</code>.</li>
+<li><strong>Simular falha na API externa</strong><br />
+   - Interromper acesso à API agify.io (ex: bloqueio de rede).<br />
+   - Chamar a rota e verificar que a resposta é <code>{ name, age: null, count: 0 }</code> e que não há erro não tratado.</li>
+<li><strong>Testar nomes com caracteres especiais</strong><br />
+   - Criar usuário com nome contendo espaços, acentos e caracteres especiais.<br />
+   - Verificar se a requisição é feita corretamente e a resposta é coerente.</li>
+<li><strong>Testar comportamento com nomes vazios ou nulos</strong><br />
+   - Criar usuário com nome vazio ou nulo (se permitido).<br />
+   - Verificar resposta da rota e se o serviço trata adequadamente.</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_6">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>estimateAge(name)</code> com:</li>
+<li>Nome válido que retorna dados completos (mock da axios).</li>
+<li>Nome que retorna <code>age</code> nulo (mock da axios).</li>
+<li>Simular erro na requisição (mock para lançar exceção).</li>
+<li>Verificar que o método retorna objeto com <code>name</code>, <code>age</code> e <code>count</code> corretos ou valores padrão.</li>
+<li>Testar que o método chama <code>axios.get</code> com URL correta, incluindo <code>encodeURIComponent</code>.</li>
+<li>Testar que erros são logados via <code>console.error</code> (mock do console).</li>
+<li>Testar comportamento com nomes contendo caracteres especiais e espaços.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_6">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar a rota <code>GET /users/:user_id/age-estimate</code>:</li>
+<li>Com usuário existente, validar resposta JSON com dados de idade estimada.</li>
+<li>Com usuário inexistente, validar retorno 404.</li>
+<li>Com mock da API externa para simular diferentes respostas (idade presente, idade nula, erro).</li>
+<li>Testar fluxo completo de criação de usuário e consulta da idade estimada.</li>
+<li>Testar que a rota não falha mesmo se a API externa estiver indisponível (mock de timeout ou erro).</li>
+<li>Validar que a rota retorna JSON com os campos esperados e tipos corretos.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_6">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois não há indicação de que a mudança impacta performance ou carga.</li>
+<li>Caso a rota <code>/users/:user_id/age-estimate</code> venha a ser muito usada, considerar testes futuros para latência e cache.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_6">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o comportamento esperado quando a API externa retorna dados incompletos ou inesperados? Atualmente, o código retorna <code>{ age: null, count: 0 }</code> silenciosamente.</li>
+<li>Existe necessidade de cache para evitar múltiplas chamadas para o mesmo nome?</li>
+<li>Há limites de requisição ou custos associados à API agify.io que precisam ser monitorados?</li>
+<li>O serviço deve diferenciar erros temporários (ex: timeout) de erros permanentes?</li>
+<li>O log de erro via <code>console.error</code> é suficiente para monitoramento ou deve ser integrado a sistema de logs centralizados?</li>
+<li>O serviço deve validar ou sanitizar mais rigorosamente o parâmetro <code>name</code> antes da requisição?</li>
+<li>Existe plano para testes unitários em JavaScript para este serviço, visto que atualmente só há testes em Python para a rota?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança introduz um novo serviço para estimar idade via API externa, consumido por rota REST. O código trata erros e ausência de dados com valores padrão, evitando falhas. Riscos principais são dependência externa e falta de testes unitários no JS. Recomenda-se testes manuais e automatizados focados em respostas da API externa, tratamento de erros e integração com a rota. Pontos de melhoria incluem cache, validação e monitoramento.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcservicesuserservicejs">Arquivo analisado: javascript-api/src/services/userService.js</h1>
+<h1 id="tipo-da-mudanca_7">Tipo da mudança</h1>
+<p>Implementação inicial de um serviço de usuário (<code>UserService</code>) em JavaScript para a API <code>javascript-api</code>.</p>
+<hr />
+<h1 id="evidencias-observadas_7">Evidências observadas</h1>
+<ul>
+<li>O arquivo <code>javascript-api/src/services/userService.js</code> foi criado do zero, contendo a classe <code>UserService</code>.</li>
+<li>A classe mantém um array interno <code>users</code> com 3 usuários pré-carregados (Alice, Bob, Charlie).</li>
+<li>Métodos implementados:</li>
+<li><code>listUsers(limit = 100, offset = 0)</code>: retorna uma fatia da lista de usuários.</li>
+<li><code>getUser(id)</code>: busca usuário por id.</li>
+<li><code>findByEmail(email)</code>: busca usuário por email.</li>
+<li><code>createUser(payload)</code>: cria um novo usuário com id incremental.</li>
+<li>Exporta uma instância singleton da classe.</li>
+<li>Contexto adicional mostra que a API JavaScript usa esse serviço em rotas (<code>javascript-api/src/routes/users.js</code>), que fazem validações básicas e retornam respostas HTTP.</li>
+<li>Testes existentes no repositório são majoritariamente para a API Java (Java), não há evidência de testes para este serviço JavaScript.</li>
+<li>A rota <code>/users</code> no arquivo de rotas usa <code>userService.createUser</code> e <code>userService.findByEmail</code> para criar usuários e evitar duplicatas.</li>
+<li>O serviço atual não implementa persistência externa, apenas mantém dados em memória.</li>
+</ul>
+<hr />
+<h1 id="impacto-provavel_7">Impacto provável</h1>
+<ul>
+<li>Introdução de um serviço básico de gerenciamento de usuários em memória para a API JavaScript.</li>
+<li>Funcionalidades básicas de listagem, busca e criação de usuários ficam disponíveis para as rotas que dependem deste serviço.</li>
+<li>Como o armazenamento é em memória, os dados são voláteis e reiniciam a cada reinício da aplicação.</li>
+<li>A criação de usuários incrementa o <code>id</code> sequencialmente, o que pode impactar a consistência se houver reinicialização.</li>
+<li>A ausência de validações no <code>createUser</code> (ex: formato de email, campos obrigatórios) pode permitir dados inconsistentes.</li>
+<li>A busca por email e id é feita com <code>Array.find</code>, o que é eficiente para poucos usuários, mas pode não escalar.</li>
+<li>A listagem suporta paginação via <code>limit</code> e <code>offset</code>, mas não há sanitização explícita de valores negativos (apesar do contexto indicar que a API trata isso).</li>
+<li>A API JavaScript pode estar em fase inicial ou protótipo, dado o armazenamento em memória.</li>
+</ul>
+<hr />
+<h1 id="riscos-identificados_7">Riscos identificados</h1>
+<ul>
+<li><strong>Persistência volátil:</strong> Dados são perdidos ao reiniciar o servidor, o que pode não ser esperado em ambiente de produção.</li>
+<li><strong>Condições de corrida:</strong> Como o serviço é singleton e mantém estado mutável, em ambiente concorrente pode haver problemas de sincronização (ex: criação simultânea de usuários).</li>
+<li><strong>Ausência de validação:</strong> <code>createUser</code> não valida o payload, podendo criar usuários com dados inválidos ou incompletos.</li>
+<li><strong>Duplicidade de emails:</strong> Embora a rota verifique duplicidade antes de criar, o serviço em si não impede duplicatas se usado diretamente.</li>
+<li><strong>Paginação sem sanitização:</strong> <code>listUsers</code> aceita <code>limit</code> e <code>offset</code> sem validação, o que pode gerar comportamentos inesperados se valores negativos forem passados.</li>
+<li><strong>Ausência de remoção/atualização:</strong> O serviço não implementa métodos para atualizar ou remover usuários, limitando funcionalidades futuras.</li>
+<li><strong>Escalabilidade:</strong> Busca linear pode ser ineficiente com muitos usuários.</li>
+<li><strong>Ausência de tratamento de erros:</strong> Métodos retornam <code>undefined</code> se não encontrar usuário, o que pode gerar erros se não tratado adequadamente.</li>
+</ul>
+<hr />
+<h1 id="cenarios-de-testes-manuais_7">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Listagem padrão de usuários</strong><br />
+   - Chamar <code>listUsers()</code> sem parâmetros.<br />
+   - Verificar se retorna os 3 usuários iniciais.</p>
+</li>
+<li>
+<p><strong>Listagem com paginação</strong><br />
+   - Chamar <code>listUsers(2, 1)</code>.<br />
+   - Verificar se retorna os usuários Bob e Charlie.</p>
+</li>
+<li>
+<p><strong>Busca por usuário existente</strong><br />
+   - Chamar <code>getUser(2)</code>.<br />
+   - Verificar se retorna o usuário Bob.</p>
+</li>
+<li>
+<p><strong>Busca por usuário inexistente</strong><br />
+   - Chamar <code>getUser(999)</code>.<br />
+   - Verificar se retorna <code>undefined</code> ou equivalente.</p>
+</li>
+<li>
+<p><strong>Busca por email existente</strong><br />
+   - Chamar <code>findByEmail("alice@example.com")</code>.<br />
+   - Verificar se retorna Alice.</p>
+</li>
+<li>
+<p><strong>Busca por email inexistente</strong><br />
+   - Chamar <code>findByEmail("naoexiste@example.com")</code>.<br />
+   - Verificar se retorna <code>undefined</code>.</p>
+</li>
+<li>
+<p><strong>Criação de novo usuário válido</strong><br />
+   - Chamar <code>createUser({name: "Diana", email: "diana@example.com"})</code>.<br />
+   - Verificar se usuário é criado com id 4 e adicionado à lista.</p>
+</li>
+<li>
+<p><strong>Criação de usuário com dados incompletos</strong><br />
+   - Chamar <code>createUser({name: "Eve"})</code> ou <code>{email: "eve@example.com"}</code>.<br />
+   - Verificar comportamento (provavelmente cria usuário com campos <code>undefined</code>).</p>
+</li>
+<li>
+<p><strong>Criação de usuário com email duplicado</strong><br />
+   - Criar usuário com email já existente.<br />
+   - Verificar se o serviço permite (provavelmente sim, pois não há validação interna).</p>
+</li>
+<li>
+<p><strong>Persistência após reinício</strong></p>
+<ul>
+<li>Criar usuário.</li>
+<li>Reiniciar aplicação.</li>
+<li>Verificar se usuário criado desaparece.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h1 id="sugestoes-de-testes-unitarios_7">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>listUsers</code> com diferentes valores de <code>limit</code> e <code>offset</code>, incluindo valores negativos e zero.</li>
+<li>Testar <code>getUser</code> para ids existentes e inexistentes.</li>
+<li>Testar <code>findByEmail</code> para emails existentes e inexistentes.</li>
+<li>Testar <code>createUser</code> para payloads válidos e inválidos (campos faltando).</li>
+<li>Testar se <code>createUser</code> incrementa corretamente o <code>id</code>.</li>
+<li>Testar se <code>createUser</code> adiciona o usuário na lista interna.</li>
+<li>Testar comportamento de <code>listUsers</code> após múltiplas criações.</li>
+<li>Testar se <code>listUsers</code> retorna array vazio quando <code>offset</code> maior que tamanho da lista.</li>
+<li>Testar se <code>findByEmail</code> é case sensitive (provável que sim, dado o código).</li>
+<li>Testar se <code>createUser</code> permite duplicatas de email (esperado que sim, pois não há bloqueio).</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-integracao_7">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoints da API JavaScript que usam <code>userService</code>:</li>
+<li><code>POST /users</code> para criação de usuário, incluindo rejeição de email duplicado.</li>
+<li><code>GET /users</code> para listagem com paginação.</li>
+<li><code>GET /users/:user_id</code> para busca por id.</li>
+<li><code>GET /users/:user_id/email</code> para retorno do email.</li>
+<li>Testar fluxo completo: criar usuário → buscar por id → buscar por email → listar usuários.</li>
+<li>Testar comportamento da API ao criar usuário com dados inválidos (ex: falta de email ou nome).</li>
+<li>Testar concorrência simulada na criação de usuários para verificar integridade do <code>nextId</code>.</li>
+<li>Testar resposta da API para buscas por usuários inexistentes.</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_7">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois o serviço é simples e em memória, sem evidência de impacto de performance nesta mudança.</li>
+</ul>
+<hr />
+<h1 id="pontos-que-precisam-de-esclarecimento_7">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o escopo esperado para o serviço? É apenas protótipo ou será usado em produção?</li>
+<li>Há planos para persistência externa (banco de dados) ou sincronização entre instâncias?</li>
+<li>Deve o serviço validar os dados do usuário (ex: formato de email, campos obrigatórios)?</li>
+<li>Como deve ser tratado o caso de emails duplicados? O serviço deve impedir ou apenas a camada de rota?</li>
+<li>Há necessidade de métodos para atualizar ou remover usuários?</li>
+<li>Como tratar valores inválidos em <code>listUsers</code> (ex: negativos)?</li>
+<li>O serviço deve ser thread-safe ou concorrente? Atualmente não há proteção contra condições de corrida.</li>
+</ul>
+<hr />
+<h1 id="resumo_1">Resumo</h1>
+<p>A mudança introduz um serviço básico de usuários em memória para a API JavaScript, com funcionalidades essenciais de listagem, busca e criação. Embora funcional para protótipos ou testes, apresenta riscos de persistência volátil, falta de validação e possíveis problemas em ambientes concorrentes. Recomenda-se testes unitários focados em limites e integridade dos dados, além de testes de integração para validar o uso nas rotas existentes. Pontos de negócio e implementação precisam ser esclarecidos para garantir robustez futura.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apitestsuserstestjs">Arquivo analisado: javascript-api/tests/users.test.js</h1>
+<h1 id="tipo-da-mudanca_8">Tipo da mudança</h1>
+<p>Inclusão de testes automatizados (testes de integração) para a API REST em Node.js, especificamente para os endpoints <code>/health</code> e <code>/users</code>.</p>
+<hr />
+<h1 id="evidencias-observadas_8">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/tests/users.test.js</code> com 36 linhas contendo testes escritos com Jest e Supertest.</li>
+<li>Os testes cobrem:</li>
+<li>Endpoint <code>/health</code> que deve retornar status 200 e corpo <code>{ status: 'ok' }</code>.</li>
+<li>Endpoint <code>GET /users</code> que deve retornar lista de usuários, com pelo menos um usuário chamado "Alice".</li>
+<li>Endpoint <code>POST /users</code> para criação de usuário, validando retorno 201 e presença do campo <code>id</code>.</li>
+<li>Validação de conflito (status 409) ao tentar criar usuário com email já existente.</li>
+<li>O contexto adicional mostra que não há testes prévios para a API JavaScript, apenas para a API Python e Java.</li>
+<li>O arquivo <code>users.test.js</code> é o único teste para a API JavaScript identificado.</li>
+<li>O uso de <code>supertest</code> indica testes de integração que fazem requisições HTTP reais contra a aplicação importada (<code>app</code>).</li>
+</ul>
+<hr />
+<h1 id="impacto-provavel_8">Impacto provável</h1>
+<ul>
+<li>A inclusão desses testes aumenta a cobertura de testes da API JavaScript, validando o funcionamento básico dos endpoints de saúde e usuários.</li>
+<li>Ajuda a detectar regressões futuras na API REST, especialmente para criação e listagem de usuários e tratamento de emails duplicados.</li>
+<li>Pode revelar problemas de integração entre o servidor e a camada de persistência (ex: banco de dados) ao criar usuários.</li>
+<li>Serve como base para garantir que o endpoint <code>/health</code> esteja sempre disponível e respondendo corretamente.</li>
+</ul>
+<hr />
+<h1 id="riscos-identificados_8">Riscos identificados</h1>
+<ul>
+<li><strong>Dependência de estado persistente:</strong> O teste de conflito de email (<code>should return 409 if email exists</code>) depende da criação prévia de um usuário com email <code>dan@example.com</code>. Se o banco de dados não for limpo entre testes, pode haver falsos positivos ou negativos.</li>
+<li><strong>Dependência de dados fixos:</strong> O teste de listagem espera que o primeiro usuário tenha nome "Alice". Se a base de dados mudar, o teste pode falhar.</li>
+<li><strong>Isolamento dos testes:</strong> Não há evidência de setup/teardown para limpar ou preparar o banco de dados antes/depois dos testes, o que pode causar interferência entre testes.</li>
+<li><strong>Ausência de testes para casos de erro adicionais:</strong> Não há testes para validação de dados inválidos, campos obrigatórios, ou outros erros HTTP além do conflito de email.</li>
+<li><strong>Possível falta de cobertura para paginação, filtros e outros endpoints relacionados a usuários</strong>, que existem na API Python e Java (conforme contexto).</li>
+</ul>
+<hr />
+<h1 id="cenarios-de-testes-manuais_8">Cenários de testes manuais</h1>
+<ul>
+<li>Acessar manualmente <code>GET /health</code> e verificar retorno 200 com <code>{ status: 'ok' }</code>.</li>
+<li>Acessar <code>GET /users</code> e verificar se a lista contém usuários, especialmente um com nome "Alice".</li>
+<li>Tentar criar um usuário via <code>POST /users</code> com nome e email válidos e verificar se retorna 201 com id gerado.</li>
+<li>Tentar criar um usuário com email já existente e verificar se retorna 409.</li>
+<li>Testar criação de usuário com dados inválidos (ex: email mal formatado, nome vazio) para verificar tratamento de erros (não coberto no teste).</li>
+<li>Testar listagem de usuários com paginação e filtros (não coberto no teste).</li>
+<li>Verificar se o banco de dados está limpo antes e depois dos testes para evitar interferência.</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-unitarios_8">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar a função/serviço que cria usuários para garantir que rejeita emails duplicados antes de persistir.</li>
+<li>Testar a função que lista usuários para garantir que retorna lista ordenada e com dados esperados.</li>
+<li>Testar a função que responde ao <code>/health</code> para garantir que sempre retorna status ok.</li>
+<li>Testar validação de dados de entrada para criação de usuário (campos obrigatórios, formato de email).</li>
+<li>Testar tratamento de erros e exceções na camada de serviço.</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-integracao_8">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar criação de usuário com dados inválidos e verificar retorno 400.</li>
+<li>Testar listagem de usuários com parâmetros de paginação (<code>limit</code>, <code>offset</code>).</li>
+<li>Testar busca de usuário por email (endpoint não coberto no teste atual, mas presente em APIs Java e Python).</li>
+<li>Testar atualização e exclusão de usuários, se existirem endpoints correspondentes.</li>
+<li>Testar comportamento da API quando o banco de dados está vazio (ex: listagem retorna lista vazia).</li>
+<li>Testar concorrência na criação de usuários com mesmo email para verificar consistência do status 409.</li>
+<li>Testar autenticação/autorização se aplicável (não evidenciado no diff).</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_8">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência na mudança que justifique testes de carga ou desempenho.</li>
+</ul>
+<hr />
+<h1 id="pontos-que-precisam-de-esclarecimento_8">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o estado inicial esperado do banco de dados para esses testes? Há algum mecanismo de limpeza ou seed?</li>
+<li>O endpoint <code>/users</code> sempre retorna um usuário chamado "Alice"? Isso é garantido por seed ou mock?</li>
+<li>Existem outros endpoints relacionados a usuários que deveriam ser testados na API JavaScript?</li>
+<li>Há validação de dados na criação de usuário? Quais campos são obrigatórios e quais regras de negócio existem?</li>
+<li>O sistema suporta autenticação? Se sim, por que não há testes cobrindo isso?</li>
+<li>Como é o tratamento de erros para dados inválidos? Por que não há testes cobrindo esses casos?</li>
+</ul>
+<hr />
+<h1 id="resumo_2">Resumo</h1>
+<p>A mudança introduz um conjunto inicial de testes de integração para a API JavaScript, cobrindo saúde da API, listagem de usuários, criação e conflito de email. Isso é positivo para garantir estabilidade básica da API. Contudo, há riscos relacionados à dependência de estado do banco e ausência de setup/teardown, além de cobertura limitada para casos de erro e outros endpoints. Recomenda-se ampliar os testes para validar dados inválidos, paginação, busca e garantir isolamento dos testes. Também é importante esclarecer o estado inicial do banco e regras de negócio para evitar falsos positivos/falsos negativos.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+</body>
+</html>
