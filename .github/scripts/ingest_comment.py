@@ -2,7 +2,7 @@
 """Ingest a PR comment forwarded via repository_dispatch.
 
 Runs the memory summariser agent to extract lessons learned and persists them
-into data/memories.db (SQLite).  Designed to run inside a GitHub Actions
+into data/lancedb. Designed to run inside a GitHub Actions
 workflow triggered by `repository_dispatch` with event_type `pr_comment_created`.
 
 Expected client_payload keys:
@@ -14,7 +14,6 @@ Expected client_payload keys:
 
 import json
 import os
-import sqlite3
 import sys
 import uuid
 from datetime import datetime
@@ -24,10 +23,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from rapidfuzz import fuzz, process as rfprocess  # noqa: E402
 from src.config.settings import get_settings  # noqa: E402
 from src.crew.memory_crew import MemoryCrewRunner  # noqa: E402
-from src.tools.memory_tools import DB_PATH, DATA_DIR, init_db  # noqa: E402
+from src.tools.memory_tools import DB_PATH, DATA_DIR, _get_table, get_encoder  # noqa: E402
 
 
 def read_dispatch_payload() -> dict:
@@ -41,37 +39,35 @@ def read_dispatch_payload() -> dict:
     return ev.get("client_payload") or ev
 
 
-def is_duplicate(conn: sqlite3.Connection, lesson: str, threshold: int = 90) -> bool:
-    cur = conn.cursor()
-    cur.execute("SELECT lesson FROM memories")
-    rows = cur.fetchall()
-    if not rows:
+def is_duplicate(table, encoder, lesson: str, threshold: float = 0.2) -> bool:
+    if table.count_rows() == 0:
         return False
-    choices = {str(i): r[0] for i, r in enumerate(rows)}
-    results = rfprocess.extract(lesson, choices, scorer=fuzz.token_sort_ratio, limit=1)
-    for _text, score, _key in results:
-        if score >= threshold:
-            return True
-    return False
+    
+    query_vector = encoder.encode(lesson).tolist()
+    results = table.search(query_vector).limit(1).to_list()
+    
+    if not results:
+        return False
+        
+    dist = results[0].get("_distance", 1.0)
+    # Cosine distance: smaller means more similar. 0.2 is very similar.
+    return dist < threshold
 
 
-def save_lesson(conn, repo, pr_number, lesson, original_comment, author):
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO memories(id,repo,pr_number,lesson,original_comment,author,created_at,tags) "
-        "VALUES (?,?,?,?,?,?,?,?)",
-        (
-            str(uuid.uuid4()),
-            repo,
-            int(pr_number),
-            lesson,
-            original_comment,
-            author,
-            datetime.utcnow().isoformat() + "Z",
-            "pr_comment",
-        ),
-    )
-    conn.commit()
+def save_lesson(table, encoder, repo, pr_number, lesson, original_comment, author):
+    vector = encoder.encode(lesson).tolist()
+    data = [{
+        "id": str(uuid.uuid4()),
+        "repo": repo,
+        "pr_number": int(pr_number),
+        "lesson": lesson,
+        "original_comment": original_comment,
+        "author": author,
+        "created_at": datetime.utcnow().isoformat() + "Z",
+        "tags": "pr_comment",
+        "vector": vector
+    }]
+    table.add(data)
 
 
 def parse_lessons(agent_output: str) -> list[str]:
@@ -126,29 +122,26 @@ def main():
 
     print(f"Agent output:\n{agent_output}\n")
 
-    # Always ensure the DB exists (so git can track data/memories.db even on
+    # Always ensure the DB exists (so git can track data/lancedb even on
     # runs where no lessons are extracted).
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH), timeout=30, check_same_thread=False)
-    try:
-        init_db(conn)
+    table = _get_table()
+    encoder = get_encoder()
 
-        lessons = parse_lessons(agent_output)
-        if not lessons:
-            print("No lessons extracted from the comment.")
-            return
+    lessons = parse_lessons(agent_output)
+    if not lessons:
+        print("No lessons extracted from the comment.")
+        return
 
-        saved = 0
-        for lesson in lessons:
-            if is_duplicate(conn, lesson):
-                print(f"  ⏭️  Duplicate skipped: {lesson[:60]}...")
-                continue
-            save_lesson(conn, repo, pr_number, lesson, comment_body, author)
-            print(f"  ✅ Saved: {lesson[:80]}")
-            saved += 1
-        print(f"\n💾 {saved} lesson(s) saved to {DB_PATH}")
-    finally:
-        conn.close()
+    saved = 0
+    for lesson in lessons:
+        if is_duplicate(table, encoder, lesson):
+            print(f"  ⏭️  Duplicate skipped: {lesson[:60]}...")
+            continue
+        save_lesson(table, encoder, repo, pr_number, lesson, comment_body, author)
+        print(f"  ✅ Saved: {lesson[:80]}")
+        saved += 1
+    print(f"\n💾 {saved} lesson(s) saved to {DB_PATH}")
 
 
 if __name__ == "__main__":

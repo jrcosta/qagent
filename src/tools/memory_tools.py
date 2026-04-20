@@ -1,52 +1,56 @@
-"""Tools for reading and writing memories from data/memories.db (SQLite)."""
+"""Tools for reading and writing memories from LanceDB."""
 
-import sqlite3
+import os
 from pathlib import Path
-from typing import List, Type
+from typing import List, Type, Dict, Any
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
-from rapidfuzz import fuzz, process
+import lancedb
+from sentence_transformers import SentenceTransformer
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-DB_PATH = DATA_DIR / "memories.db"
+DB_PATH = DATA_DIR / "lancedb"
 
+# Initialize embedding model lazily
+_encoder = None
 
-def _get_conn() -> sqlite3.Connection:
+def get_encoder():
+    global _encoder
+    if _encoder is None:
+        _encoder = SentenceTransformer("all-MiniLM-L6-v2")
+    return _encoder
+
+class MemoryModel(lancedb.pydantic.LanceModel):
+    id: str
+    repo: str
+    pr_number: int
+    lesson: str
+    original_comment: str
+    author: str
+    created_at: str
+    tags: str
+    vector: lancedb.pydantic.Vector(384)
+
+def _get_table() -> Any:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH), timeout=30, check_same_thread=False)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    return conn
+    db = lancedb.connect(str(DB_PATH))
+    if "memories" not in db.table_names():
+        db.create_table("memories", schema=MemoryModel)
+    return db.open_table("memories")
 
 
-def init_db(conn: sqlite3.Connection) -> None:
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS memories (
-            id TEXT PRIMARY KEY,
-            repo TEXT NOT NULL,
-            pr_number INTEGER NOT NULL,
-            lesson TEXT NOT NULL,
-            original_comment TEXT,
-            author TEXT,
-            created_at TEXT,
-            tags TEXT
-        );
-        """
-    )
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_repo ON memories(repo);")
-    conn.commit()
-
-
-def fetch_all_lessons(conn: sqlite3.Connection) -> list[dict]:
-    cur = conn.cursor()
-    cur.execute("SELECT id, repo, pr_number, lesson, author, created_at, tags FROM memories ORDER BY created_at DESC")
-    rows = cur.fetchall()
-    return [
-        {"id": r[0], "repo": r[1], "pr_number": r[2], "lesson": r[3], "author": r[4], "created_at": r[5], "tags": r[6]}
-        for r in rows
-    ]
+def fetch_all_lessons(limit: int = None) -> list[dict]:
+    table = _get_table()
+    if table.count_rows() == 0:
+        return []
+    
+    query = table.search(None).limit(limit if limit else 1000)
+    
+    # Simple sort via Python since lance python api sometimes lacks direct sorting without vector
+    results = query.to_list()
+    results.sort(key=lambda x: x['created_at'], reverse=True)
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -62,34 +66,30 @@ class QueryMemoriesTool(BaseTool):
     name: str = "query_memories"
     description: str = (
         "Consulta o banco de memórias (lições aprendidas) para evitar erros já cometidos. "
-        "Retorna lições relevantes ordenadas por similaridade com a busca."
+        "Retorna lições relevantes baseadas n busca semântica."
     )
     args_schema: Type[BaseModel] = QueryMemoriesInput
 
     def _run(self, query: str, limit: int = 10) -> str:
         if not DB_PATH.exists():
             return "Nenhuma memória disponível ainda (banco não existe)."
-
-        conn = _get_conn()
-        try:
-            init_db(conn)
-            all_memories = fetch_all_lessons(conn)
-        finally:
-            conn.close()
-
-        if not all_memories:
+        
+        table = _get_table()
+        if table.count_rows() == 0:
             return "Nenhuma memória registrada ainda."
 
-        choices = {str(i): m["lesson"] for i, m in enumerate(all_memories)}
-        results = process.extract(query, choices, scorer=fuzz.token_sort_ratio, limit=limit)
+        encoder = get_encoder()
+        query_vector = encoder.encode(query).tolist()
+        
+        results = table.search(query_vector).limit(limit).to_list()
 
         output_lines: list[str] = []
-        for text, score, key in results:
-            if score < 40:
+        for mem in results:
+            dist = mem.get("_distance", 2.0)
+            if dist > 1.3: # Cosine distance threshold. 1.3 ensures somewhat semantically related texts
                 continue
-            mem = all_memories[int(key)]
             output_lines.append(
-                f"[score={score}] (PR #{mem['pr_number']} em {mem['repo']}, por {mem['author']})\n"
+                f"[distance={dist:.3f}] (PR #{mem['pr_number']} em {mem['repo']}, por {mem['author']})\n"
                 f"  Lição: {mem['lesson']}"
             )
 
@@ -112,18 +112,14 @@ class ListAllMemoriesTool(BaseTool):
         if not DB_PATH.exists():
             return "Nenhuma memória disponível ainda (banco não existe)."
 
-        conn = _get_conn()
-        try:
-            init_db(conn)
-            all_memories = fetch_all_lessons(conn)
-        finally:
-            conn.close()
-
-        if not all_memories:
+        table = _get_table()
+        if table.count_rows() == 0:
             return "Nenhuma memória registrada ainda."
 
+        all_memories = fetch_all_lessons(limit=limit)
+
         lines: list[str] = []
-        for mem in all_memories[:limit]:
+        for mem in all_memories:
             lines.append(
                 f"- [{mem['created_at']}] PR #{mem['pr_number']} ({mem['repo']}): {mem['lesson']}"
             )
