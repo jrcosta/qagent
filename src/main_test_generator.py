@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.config.settings import get_settings
 from src.crew.test_generator_crew import TestGeneratorCrewRunner
+from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
 from src.utils.git_utils import get_changed_files
 from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.services.test_strategy_builder import build_test_strategy_from_review
@@ -106,6 +107,7 @@ def main() -> None:
 
     settings = get_settings()
     crew_runner = TestGeneratorCrewRunner(settings)
+    high_risk_runner = HighRiskTestStrategyRunner(settings)
 
     qa_report = read_report(args.report_file)
     report_sections = extract_report_sections(qa_report)
@@ -148,6 +150,16 @@ def main() -> None:
             risk_level=artifact.risk_level,
         )
         artifact.test_strategy_result = test_strategy
+
+        # 2b. Enriquecimento via LLM para HIGH risk
+        if artifact.risk_level == "HIGH":
+            print(f"  🔬 Acionando agente especializado HIGH risk para: {file_path}")
+            artifact.test_strategy_result = high_risk_runner.run(
+                file_path=file_path,
+                review_result=review_result,
+                base_strategy=test_strategy,
+                context_result=artifact.context_result,
+            )
 
         # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
         evaluate_artifact(artifact)

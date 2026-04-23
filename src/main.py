@@ -3,10 +3,12 @@ from pathlib import Path
 
 from src.config.settings import get_settings
 from src.crew.qa_crew import QACrewRunner
+from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
 from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.artifact_evaluator import evaluate_artifact
+
 
 
 
@@ -66,6 +68,7 @@ def main() -> None:
 
     settings = get_settings()
     crew_runner = QACrewRunner(settings)
+    high_risk_runner = HighRiskTestStrategyRunner(settings)
 
     changed_files = get_changed_files(
         repo_path=repo_path,
@@ -119,6 +122,16 @@ def main() -> None:
             risk_level=artifact.risk_level,
         )
         artifact.test_strategy_result = test_strategy_result
+
+        # 2b. Enriquecimento via LLM para HIGH risk
+        if artifact.risk_level == "HIGH":
+            print(f"  🔬 Acionando agente especializado HIGH risk para: {file_path}")
+            artifact.test_strategy_result = high_risk_runner.run(
+                file_path=file_path,
+                review_result=crew_result.review_result,
+                base_strategy=test_strategy_result,
+                context_result=artifact.context_result,
+            )
 
         # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
         evaluate_artifact(artifact)
