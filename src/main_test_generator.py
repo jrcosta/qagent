@@ -141,7 +141,13 @@ def main() -> None:
             raw_review_markdown=section_report,
             review_result=review_result,
             test_strategy_result=test_strategy,
-        )
+        ).evaluate()
+
+        print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
+
+        if artifact.test_generation_recommendation == "SKIPPED":
+            print(f"  ⏭️ Geração de testes pulada para: {file_path} (sem testes recomendados)")
+            continue
 
         result = crew_runner.run(
             qa_report=section_report,
