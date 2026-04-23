@@ -4,6 +4,7 @@ from pathlib import Path
 from src.config.settings import get_settings
 from src.crew.qa_crew import QACrewRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
+from src.services.test_strategy_builder import build_test_strategy_from_review
 
 
 def parse_args():
@@ -96,6 +97,13 @@ def main() -> None:
             file_diff=file_diff,
             code_content=code_content,
             repo_path=str(repo_path),
+        )
+
+        # INTEGRAÇÃO INTERNA: Criação da Estratégia de Testes estruturada (Handoff)
+        # O sistema gera a estratégia em background sem alterar a saída final baseada no raw_markdown
+        test_strategy_result = build_test_strategy_from_review(
+            file_path=file_path,
+            review_result=crew_result.review_result
         )
 
         section = f"# Arquivo analisado: {file_path}\n\n{crew_result.raw_review_markdown}"
