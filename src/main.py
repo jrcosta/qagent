@@ -91,14 +91,14 @@ def main() -> None:
             print(f"Sem diff relevante para: {file_path}")
             continue
 
-        result = crew_runner.run(
+        crew_result = crew_runner.run(
             file_path=file_path,
             file_diff=file_diff,
             code_content=code_content,
             repo_path=str(repo_path),
         )
 
-        section = f"# Arquivo analisado: {file_path}\n\n{result}"
+        section = f"# Arquivo analisado: {file_path}\n\n{crew_result.raw_review_markdown}"
         analyses.append(section)
 
     if not analyses:
