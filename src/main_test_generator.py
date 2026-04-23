@@ -9,6 +9,7 @@ from src.utils.git_utils import get_changed_files
 from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
+from src.services.artifact_evaluator import evaluate_artifact
 from src.utils.pr_utils import (
     build_pr_body,
     create_branch_and_commit,
@@ -141,7 +142,8 @@ def main() -> None:
             raw_review_markdown=section_report,
             review_result=review_result,
             test_strategy_result=test_strategy,
-        ).evaluate()
+        )
+        evaluate_artifact(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
 

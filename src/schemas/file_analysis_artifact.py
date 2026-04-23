@@ -14,9 +14,6 @@ RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
 ReviewQuality = Literal["OK", "INCOMPLETE"]
 TestGenerationRecommendation = Literal["RECOMMENDED", "SKIPPED"]
 
-# Limiar mínimo de caracteres para considerar um summary aceitável
-_MIN_SUMMARY_LENGTH = 20
-
 
 class FileAnalysisArtifact(BaseModel):
     """
@@ -29,10 +26,8 @@ class FileAnalysisArtifact(BaseModel):
     Permite que etapas futuras consumam um único objeto em vez de
     variáveis dispersas.
 
-    Campos de orquestração (preenchidos via `evaluate`):
-    - risk_level: nível de risco inferido dos findings
-    - review_quality: qualidade percebida da revisão
-    - test_generation_recommendation: se a geração de testes é recomendada
+    Campos de orquestração são preenchidos externamente via
+    `src.services.artifact_evaluator.evaluate_artifact`.
     """
 
     file_path: str = Field(..., description="Caminho do arquivo analisado")
@@ -61,51 +56,3 @@ class FileAnalysisArtifact(BaseModel):
         description="Recomendação sobre execução da geração de testes",
     )
 
-    # -----------------------------------------------------------------------
-    # Avaliação automática
-    # -----------------------------------------------------------------------
-
-    def evaluate(self) -> "FileAnalysisArtifact":
-        """
-        Preenche os campos de orquestração com base nos dados estruturados
-        já presentes no artefato. Retorna `self` para permitir encadeamento.
-        """
-        self.risk_level = self._evaluate_risk_level()
-        self.review_quality = self._evaluate_review_quality()
-        self.test_generation_recommendation = (
-            self._evaluate_test_generation_recommendation()
-        )
-        return self
-
-    def _evaluate_risk_level(self) -> RiskLevel:
-        if not self.review_result or not self.review_result.findings:
-            return "LOW"
-
-        severities = {f.severity for f in self.review_result.findings}
-
-        if "ERROR" in severities:
-            return "HIGH"
-        if "WARN" in severities:
-            return "MEDIUM"
-        return "LOW"
-
-    def _evaluate_review_quality(self) -> ReviewQuality:
-        if not self.review_result:
-            return "INCOMPLETE"
-
-        summary = (self.review_result.summary or "").strip()
-        if len(summary) < _MIN_SUMMARY_LENGTH:
-            return "INCOMPLETE"
-
-        return "OK"
-
-    def _evaluate_test_generation_recommendation(
-        self,
-    ) -> TestGenerationRecommendation:
-        if (
-            not self.test_strategy_result
-            or not self.test_strategy_result.recommended_tests
-        ):
-            return "SKIPPED"
-
-        return "RECOMMENDED"

@@ -6,6 +6,8 @@ from src.crew.qa_crew import QACrewRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
 from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
+from src.services.artifact_evaluator import evaluate_artifact
+
 
 
 
@@ -112,7 +114,8 @@ def main() -> None:
             raw_review_markdown=crew_result.raw_review_markdown,
             review_result=crew_result.review_result,
             test_strategy_result=test_strategy_result,
-        ).evaluate()
+        )
+        evaluate_artifact(artifact)
         artifacts.append(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
