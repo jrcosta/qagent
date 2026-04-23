@@ -112,8 +112,10 @@ def main() -> None:
             raw_review_markdown=crew_result.raw_review_markdown,
             review_result=crew_result.review_result,
             test_strategy_result=test_strategy_result,
-        )
+        ).evaluate()
         artifacts.append(artifact)
+
+        print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
 
         section = f"# Arquivo analisado: {file_path}\n\n{artifact.raw_review_markdown}"
         analyses.append(section)
