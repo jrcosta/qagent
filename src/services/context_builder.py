@@ -7,6 +7,8 @@ from src.tools.repo_tools import (
     ReadFileTool,
     SearchInRepoTool,
 )
+from src.schemas.context_result import ContextResult
+
 
 
 class RepoContextBuilder:
@@ -105,7 +107,7 @@ class RepoContextBuilder:
         truncated = "\n... [TRUNCADO]" if len(content) > self.MAX_CHARS_PER_FILE else ""
         return f"### {relative_path}\n```\n{snippet}{truncated}\n```"
 
-    def build(self, changed_file: str, code_content: str) -> str:
+    def build(self, changed_file: str, code_content: str) -> ContextResult:
         stem = Path(changed_file).stem
 
         same_name_hits_text = self.search_tool._run(stem, max_results=self.MAX_SAME_NAME_HITS)
@@ -151,4 +153,12 @@ class RepoContextBuilder:
             f"# Conteúdo de testes existentes (amostra)\n{existing_tests_contents}",
         ]
 
-        return "\n\n".join(context_sections)
+        summary_text = "\n\n".join(context_sections)
+
+        return ContextResult(
+            file_path=changed_file,
+            summary=summary_text,
+            related_files=same_name_hits,
+            existing_tests=final_existing_tests,
+            risks_from_context=[]
+        )

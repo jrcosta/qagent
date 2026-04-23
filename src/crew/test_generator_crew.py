@@ -4,6 +4,8 @@ from src.services.context_builder import RepoContextBuilder
 from src.tasks.test_generator_task import TestGeneratorTaskFactory
 from src.tools.memory_tools import QueryMemoriesTool
 from crewai import Crew, Process
+from src.schemas.context_result import render_context_result_for_prompt
+
 
 
 class TestGeneratorCrewRunner:
@@ -36,10 +38,13 @@ class TestGeneratorCrewRunner:
         repo_path: str,
     ) -> str:
         context_builder = RepoContextBuilder(repo_path)
-        repo_context = context_builder.build(
+        context_result = context_builder.build(
             changed_file=file_path,
             code_content=code_content,
         )
+        
+        repo_context_text = render_context_result_for_prompt(context_result)
+
 
         memories = self._load_memories(file_path, code_content)
 
@@ -49,7 +54,7 @@ class TestGeneratorCrewRunner:
             qa_report=qa_report,
             file_path=file_path,
             code_content=code_content,
-            repo_context=repo_context,
+            repo_context=repo_context_text,
             memories=memories,
         )
 

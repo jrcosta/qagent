@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from src.tasks.qa_task import QATaskFactory
 from crewai import Crew, Process
 from src.schemas.review_result import ReviewResult, parse_review_markdown_to_review_result
+from src.schemas.context_result import render_context_result_for_prompt
+
 
 
 @dataclass
@@ -19,10 +21,12 @@ class QACrewRunner:
 
     def run(self, file_path: str, file_diff: str, code_content: str, repo_path: str) -> QACrewResult:
         context_builder = RepoContextBuilder(repo_path)
-        repo_context = context_builder.build(
+        context_result = context_builder.build(
             changed_file=file_path,
             code_content=code_content,
         )
+        
+        repo_context_text = render_context_result_for_prompt(context_result)
 
         agent = QAAgentFactory(self.settings).create()
         task = QATaskFactory.create(
@@ -30,7 +34,7 @@ class QACrewRunner:
             file_path=file_path,
             file_diff=file_diff,
             code_content=code_content,
-            repo_context=repo_context,
+            repo_context=repo_context_text,
         )
 
         crew = Crew(

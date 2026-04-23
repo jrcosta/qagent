@@ -24,3 +24,11 @@ def parse_context_markdown_to_context_result(text: str, file_path: Optional[str]
         existing_tests=[],
         risks_from_context=[]
     )
+
+
+def render_context_result_for_prompt(context_result: ContextResult) -> str:
+    """
+    Helper para converter o ContextResult estruturado no formato textual 
+    esperado pelos agents.
+    """
+    return context_result.summary
