@@ -104,17 +104,23 @@ def main() -> None:
             repo_path=str(repo_path),
         )
 
-        test_strategy_result = build_test_strategy_from_review(
-            file_path=file_path,
-            review_result=crew_result.review_result
-        )
-
+        # 1. Monta artefato parcial e avalia risco
         artifact = FileAnalysisArtifact(
             file_path=file_path,
             raw_review_markdown=crew_result.raw_review_markdown,
             review_result=crew_result.review_result,
-            test_strategy_result=test_strategy_result,
         )
+        evaluate_artifact(artifact)
+
+        # 2. Constrói estratégia adaptativa baseada no risco
+        test_strategy_result = build_test_strategy_from_review(
+            file_path=file_path,
+            review_result=crew_result.review_result,
+            risk_level=artifact.risk_level,
+        )
+        artifact.test_strategy_result = test_strategy_result
+
+        # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
         evaluate_artifact(artifact)
         artifacts.append(artifact)
 

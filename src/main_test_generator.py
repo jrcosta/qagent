@@ -130,19 +130,26 @@ def main() -> None:
 
         section_report = report_sections[file_path]
 
-        # Gera ReviewResult e TestStrategyResult estruturados a partir do markdown de QA
+        # Gera ReviewResult estruturado a partir do markdown de QA
         review_result = parse_review_markdown_to_review_result(section_report)
-        test_strategy = build_test_strategy_from_review(
-            file_path=file_path,
-            review_result=review_result,
-        )
 
+        # 1. Monta artefato parcial e avalia risco
         artifact = FileAnalysisArtifact(
             file_path=file_path,
             raw_review_markdown=section_report,
             review_result=review_result,
-            test_strategy_result=test_strategy,
         )
+        evaluate_artifact(artifact)
+
+        # 2. Constrói estratégia adaptativa baseada no risco
+        test_strategy = build_test_strategy_from_review(
+            file_path=file_path,
+            review_result=review_result,
+            risk_level=artifact.risk_level,
+        )
+        artifact.test_strategy_result = test_strategy
+
+        # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
         evaluate_artifact(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
