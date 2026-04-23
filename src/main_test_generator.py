@@ -141,35 +141,54 @@ def main() -> None:
             raw_review_markdown=section_report,
             review_result=review_result,
         )
+        artifact.mark_step_executed("parse_review")
+
+        t0 = time.perf_counter()
         evaluate_artifact(artifact)
+        artifact.record_duration("evaluate_risk", (time.perf_counter() - t0) * 1000)
+        artifact.mark_step_executed("evaluate_risk")
 
         # 2. Constrói estratégia adaptativa baseada no risco
+        t0 = time.perf_counter()
         test_strategy = build_test_strategy_from_review(
             file_path=file_path,
             review_result=review_result,
             risk_level=artifact.risk_level,
         )
         artifact.test_strategy_result = test_strategy
+        artifact.record_duration("build_strategy", (time.perf_counter() - t0) * 1000)
+        artifact.mark_step_executed("build_strategy")
+        artifact.add_policy(f"strategy_{artifact.risk_level}")
 
         # 2b. Enriquecimento via LLM para HIGH risk
         if artifact.risk_level == "HIGH":
             print(f"  🔬 Acionando agente especializado HIGH risk para: {file_path}")
+            t0 = time.perf_counter()
             artifact.test_strategy_result = high_risk_runner.run(
                 file_path=file_path,
                 review_result=review_result,
                 base_strategy=test_strategy,
                 context_result=artifact.context_result,
             )
+            artifact.record_duration("high_risk_enrichment", (time.perf_counter() - t0) * 1000)
+            artifact.mark_step_executed("high_risk_enrichment")
+            artifact.add_policy("high_risk_llm_enrichment")
+        else:
+            artifact.mark_step_skipped("high_risk_enrichment", f"risk_level={artifact.risk_level}")
 
         # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
         evaluate_artifact(artifact)
+        artifact.mark_step_executed("evaluate_final")
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
+        print(f"  ⏱️ Durações: {artifact.step_durations_ms}")
 
         if artifact.test_generation_recommendation == "SKIPPED":
+            artifact.mark_step_skipped("test_generation", "sem testes recomendados")
             print(f"  ⏭️ Geração de testes pulada para: {file_path} (sem testes recomendados)")
             continue
 
+        t0 = time.perf_counter()
         result = crew_runner.run(
             qa_report=section_report,
             file_path=file_path,
@@ -177,10 +196,13 @@ def main() -> None:
             repo_path=str(repo_path),
             test_strategy=artifact.test_strategy_result,
         )
+        artifact.record_duration("test_generation", (time.perf_counter() - t0) * 1000)
+        artifact.mark_step_executed("test_generation")
 
         test_files = parse_test_files_from_output(result)
 
         if not test_files:
+            artifact.add_note("Nenhum arquivo de teste extraído do output do agente")
             print(f"  ⚠️ Nenhum arquivo de teste extraído para: {file_path}")
             continue
 
