@@ -1,0 +1,2115 @@
+[
+  {
+    "file_path": "javascript-api/src/__tests__/users.test.js",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\nInclusão de testes automatizados (testes de integração) para o endpoint `GET /users/by-email`.\n\n# Evidências observadas\n- O diff mostra a criação do arquivo `javascript-api/src/__tests__/users.test.js` com testes para a rota `/users/by-email`.\n- O arquivo contém três testes principais:\n  - Retorno 200 com o usuário correto quando o email existe.\n  - Retorno 404 com mensagem específica quando o email não existe.\n  - Retorno 400 com mensagem específica quando o parâmetro `email` está ausente.\n- O `beforeEach` reseta o estado do `userService.users` para um conjunto fixo de usuários, garantindo ambiente controlado para os testes.\n- No contexto adicional, não há testes para `/users/by-email` na pasta `javascript-api/tests/`, mas há testes similares para usuários em outras rotas.\n- Em `java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java` há testes para o mesmo endpoint, porém em Java, indicando que a funcionalidade já existe e está sendo testada em outro stack.\n- O uso do `supertest` e `app` indica que os testes são de integração, testando a rota HTTP real.\n\n# Impacto provável\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.\n- Provavelmente melhora a confiabilidade e a detecção precoce de regressões para essa rota.\n- Garante que o endpoint trate corretamente os casos de sucesso, ausência do usuário e falta do parâmetro obrigatório.\n- Pode facilitar futuras refatorações ou correções no endpoint, pois há testes automatizados que validam o comportamento esperado.\n\n# Riscos identificados\n- Como é uma adição de testes, o risco de regressão funcional é baixo.\n- Risco potencial de falso positivo/negativo se o mock do `userService.users` não refletir o comportamento real do serviço, mas isso é mitigado pelo reset no `beforeEach`.\n- Se o endpoint `/users/by-email` sofrer alterações na API (ex: mudança de parâmetros, mensagens de erro), os testes podem quebrar e demandar atualização.\n- Possível duplicidade de testes se já existirem testes similares em outras pastas (ex: `javascript-api/tests/users.test.js`), o que pode causar manutenção redundante.\n\n# Cenários de testes manuais\n- Buscar usuário existente pelo email `alice@example.com` e verificar retorno 200 com dados corretos.\n- Buscar usuário com email inexistente `notfound@example.com` e verificar retorno 404 com mensagem \"Usuário não encontrado\".\n- Fazer requisição para `/users/by-email` sem o parâmetro `email` e verificar retorno 400 com mensagem \"Parâmetro email é obrigatório\".\n- Testar com email vazio (`email=`) para verificar comportamento (não coberto no teste automatizado, mas presente no contexto Java).\n- Testar com email mal formatado para verificar se há validação (não coberto no teste automatizado).\n\n# Sugestões de testes unitários\n- Testar a função/método do serviço que busca usuário por email isoladamente, cobrindo:\n  - Retorno correto do usuário quando email existe.\n  - Retorno nulo ou exceção quando email não existe.\n  - Validação do parâmetro email (ex: vazio, nulo).\n- Testar o controlador (controller) para garantir que ele retorna os códigos HTTP e mensagens corretas conforme o resultado do serviço.\n- Mockar o `userService` para simular diferentes cenários e validar respostas do controller.\n\n# Sugestões de testes de integração\n- Expandir os testes atuais para cobrir:\n  - Caso de email vazio (`email=`) retornando 404 ou 400 conforme regra de negócio.\n  - Testar headers HTTP, como `Accept` e `Content-Type`, para garantir conformidade.\n  - Testar resposta para métodos HTTP não suportados na rota (ex: POST, PUT).\n  - Testar comportamento com usuários adicionais ou com dados especiais (ex: emails com maiúsculas, espaços).\n- Validar que a resposta não inclui dados sensíveis (ex: senha), conforme boas práticas observadas no contexto Java.\n- Testar integração com banco de dados real ou mock mais próximo do ambiente de produção para validar consistência.\n\n# Sugestões de testes de carga ou desempenho\n- Não aplicável. A mudança é apenas inclusão de testes funcionais para endpoint específico, sem alteração de lógica ou performance.\n\n# Pontos que precisam de esclarecimento\n- Qual o comportamento esperado quando o parâmetro `email` é passado vazio (`email=`)? O teste Java sugere 404, mas o teste JS não cobre esse caso.\n- Existe alguma validação de formato do email no endpoint? Caso sim, testes para emails inválidos deveriam ser adicionados.\n- O `userService.users` é um mock simples; qual a complexidade real do serviço? Há cache, banco de dados, ou outras integrações que possam impactar o comportamento?\n- Há planos para unificar os testes de usuários entre as pastas `javascript-api/tests/` e `javascript-api/src/__tests__/` para evitar duplicidade?\n- As mensagens de erro estão padronizadas? O teste usa mensagens em português, isso está alinhado com o padrão do sistema?\n\n---\n\n**Resumo:**  \nA mudança adiciona testes de integração para o endpoint `/users/by-email` no ambiente Node.js, cobrindo os principais fluxos de sucesso, usuário não encontrado e falta do parâmetro obrigatório. Isso aumenta a cobertura e a confiabilidade da API. Recomenda-se complementar os testes com casos de email vazio, validação de formato e garantir alinhamento com mensagens e padrões do sistema. Não há riscos de regressão na aplicação, pois não há alteração de código de produção.\n\n---",
+    "review_result": {
+      "summary": "Inclusão de testes automatizados (testes de integração) para o endpoint `GET /users/by-email`.\n\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.\n- Provavelmente melhora a confiabilidade e a detecção precoce de regressões para essa rota.\n- Garante que o endpoint trate corretamente os casos de sucesso, ausência do usuário e falta do parâmetro obrigatório.\n- Pode facilitar futuras refatorações ou correções no endpoint, pois há testes automatizados que validam o comportamento esperado.",
+      "findings": [
+        {
+          "description": "Como é uma adição de testes, o risco de regressão funcional é baixo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Risco potencial de falso positivo/negativo se o mock do `userService.users` não refletir o comportamento real do serviço, mas isso é mitigado pelo reset no `beforeEach`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Se o endpoint `/users/by-email` sofrer alterações na API (ex: mudança de parâmetros, mensagens de erro), os testes podem quebrar e demandar atualização.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Possível duplicidade de testes se já existirem testes similares em outras pastas (ex: `javascript-api/tests/users.test.js`), o que pode causar manutenção redundante.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff mostra a criação do arquivo `javascript-api/src/__tests__/users.test.js` com testes para a rota `/users/by-email`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo contém três testes principais:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 200 com o usuário correto quando o email existe.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 404 com mensagem específica quando o email não existe.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 400 com mensagem específica quando o parâmetro `email` está ausente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O `beforeEach` reseta o estado do `userService.users` para um conjunto fixo de usuários, garantindo ambiente controlado para os testes.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No contexto adicional, não há testes para `/users/by-email` na pasta `javascript-api/tests/`, mas há testes similares para usuários em outras rotas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Em `java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java` há testes para o mesmo endpoint, porém em Java, indicando que a funcionalidade já existe e está sendo testada em outro stack.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O uso do `supertest` e `app` indica que os testes são de integração, testando a rota HTTP real.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Provavelmente melhora a confiabilidade e a detecção precoce de regressões para essa rota.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Garante que o endpoint trate corretamente os casos de sucesso, ausência do usuário e falta do parâmetro obrigatório.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode facilitar futuras refatorações ou correções no endpoint, pois há testes automatizados que validam o comportamento esperado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual o comportamento esperado quando o parâmetro `email` é passado vazio (`email=`)? O teste Java sugere 404, mas o teste JS não cobre esse caso.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe alguma validação de formato do email no endpoint? Caso sim, testes para emails inválidos deveriam ser adicionados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O `userService.users` é um mock simples; qual a complexidade real do serviço? Há cache, banco de dados, ou outras integrações que possam impactar o comportamento?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há planos para unificar os testes de usuários entre as pastas `javascript-api/tests/` e `javascript-api/src/__tests__/` para evitar duplicidade?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "As mensagens de erro estão padronizadas? O teste usa mensagens em português, isso está alinhado com o padrão do sistema?",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "Buscar usuário existente pelo email `alice@example.com` e verificar retorno 200 com dados corretos.",
+        "Buscar usuário com email inexistente `notfound@example.com` e verificar retorno 404 com mensagem \"Usuário não encontrado\".",
+        "Fazer requisição para `/users/by-email` sem o parâmetro `email` e verificar retorno 400 com mensagem \"Parâmetro email é obrigatório\".",
+        "Testar com email vazio (`email=`) para verificar comportamento (não coberto no teste automatizado, mas presente no contexto Java).",
+        "Testar com email mal formatado para verificar se há validação (não coberto no teste automatizado).",
+        "Testar a função/método do serviço que busca usuário por email isoladamente, cobrindo:",
+        "Retorno correto do usuário quando email existe.",
+        "Retorno nulo ou exceção quando email não existe.",
+        "Validação do parâmetro email (ex: vazio, nulo).",
+        "Testar o controlador (controller) para garantir que ele retorna os códigos HTTP e mensagens corretas conforme o resultado do serviço.",
+        "Mockar o `userService` para simular diferentes cenários e validar respostas do controller.",
+        "Expandir os testes atuais para cobrir:",
+        "Caso de email vazio (`email=`) retornando 404 ou 400 conforme regra de negócio.",
+        "Testar headers HTTP, como `Accept` e `Content-Type`, para garantir conformidade.",
+        "Testar resposta para métodos HTTP não suportados na rota (ex: POST, PUT).",
+        "Testar comportamento com usuários adicionais ou com dados especiais (ex: emails com maiúsculas, espaços).",
+        "Validar que a resposta não inclui dados sensíveis (ex: senha), conforme boas práticas observadas no contexto Java.",
+        "Testar integração com banco de dados real ou mock mais próximo do ambiente de produção para validar consistência.",
+        "Não aplicável. A mudança é apenas inclusão de testes funcionais para endpoint específico, sem alteração de lógica ou performance."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "Buscar usuário existente pelo email `alice@example.com` e verificar retorno 200 com dados corretos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Buscar usuário com email inexistente `notfound@example.com` e verificar retorno 404 com mensagem \"Usuário não encontrado\".",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição para `/users/by-email` sem o parâmetro `email` e verificar retorno 400 com mensagem \"Parâmetro email é obrigatório\".",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar com email vazio (`email=`) para verificar comportamento (não coberto no teste automatizado, mas presente no contexto Java).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar com email mal formatado para verificar se há validação (não coberto no teste automatizado).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar a função/método do serviço que busca usuário por email isoladamente, cobrindo:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Retorno correto do usuário quando email existe.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Retorno nulo ou exceção quando email não existe.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validação do parâmetro email (ex: vazio, nulo).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o controlador (controller) para garantir que ele retorna os códigos HTTP e mensagens corretas conforme o resultado do serviço.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Mockar o `userService` para simular diferentes cenários e validar respostas do controller.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Expandir os testes atuais para cobrir:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso de email vazio (`email=`) retornando 404 ou 400 conforme regra de negócio.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar headers HTTP, como `Accept` e `Content-Type`, para garantir conformidade.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar resposta para métodos HTTP não suportados na rota (ex: POST, PUT).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com usuários adicionais ou com dados especiais (ex: emails com maiúsculas, espaços).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que a resposta não inclui dados sensíveis (ex: senha), conforme boas práticas observadas no contexto Java.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com banco de dados real ou mock mais próximo do ambiente de produção para validar consistência.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável. A mudança é apenas inclusão de testes funcionais para endpoint específico, sem alteração de lógica ou performance.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Como é uma adição de testes, o risco de regressão funcional é baixo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Risco potencial de falso positivo/negativo se o mock do `userService.users` não refletir o comportamento real do serviço, mas isso é mitigado pelo reset no `beforeEach`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se o endpoint `/users/by-email` sofrer alterações na API (ex: mudança de parâmetros, mensagens de erro), os testes podem quebrar e demandar atualização.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possível duplicidade de testes se já existirem testes similares em outras pastas (ex: `javascript-api/tests/users.test.js`), o que pode causar manutenção redundante.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O diff mostra a criação do arquivo `javascript-api/src/__tests__/users.test.js` com testes para a rota `/users/by-email`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo contém três testes principais:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 200 com o usuário correto quando o email existe.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 404 com mensagem específica quando o email não existe.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 400 com mensagem específica quando o parâmetro `email` está ausente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O `beforeEach` reseta o estado do `userService.users` para um conjunto fixo de usuários, garantindo ambiente controlado para os testes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No contexto adicional, não há testes para `/users/by-email` na pasta `javascript-api/tests/`, mas há testes similares para usuários em outras rotas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Em `java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java` há testes para o mesmo endpoint, porém em Java, indicando que a funcionalidade já existe e está sendo testada em outro stack.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O uso do `supertest` e `app` indica que os testes são de integração, testando a rota HTTP real.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Provavelmente melhora a confiabilidade e a detecção precoce de regressões para essa rota.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Garante que o endpoint trate corretamente os casos de sucesso, ausência do usuário e falta do parâmetro obrigatório.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode facilitar futuras refatorações ou correções no endpoint, pois há testes automatizados que validam o comportamento esperado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual o comportamento esperado quando o parâmetro `email` é passado vazio (`email=`)? O teste Java sugere 404, mas o teste JS não cobre esse caso.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe alguma validação de formato do email no endpoint? Caso sim, testes para emails inválidos deveriam ser adicionados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O `userService.users` é um mock simples; qual a complexidade real do serviço? Há cache, banco de dados, ou outras integrações que possam impactar o comportamento?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há planos para unificar os testes de usuários entre as pastas `javascript-api/tests/` e `javascript-api/src/__tests__/` para evitar duplicidade?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: As mensagens de erro estão padronizadas? O teste usa mensagens em português, isso está alinhado com o padrão do sistema?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'javascript-api/src/__tests__/users.test.js'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `/users/by-email` com email contendo espaços em branco antes e depois para validar trim e comportamento esperado.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com email em maiúsculas e verificar se a busca é case-insensitive ou se retorna 404 conforme regra de negócio.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com email contendo caracteres especiais válidos para garantir aceitação correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com email mal formatado (ex: `user@@example.com`, `userexample.com`) para validar resposta de erro e mensagem padronizada.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com múltiplos parâmetros query, incluindo `email` e outros parâmetros inesperados, para garantir que apenas `email` é considerado e não cause erro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com método HTTP não suportado (ex: DELETE, PATCH) para garantir retorno 405 Method Not Allowed.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint para garantir que a resposta não contenha dados sensíveis do usuário (ex: senha, tokens).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com banco de dados mockado que simule falha (ex: timeout, erro de conexão) para validar tratamento de erro e resposta adequada do endpoint.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com usuários que possuem emails com caracteres Unicode para validar suporte internacional.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint com carga simultânea de múltiplas requisições para avaliar comportamento sob stress e possíveis condições de corrida.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de criação de usuário e posterior busca pelo endpoint `/users/by-email` para validar consistência entre criação e consulta.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint em ambiente que simule autenticação/autorização (se aplicável) para garantir que acesso não autorizado seja bloqueado.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar a padronização das mensagens de erro em português, garantindo alinhamento com o padrão do sistema em todos os cenários de falha.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'javascript-api/src/__tests__/users.test.js'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Inclusão de testes automatizados (testes de integração) para o endpoint `GET /users/by-email`.\n\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/b...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre bem os cenários principais, porém a inclusão de testes para validação de formato de email, tratamento de espaços e case sensitivity é crítica para evitar falhas sutis.\n- Testes para métodos HTTP não suportados e múltiplos parâmetros query reforçam a robustez do endpoint contra uso indevido.\n- A ausência de dados sensíveis na resposta é uma boa prática de segurança que deve ser validada explicitamente.\n- Testes de integração simulando falhas no banco e carga simultânea são importantes para garantir resiliência e estabilidade em produção.\n- Testes E2E que envolvam criação e consulta garantem que o endpoint funciona corretamente no fluxo real de uso.\n- A padronização das mensagens de erro em português deve ser verificada para manter consistência e boa experiência do usuário.\n- Recomenda-se avaliar a unificação dos testes de usuários entre as pastas para evitar duplicidade e facilitar manutenção futura."
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.03,
+      "build_strategy": 0.08,
+      "high_risk_enrichment": 8731.76,
+      "test_generation": 31203.46
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "javascript-api/src/routes/users.js",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Adição de funcionalidade**: inclusão de um novo endpoint `GET /users/by-email` para buscar usuário pelo e-mail via query parameter.\n\n# Evidências observadas\n\n- O diff adiciona o seguinte trecho no arquivo `javascript-api/src/routes/users.js`:\n\n```javascript\nrouter.get('/by-email', (req, res) => {\n  const email = req.query.email;\n  if (!email) {\n    return res.status(400).json({ detail: \"Parâmetro email é obrigatório\" });\n  }\n  const user = userService.findByEmail(email);\n  if (!user) {\n    return res.status(404).json({ detail: \"Usuário não encontrado\" });\n  }\n  return res.json(user);\n});\n```\n\n- O arquivo atual já contém outros endpoints relacionados a usuários, incluindo buscas por ID, listagem, criação, etc.\n- O contexto do repositório indica que o endpoint `/users/by-email` já é documentado no README.md e que existe uma implementação equivalente na API Java.\n- Há testes existentes no arquivo `javascript-api/src/__tests__/users.test.js` que cobrem o endpoint `/users/by-email` com os seguintes casos:\n  - Retorno 200 com usuário válido quando o e-mail existe.\n  - Retorno 404 quando o e-mail não existe.\n  - Retorno 400 quando o parâmetro `email` está ausente.\n- Também há testes de integração Java que cobrem o mesmo endpoint, reforçando a importância e uso esperado do endpoint.\n- O serviço `userService.findByEmail(email)` é utilizado para buscar o usuário, consistente com outras partes do código.\n\n# Impacto provável\n\n- **Funcionalidade nova**: permite que clientes da API busquem um usuário pelo e-mail via query string, o que facilita buscas diretas sem precisar do ID.\n- **Validação de entrada**: o endpoint valida a presença do parâmetro `email` e retorna erro 400 caso esteja ausente.\n- **Tratamento de usuário não encontrado**: retorna 404 com mensagem clara.\n- **Resposta JSON**: retorna o objeto completo do usuário encontrado, diferente do endpoint `/users/:user_id/email` que retorna apenas o e-mail.\n- **Consistência com outras rotas**: segue padrão de tratamento de erros e respostas já adotado no arquivo.\n- **Possível aumento no uso do serviço `userService.findByEmail`**: pode impactar performance se a base de usuários crescer, mas não há evidência de preocupação com performance neste contexto.\n\n# Riscos identificados\n\n- **Ausência de sanitização ou validação do parâmetro `email`**: o código apenas verifica se o parâmetro existe, mas não valida se é um e-mail válido. Isso pode levar a buscas inúteis ou erros silenciosos no serviço.\n- **Exposição de dados sensíveis**: o endpoint retorna o objeto `user` completo. Se o objeto usuário contiver campos sensíveis (como senha, tokens, etc.), eles podem ser expostos. No código atual não há indicação clara de campos sensíveis, mas é um risco a ser avaliado.\n- **Conflito de rotas**: a rota `/by-email` é estática e não conflita com rotas dinâmicas, mas a ordem das rotas deve ser mantida para evitar captura incorreta.\n- **Dependência direta do `userService.findByEmail`**: se o método não tratar corretamente casos de e-mails inválidos ou mal formatados, pode haver erros não tratados.\n- **Possível falta de testes para casos de e-mail vazio (string vazia)**: o código verifica `if (!email)`, que cobre `undefined` e `null`, mas não está claro se string vazia é tratada como inválida (provavelmente sim, pois string vazia é falsy em JS).\n\n# Cenários de testes manuais\n\n1. **Busca por e-mail válido existente**\n   - Requisição: `GET /users/by-email?email=ana@example.com`\n   - Esperado: status 200 e JSON com dados do usuário Ana.\n\n2. **Busca por e-mail inexistente**\n   - Requisição: `GET /users/by-email?email=naoexiste@example.com`\n   - Esperado: status 404 e JSON com `{ detail: \"Usuário não encontrado\" }`.\n\n3. **Busca sem parâmetro `email`**\n   - Requisição: `GET /users/by-email`\n   - Esperado: status 400 e JSON com `{ detail: \"Parâmetro email é obrigatório\" }`.\n\n4. **Busca com parâmetro `email` vazio**\n   - Requisição: `GET /users/by-email?email=`\n   - Esperado: status 400 (ou 404 dependendo do tratamento), verificar comportamento.\n\n5. **Busca com parâmetro `email` mal formatado**\n   - Requisição: `GET /users/by-email?email=invalid-email`\n   - Esperado: comportamento definido pelo serviço, idealmente 404 ou erro de validação.\n\n6. **Verificar que o objeto retornado não contém dados sensíveis**\n   - Confirmar que o JSON retornado não inclui campos como senha, tokens, etc.\n\n# Sugestões de testes unitários\n\n- Testar que o endpoint retorna 400 quando `email` está ausente ou vazio.\n- Testar que o endpoint retorna 404 quando `userService.findByEmail` retorna `undefined`.\n- Testar que o endpoint retorna 200 e o objeto correto quando `userService.findByEmail` retorna um usuário.\n- Testar que o endpoint não expõe campos sensíveis no objeto retornado (mockar usuário com campo sensível e verificar exclusão).\n- Testar comportamento com e-mails mal formatados (se houver validação no serviço).\n\n# Sugestões de testes de integração\n\n- Testar fluxo completo de criação de usuário e busca por e-mail via `/users/by-email`.\n- Testar busca por e-mail inexistente e ausência do parâmetro.\n- Testar concorrência de buscas por e-mail para garantir estabilidade.\n- Testar integração com o serviço `userService` para garantir que o método `findByEmail` está sendo chamado corretamente.\n- Testar que o endpoint está documentado e acessível conforme esperado (ex: via Swagger ou documentação).\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável diretamente, pois a mudança é uma adição simples de endpoint sem alteração em lógica pesada ou loops.\n- Caso a base de usuários cresça muito, pode ser interessante monitorar performance do método `findByEmail`, mas não há evidência atual para isso.\n\n# Pontos que precisam de esclarecimento\n\n- O objeto `user` retornado pelo endpoint contém campos sensíveis? Se sim, há necessidade de filtragem antes do retorno?\n- Existe alguma validação formal do parâmetro `email` (ex: formato válido) no serviço ou camada de rota? Se não, seria recomendável adicionar.\n- Qual o comportamento esperado para e-mails vazios ou mal formatados? Atualmente, string vazia é tratada como ausência (status 400), mas e-mails inválidos?\n- O serviço `userService.findByEmail` é síncrono e confiável para uso direto na rota? Há possibilidade de erro ou exceção que deveria ser tratada?\n- Há necessidade de autenticação/autorização para este endpoint? Atualmente não há, mas pode ser um ponto de segurança dependendo do contexto.\n\n---\n\n**Resumo:** A mudança adiciona um endpoint útil e esperado para busca de usuário por e-mail via query string, com tratamento básico de erros. O código está consistente com o padrão do projeto e já possui testes automatizados cobrindo os casos principais. Os riscos principais são exposição de dados sensíveis e falta de validação do parâmetro `email`. Recomenda-se validar o formato do e-mail e garantir que o objeto retornado não contenha dados sensíveis. Testes manuais e automatizados devem focar nesses pontos.\n\n---",
+    "review_result": {
+      "summary": "- **Adição de funcionalidade**: inclusão de um novo endpoint `GET /users/by-email` para buscar usuário pelo e-mail via query parameter.\n\n- **Funcionalidade nova**: permite que clientes da API busquem um usuário pelo e-mail via query string, o que facilita buscas diretas sem precisar do ID.\n- **Validação de entrada**: o endpoint valida a presença do parâmetro `email` e retorna erro 400 caso esteja ausente.\n- **Tratamento de usuário não encontrado**: retorna 404 com mensagem clara.\n- **Resposta JSON**: retorna o objeto completo do usuário encontrado, diferente do endpoint `/users/:user_id/email` que retorna apenas o e-mail.\n- **Consistência com outras rotas**: segue padrão de tratamento de erros e respostas já adotado no arquivo.\n- **Possível aumento no uso do serviço `userService.findByEmail`**: pode impactar performance se a base de usuários crescer, mas não há evidência de preocupação com performance neste contexto.",
+      "findings": [
+        {
+          "description": "**Ausência de sanitização ou validação do parâmetro `email`**: o código apenas verifica se o parâmetro existe, mas não valida se é um e-mail válido. Isso pode levar a buscas inúteis ou erros silenciosos no serviço.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Exposição de dados sensíveis**: o endpoint retorna o objeto `user` completo. Se o objeto usuário contiver campos sensíveis (como senha, tokens, etc.), eles podem ser expostos. No código atual não há indicação clara de campos sensíveis, mas é um risco a ser avaliado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Conflito de rotas**: a rota `/by-email` é estática e não conflita com rotas dinâmicas, mas a ordem das rotas deve ser mantida para evitar captura incorreta.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Dependência direta do `userService.findByEmail`**: se o método não tratar corretamente casos de e-mails inválidos ou mal formatados, pode haver erros não tratados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Possível falta de testes para casos de e-mail vazio (string vazia)**: o código verifica `if (!email)`, que cobre `undefined` e `null`, mas não está claro se string vazia é tratada como inválida (provavelmente sim, pois string vazia é falsy em JS).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff adiciona o seguinte trecho no arquivo `javascript-api/src/routes/users.js`:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo atual já contém outros endpoints relacionados a usuários, incluindo buscas por ID, listagem, criação, etc.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto do repositório indica que o endpoint `/users/by-email` já é documentado no README.md e que existe uma implementação equivalente na API Java.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há testes existentes no arquivo `javascript-api/src/__tests__/users.test.js` que cobrem o endpoint `/users/by-email` com os seguintes casos:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 200 com usuário válido quando o e-mail existe.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 404 quando o e-mail não existe.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorno 400 quando o parâmetro `email` está ausente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Também há testes de integração Java que cobrem o mesmo endpoint, reforçando a importância e uso esperado do endpoint.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço `userService.findByEmail(email)` é utilizado para buscar o usuário, consistente com outras partes do código.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Funcionalidade nova**: permite que clientes da API busquem um usuário pelo e-mail via query string, o que facilita buscas diretas sem precisar do ID.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Validação de entrada**: o endpoint valida a presença do parâmetro `email` e retorna erro 400 caso esteja ausente.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Tratamento de usuário não encontrado**: retorna 404 com mensagem clara.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Resposta JSON**: retorna o objeto completo do usuário encontrado, diferente do endpoint `/users/:user_id/email` que retorna apenas o e-mail.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Consistência com outras rotas**: segue padrão de tratamento de erros e respostas já adotado no arquivo.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Possível aumento no uso do serviço `userService.findByEmail`**: pode impactar performance se a base de usuários crescer, mas não há evidência de preocupação com performance neste contexto.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O objeto `user` retornado pelo endpoint contém campos sensíveis? Se sim, há necessidade de filtragem antes do retorno?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe alguma validação formal do parâmetro `email` (ex: formato válido) no serviço ou camada de rota? Se não, seria recomendável adicionar.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual o comportamento esperado para e-mails vazios ou mal formatados? Atualmente, string vazia é tratada como ausência (status 400), mas e-mails inválidos?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço `userService.findByEmail` é síncrono e confiável para uso direto na rota? Há possibilidade de erro ou exceção que deveria ser tratada?",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Há necessidade de autenticação/autorização para este endpoint? Atualmente não há, mas pode ser um ponto de segurança dependendo do contexto.",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Busca por e-mail válido existente**",
+        "Requisição: `GET /users/by-email?email=ana@example.com`",
+        "Esperado: status 200 e JSON com dados do usuário Ana.",
+        "**Busca por e-mail inexistente**",
+        "Requisição: `GET /users/by-email?email=naoexiste@example.com`",
+        "Esperado: status 404 e JSON com `{ detail: \"Usuário não encontrado\" }`.",
+        "**Busca sem parâmetro `email`**",
+        "Requisição: `GET /users/by-email`",
+        "Esperado: status 400 e JSON com `{ detail: \"Parâmetro email é obrigatório\" }`.",
+        "**Busca com parâmetro `email` vazio**",
+        "Requisição: `GET /users/by-email?email=`",
+        "Esperado: status 400 (ou 404 dependendo do tratamento), verificar comportamento.",
+        "**Busca com parâmetro `email` mal formatado**",
+        "Requisição: `GET /users/by-email?email=invalid-email`",
+        "Esperado: comportamento definido pelo serviço, idealmente 404 ou erro de validação.",
+        "**Verificar que o objeto retornado não contém dados sensíveis**",
+        "Confirmar que o JSON retornado não inclui campos como senha, tokens, etc.",
+        "Testar que o endpoint retorna 400 quando `email` está ausente ou vazio.",
+        "Testar que o endpoint retorna 404 quando `userService.findByEmail` retorna `undefined`.",
+        "Testar que o endpoint retorna 200 e o objeto correto quando `userService.findByEmail` retorna um usuário.",
+        "Testar que o endpoint não expõe campos sensíveis no objeto retornado (mockar usuário com campo sensível e verificar exclusão).",
+        "Testar comportamento com e-mails mal formatados (se houver validação no serviço).",
+        "Testar fluxo completo de criação de usuário e busca por e-mail via `/users/by-email`.",
+        "Testar busca por e-mail inexistente e ausência do parâmetro.",
+        "Testar concorrência de buscas por e-mail para garantir estabilidade.",
+        "Testar integração com o serviço `userService` para garantir que o método `findByEmail` está sendo chamado corretamente.",
+        "Testar que o endpoint está documentado e acessível conforme esperado (ex: via Swagger ou documentação).",
+        "Não aplicável diretamente, pois a mudança é uma adição simples de endpoint sem alteração em lógica pesada ou loops.",
+        "Caso a base de usuários cresça muito, pode ser interessante monitorar performance do método `findByEmail`, mas não há evidência atual para isso."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Busca por e-mail válido existente**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=ana@example.com`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: status 200 e JSON com dados do usuário Ana.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca por e-mail inexistente**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=naoexiste@example.com`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: status 404 e JSON com `{ detail: \"Usuário não encontrado\" }`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca sem parâmetro `email`**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: status 400 e JSON com `{ detail: \"Parâmetro email é obrigatório\" }`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com parâmetro `email` vazio**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: status 400 (ou 404 dependendo do tratamento), verificar comportamento.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com parâmetro `email` mal formatado**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=invalid-email`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: comportamento definido pelo serviço, idealmente 404 ou erro de validação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Verificar que o objeto retornado não contém dados sensíveis**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que o JSON retornado não inclui campos como senha, tokens, etc.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint retorna 400 quando `email` está ausente ou vazio.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint retorna 404 quando `userService.findByEmail` retorna `undefined`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint retorna 200 e o objeto correto quando `userService.findByEmail` retorna um usuário.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não expõe campos sensíveis no objeto retornado (mockar usuário com campo sensível e verificar exclusão).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com e-mails mal formatados (se houver validação no serviço).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de criação de usuário e busca por e-mail via `/users/by-email`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar busca por e-mail inexistente e ausência do parâmetro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência de buscas por e-mail para garantir estabilidade.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com o serviço `userService` para garantir que o método `findByEmail` está sendo chamado corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint está documentado e acessível conforme esperado (ex: via Swagger ou documentação).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável diretamente, pois a mudança é uma adição simples de endpoint sem alteração em lógica pesada ou loops.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso a base de usuários cresça muito, pode ser interessante monitorar performance do método `findByEmail`, mas não há evidência atual para isso.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ausência de sanitização ou validação do parâmetro `email`**: o código apenas verifica se o parâmetro existe, mas não valida se é um e-mail válido. Isso pode levar a buscas inúteis ou erros silenciosos no serviço.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Exposição de dados sensíveis**: o endpoint retorna o objeto `user` completo. Se o objeto usuário contiver campos sensíveis (como senha, tokens, etc.), eles podem ser expostos. No código atual não há indicação clara de campos sensíveis, mas é um risco a ser avaliado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Conflito de rotas**: a rota `/by-email` é estática e não conflita com rotas dinâmicas, mas a ordem das rotas deve ser mantida para evitar captura incorreta.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dependência direta do `userService.findByEmail`**: se o método não tratar corretamente casos de e-mails inválidos ou mal formatados, pode haver erros não tratados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível falta de testes para casos de e-mail vazio (string vazia)**: o código verifica `if (!email)`, que cobre `undefined` e `null`, mas não está claro se string vazia é tratada como inválida (provavelmente sim, pois string vazia é falsy em JS).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O diff adiciona o seguinte trecho no arquivo `javascript-api/src/routes/users.js`:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo atual já contém outros endpoints relacionados a usuários, incluindo buscas por ID, listagem, criação, etc.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O contexto do repositório indica que o endpoint `/users/by-email` já é documentado no README.md e que existe uma implementação equivalente na API Java.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há testes existentes no arquivo `javascript-api/src/__tests__/users.test.js` que cobrem o endpoint `/users/by-email` com os seguintes casos:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 200 com usuário válido quando o e-mail existe.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 404 quando o e-mail não existe.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorno 400 quando o parâmetro `email` está ausente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Também há testes de integração Java que cobrem o mesmo endpoint, reforçando a importância e uso esperado do endpoint.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço `userService.findByEmail(email)` é utilizado para buscar o usuário, consistente com outras partes do código.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Funcionalidade nova**: permite que clientes da API busquem um usuário pelo e-mail via query string, o que facilita buscas diretas sem precisar do ID.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação de entrada**: o endpoint valida a presença do parâmetro `email` e retorna erro 400 caso esteja ausente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Tratamento de usuário não encontrado**: retorna 404 com mensagem clara.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Resposta JSON**: retorna o objeto completo do usuário encontrado, diferente do endpoint `/users/:user_id/email` que retorna apenas o e-mail.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Consistência com outras rotas**: segue padrão de tratamento de erros e respostas já adotado no arquivo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível aumento no uso do serviço `userService.findByEmail`**: pode impactar performance se a base de usuários crescer, mas não há evidência de preocupação com performance neste contexto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O objeto `user` retornado pelo endpoint contém campos sensíveis? Se sim, há necessidade de filtragem antes do retorno?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe alguma validação formal do parâmetro `email` (ex: formato válido) no serviço ou camada de rota? Se não, seria recomendável adicionar.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual o comportamento esperado para e-mails vazios ou mal formatados? Atualmente, string vazia é tratada como ausência (status 400), mas e-mails inválidos?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço `userService.findByEmail` é síncrono e confiável para uso direto na rota? Há possibilidade de erro ou exceção que deveria ser tratada?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há necessidade de autenticação/autorização para este endpoint? Atualmente não há, mas pode ser um ponto de segurança dependendo do contexto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'javascript-api/src/routes/users.js'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint quando o parâmetro `email` contém espaços em branco antes ou depois do valor (ex: `email= ana@example.com `), garantindo trim ou rejeição adequada.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com e-mails contendo caracteres especiais válidos (ex: `email=user+tag@example.com`), garantindo aceitação correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint retorna erro 400 para parâmetros `email` com tamanho excessivamente grande (ex: string muito longa), prevenindo possíveis ataques de negação de serviço.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint trata corretamente exceções lançadas pelo `userService.findByEmail` (ex: erro inesperado), retornando status 500 com mensagem genérica de erro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do endpoint com autenticação/autorização, verificando se o endpoint está acessível sem autenticação e avaliando necessidade de restrição futura.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência de múltiplas requisições simultâneas com o mesmo e-mail para verificar estabilidade e ausência de race conditions.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não permite injeção de código via parâmetro `email` (ex: SQL Injection, script injection), validando sanitização ou rejeição.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint mantém a ordem correta das rotas no arquivo para evitar conflito com outras rotas dinâmicas ou estáticas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de busca por e-mail via API real, incluindo casos de sucesso, e-mail inexistente, ausência do parâmetro e e-mail mal formatado, validando respostas HTTP e payloads JSON.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar impacto de carga no endpoint `/users/by-email` simulando aumento significativo de requisições para avaliar comportamento sob estresse e possíveis gargalos.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não expõe dados sensíveis em ambiente real, validando resposta JSON contra campos sensíveis conhecidos do modelo de usuário.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'javascript-api/src/routes/users.js'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: - **Adição de funcionalidade**: inclusão de um novo endpoint `GET /users/by-email` para buscar usuário pelo e-mail via query parameter.\n\n- **Funcionalidade nova**: permite que clientes da API busquem ...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base já cobre os principais cenários funcionais e de validação, porém a inclusão de testes para casos de borda como espaços em branco, caracteres especiais e tamanho excessivo do parâmetro `email` reforça a robustez da validação de entrada.\n- A recomendação de testes para tratamento de exceções do serviço `userService.findByEmail` é crítica para evitar falhas inesperadas e garantir respostas apropriadas ao cliente.\n- A ausência atual de autenticação no endpoint pode ser um ponto de atenção para segurança, portanto testes de acesso e autorização são recomendados para avaliação futura.\n- Testes de injeção e sanitização são essenciais para prevenir vulnerabilidades comuns em APIs que recebem parâmetros via query string.\n- Testes de concorrência e carga são importantes para antecipar problemas de performance e estabilidade, especialmente considerando o possível aumento do uso do serviço.\n- Testes E2E complementam a cobertura garantindo que o endpoint funcione corretamente em ambiente real, incluindo a não exposição de dados sensíveis, que é um risco destacado na revisão.\n- A manutenção da ordem das rotas no arquivo é um detalhe técnico que pode evitar regressões sutis e deve ser validada em integração."
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.09,
+      "high_risk_enrichment": 7854.65,
+      "test_generation": 33151.23
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/app/api/routes.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Nova funcionalidade**: inclusão de um novo endpoint REST para busca de usuário por e-mail exato.\n\n# Evidências observadas\n\n- O diff adiciona o método `get_user_by_email` no arquivo `python-api/app/api/routes.py`:\n  ```python\n  @router.get(\"/users/by-email\", response_model=UserResponse, tags=[\"users\"])\n  def get_user_by_email(email: str) -> UserResponse:\n      \"\"\"Find a user by their exact email address.\"\"\"\n      user = user_service.find_by_email(email)\n\n      if not user:\n          raise HTTPException(\n              status_code=status.HTTP_404_NOT_FOUND,\n              detail=\"Usuário não encontrado\",\n          )\n\n      return user\n  ```\n- O método usa o serviço `user_service.find_by_email(email)` para buscar o usuário.\n- Caso o usuário não seja encontrado, retorna HTTP 404 com mensagem \"Usuário não encontrado\".\n- Caso encontrado, retorna o objeto `UserResponse` correspondente.\n- O endpoint está documentado no contexto adicional (`docs/endpoints.md`) com parâmetros e respostas esperadas.\n- Há testes de integração Java para esse endpoint, indicando que o endpoint já é esperado e testado em outro módulo (Java API), com casos para sucesso, 404 e 400 (parâmetro ausente).\n- O arquivo `routes.py` já possui endpoints similares para busca por ID, email parcial (search), e outros relacionados a usuários.\n\n# Impacto provável\n\n- Adiciona uma nova rota GET `/users/by-email` que permite buscar um usuário pelo e-mail exato.\n- Facilita consultas diretas por e-mail, que antes só poderiam ser feitas via listagem e filtro manual.\n- Pode ser usada por clientes da API para validação rápida da existência de um usuário pelo e-mail.\n- Não altera endpoints existentes, portanto não deve impactar funcionalidades anteriores.\n- Pode aumentar a superfície de ataque se não houver controle de acesso (não evidenciado no código).\n- Depende da implementação correta de `user_service.find_by_email` para garantir retorno correto e consistente.\n\n# Riscos identificados\n\n- **Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples, sem validação explícita de formato de e-mail. Pode aceitar strings inválidas, o que pode levar a buscas inúteis ou erros no serviço.\n- **Comportamento para e-mails vazios ou malformados**: Não há tratamento explícito para e-mails vazios ou inválidos, o que pode resultar em comportamento inesperado ou erros não tratados.\n- **Dependência do serviço `user_service.find_by_email`**: Se o serviço não tratar corretamente casos de múltiplos usuários com mesmo e-mail (se permitido), pode retornar dados incorretos ou inconsistentes.\n- **Exposição de dados sensíveis**: O retorno é do tipo `UserResponse`, que no contexto atual parece conter `id`, `name` e `email`. Se futuramente o modelo incluir dados sensíveis, pode haver vazamento.\n- **Ausência de autenticação/autorização**: O endpoint não mostra nenhum controle de acesso, o que pode ser um risco dependendo do contexto de uso da API.\n- **Possível conflito de rotas**: Embora improvável, a rota `/users/by-email` deve ser estática para não conflitar com rotas dinâmicas como `/users/{user_id}`. O arquivo já segue essa prática, mas é importante manter.\n\n# Cenários de testes manuais\n\n1. **Busca por e-mail existente**\n   - Requisição: `GET /users/by-email?email=ana@example.com`\n   - Esperado: HTTP 200 com JSON contendo `id`, `name` e `email` correspondentes ao usuário.\n2. **Busca por e-mail inexistente**\n   - Requisição: `GET /users/by-email?email=naoexiste@example.com`\n   - Esperado: HTTP 404 com JSON `{ \"detail\": \"Usuário não encontrado\" }`.\n3. **Busca sem parâmetro `email`**\n   - Requisição: `GET /users/by-email` sem query param `email`\n   - Esperado: HTTP 422 (Unprocessable Entity) ou 400 (Bad Request) por falta de parâmetro obrigatório.\n4. **Busca com parâmetro `email` vazio**\n   - Requisição: `GET /users/by-email?email=`\n   - Esperado: HTTP 404 ou 422, dependendo do tratamento interno.\n5. **Busca com e-mail malformado**\n   - Requisição: `GET /users/by-email?email=invalid-email`\n   - Esperado: Possível HTTP 404 ou 422, verificar comportamento.\n6. **Busca com e-mail contendo espaços ou caracteres especiais**\n   - Requisição: `GET /users/by-email?email=ana @example.com`\n   - Esperado: Verificar se retorna 404 ou erro de validação.\n7. **Verificar resposta para múltiplos usuários com mesmo e-mail (se possível)**\n   - Se o sistema permitir duplicatas, verificar qual usuário é retornado.\n8. **Verificar que o retorno não inclui campos sensíveis**\n   - Confirmar que o JSON retornado contém apenas os campos esperados (`id`, `name`, `email`).\n\n# Sugestões de testes unitários\n\n- Testar `get_user_by_email` com:\n  - E-mail válido que existe → retorna `UserResponse` correto.\n  - E-mail válido que não existe → levanta `HTTPException` 404.\n  - E-mail vazio ou None → levanta erro de validação (se aplicável).\n- Mockar `user_service.find_by_email` para simular os casos acima.\n- Testar que o método retorna exatamente o objeto retornado pelo serviço.\n- Testar que a exceção HTTP 404 contém a mensagem correta.\n- Testar que o endpoint está registrado com o método GET e caminho correto.\n\n# Sugestões de testes de integração\n\n- Testar o endpoint `/users/by-email` via cliente HTTP real (ex: `TestClient` do FastAPI):\n  - Caso sucesso: e-mail existente retorna 200 e JSON correto.\n  - Caso falha: e-mail inexistente retorna 404 com mensagem correta.\n  - Parâmetro obrigatório: ausência do parâmetro retorna 422.\n  - Parâmetro vazio retorna 404 ou 422 conforme implementação.\n- Testar integração com o serviço real `user_service` para garantir que a busca funciona com dados reais.\n- Testar que o endpoint não interfere em outras rotas estáticas ou dinâmicas.\n- Testar que o endpoint respeita o contrato do `response_model` `UserResponse`.\n- Testar que o endpoint não retorna dados sensíveis (ex: senha, tokens).\n- Testar comportamento com e-mails com maiúsculas/minúsculas (case sensitivity).\n- Testar concorrência se possível (múltiplas requisições simultâneas).\n\n# Sugestões de testes de carga ou desempenho\n\n- Não há indicação clara na mudança que justifique testes de carga ou desempenho específicos para este endpoint.\n- Caso o serviço `user_service.find_by_email` seja custoso, pode-se considerar testes de carga no futuro, mas não há evidência atual.\n\n# Pontos que precisam de esclarecimento\n\n- **Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples. Há necessidade de validação explícita do formato de e-mail na rota? Atualmente, o Pydantic não valida parâmetros de query string automaticamente.\n- **Comportamento para e-mails vazios ou inválidos**: Qual o comportamento esperado? Retornar 404 ou erro de validação?\n- **Permissão e segurança**: O endpoint é público? Há algum controle de autenticação/autorização esperado para essa rota?\n- **Tratamento de múltiplos usuários com mesmo e-mail**: O sistema permite duplicatas? Se sim, qual usuário deve ser retornado? O primeiro? Todos?\n- **Inclusão futura de campos sensíveis no `UserResponse`**: Há preocupação com exposição de dados sensíveis? Atualmente parece seguro, mas deve-se monitorar.\n- **Internacionalização da mensagem de erro**: A mensagem \"Usuário não encontrado\" está em português. É consistente com o restante da API? Há suporte para outros idiomas?\n\n---\n\n**Resumo:** A mudança adiciona um endpoint simples e direto para buscar usuário por e-mail exato, com tratamento básico de erro 404. A implementação é consistente com o padrão do projeto e já possui documentação e testes relacionados no contexto Java. Os principais riscos são ausência de validação do parâmetro e possíveis problemas de segurança e consistência de dados. Recomenda-se testes focados em validação de entrada, resposta correta e tratamento de erros, além de esclarecer pontos de negócio sobre validação e segurança.\n\n---",
+    "review_result": {
+      "summary": "- **Nova funcionalidade**: inclusão de um novo endpoint REST para busca de usuário por e-mail exato.\n\n- Adiciona uma nova rota GET `/users/by-email` que permite buscar um usuário pelo e-mail exato.\n- Facilita consultas diretas por e-mail, que antes só poderiam ser feitas via listagem e filtro manual.\n- Pode ser usada por clientes da API para validação rápida da existência de um usuário pelo e-mail.\n- Não altera endpoints existentes, portanto não deve impactar funcionalidades anteriores.\n- Pode aumentar a superfície de ataque se não houver controle de acesso (não evidenciado no código).\n- Depende da implementação correta de `user_service.find_by_email` para garantir retorno correto e consistente.",
+      "findings": [
+        {
+          "description": "**Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples, sem validação explícita de formato de e-mail. Pode aceitar strings inválidas, o que pode levar a buscas inúteis ou erros no serviço.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Comportamento para e-mails vazios ou malformados**: Não há tratamento explícito para e-mails vazios ou inválidos, o que pode resultar em comportamento inesperado ou erros não tratados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Dependência do serviço `user_service.find_by_email`**: Se o serviço não tratar corretamente casos de múltiplos usuários com mesmo e-mail (se permitido), pode retornar dados incorretos ou inconsistentes.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Exposição de dados sensíveis**: O retorno é do tipo `UserResponse`, que no contexto atual parece conter `id`, `name` e `email`. Se futuramente o modelo incluir dados sensíveis, pode haver vazamento.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ausência de autenticação/autorização**: O endpoint não mostra nenhum controle de acesso, o que pode ser um risco dependendo do contexto de uso da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Possível conflito de rotas**: Embora improvável, a rota `/users/by-email` deve ser estática para não conflitar com rotas dinâmicas como `/users/{user_id}`. O arquivo já segue essa prática, mas é importante manter.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff adiciona o método `get_user_by_email` no arquivo `python-api/app/api/routes.py`:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O método usa o serviço `user_service.find_by_email(email)` para buscar o usuário.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Caso o usuário não seja encontrado, retorna HTTP 404 com mensagem \"Usuário não encontrado\".",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Caso encontrado, retorna o objeto `UserResponse` correspondente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint está documentado no contexto adicional (`docs/endpoints.md`) com parâmetros e respostas esperadas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há testes de integração Java para esse endpoint, indicando que o endpoint já é esperado e testado em outro módulo (Java API), com casos para sucesso, 404 e 400 (parâmetro ausente).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo `routes.py` já possui endpoints similares para busca por ID, email parcial (search), e outros relacionados a usuários.",
+          "severity": "WARN",
+          "line_number": null
+        },
+        {
+          "description": "Adiciona uma nova rota GET `/users/by-email` que permite buscar um usuário pelo e-mail exato.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Facilita consultas diretas por e-mail, que antes só poderiam ser feitas via listagem e filtro manual.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode ser usada por clientes da API para validação rápida da existência de um usuário pelo e-mail.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não altera endpoints existentes, portanto não deve impactar funcionalidades anteriores.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode aumentar a superfície de ataque se não houver controle de acesso (não evidenciado no código).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Depende da implementação correta de `user_service.find_by_email` para garantir retorno correto e consistente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples. Há necessidade de validação explícita do formato de e-mail na rota? Atualmente, o Pydantic não valida parâmetros de query string automaticamente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Comportamento para e-mails vazios ou inválidos**: Qual o comportamento esperado? Retornar 404 ou erro de validação?",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Permissão e segurança**: O endpoint é público? Há algum controle de autenticação/autorização esperado para essa rota?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Tratamento de múltiplos usuários com mesmo e-mail**: O sistema permite duplicatas? Se sim, qual usuário deve ser retornado? O primeiro? Todos?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Inclusão futura de campos sensíveis no `UserResponse`**: Há preocupação com exposição de dados sensíveis? Atualmente parece seguro, mas deve-se monitorar.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Internacionalização da mensagem de erro**: A mensagem \"Usuário não encontrado\" está em português. É consistente com o restante da API? Há suporte para outros idiomas?",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Busca por e-mail existente**",
+        "Requisição: `GET /users/by-email?email=ana@example.com`",
+        "Esperado: HTTP 200 com JSON contendo `id`, `name` e `email` correspondentes ao usuário.",
+        "**Busca por e-mail inexistente**",
+        "Requisição: `GET /users/by-email?email=naoexiste@example.com`",
+        "Esperado: HTTP 404 com JSON `{ \"detail\": \"Usuário não encontrado\" }`.",
+        "**Busca sem parâmetro `email`**",
+        "Requisição: `GET /users/by-email` sem query param `email`",
+        "Esperado: HTTP 422 (Unprocessable Entity) ou 400 (Bad Request) por falta de parâmetro obrigatório.",
+        "**Busca com parâmetro `email` vazio**",
+        "Requisição: `GET /users/by-email?email=`",
+        "Esperado: HTTP 404 ou 422, dependendo do tratamento interno.",
+        "**Busca com e-mail malformado**",
+        "Requisição: `GET /users/by-email?email=invalid-email`",
+        "Esperado: Possível HTTP 404 ou 422, verificar comportamento.",
+        "**Busca com e-mail contendo espaços ou caracteres especiais**",
+        "Requisição: `GET /users/by-email?email=ana @example.com`",
+        "Esperado: Verificar se retorna 404 ou erro de validação.",
+        "**Verificar resposta para múltiplos usuários com mesmo e-mail (se possível)**",
+        "Se o sistema permitir duplicatas, verificar qual usuário é retornado.",
+        "**Verificar que o retorno não inclui campos sensíveis**",
+        "Confirmar que o JSON retornado contém apenas os campos esperados (`id`, `name`, `email`).",
+        "Testar `get_user_by_email` com:",
+        "E-mail válido que existe → retorna `UserResponse` correto.",
+        "E-mail válido que não existe → levanta `HTTPException` 404.",
+        "E-mail vazio ou None → levanta erro de validação (se aplicável).",
+        "Mockar `user_service.find_by_email` para simular os casos acima.",
+        "Testar que o método retorna exatamente o objeto retornado pelo serviço.",
+        "Testar que a exceção HTTP 404 contém a mensagem correta.",
+        "Testar que o endpoint está registrado com o método GET e caminho correto.",
+        "Testar o endpoint `/users/by-email` via cliente HTTP real (ex: `TestClient` do FastAPI):",
+        "Caso sucesso: e-mail existente retorna 200 e JSON correto.",
+        "Caso falha: e-mail inexistente retorna 404 com mensagem correta.",
+        "Parâmetro obrigatório: ausência do parâmetro retorna 422.",
+        "Parâmetro vazio retorna 404 ou 422 conforme implementação.",
+        "Testar integração com o serviço real `user_service` para garantir que a busca funciona com dados reais.",
+        "Testar que o endpoint não interfere em outras rotas estáticas ou dinâmicas.",
+        "Testar que o endpoint respeita o contrato do `response_model` `UserResponse`.",
+        "Testar que o endpoint não retorna dados sensíveis (ex: senha, tokens).",
+        "Testar comportamento com e-mails com maiúsculas/minúsculas (case sensitivity).",
+        "Testar concorrência se possível (múltiplas requisições simultâneas).",
+        "Não há indicação clara na mudança que justifique testes de carga ou desempenho específicos para este endpoint.",
+        "Caso o serviço `user_service.find_by_email` seja custoso, pode-se considerar testes de carga no futuro, mas não há evidência atual."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Busca por e-mail existente**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=ana@example.com`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: HTTP 200 com JSON contendo `id`, `name` e `email` correspondentes ao usuário.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca por e-mail inexistente**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=naoexiste@example.com`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: HTTP 404 com JSON `{ \"detail\": \"Usuário não encontrado\" }`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca sem parâmetro `email`**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email` sem query param `email`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: HTTP 422 (Unprocessable Entity) ou 400 (Bad Request) por falta de parâmetro obrigatório.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com parâmetro `email` vazio**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: HTTP 404 ou 422, dependendo do tratamento interno.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com e-mail malformado**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=invalid-email`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Possível HTTP 404 ou 422, verificar comportamento.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com e-mail contendo espaços ou caracteres especiais**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/by-email?email=ana @example.com`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Verificar se retorna 404 ou erro de validação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Verificar resposta para múltiplos usuários com mesmo e-mail (se possível)**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Se o sistema permitir duplicatas, verificar qual usuário é retornado.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Verificar que o retorno não inclui campos sensíveis**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que o JSON retornado contém apenas os campos esperados (`id`, `name`, `email`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `get_user_by_email` com:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "E-mail válido que existe → retorna `UserResponse` correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "E-mail válido que não existe → levanta `HTTPException` 404.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "E-mail vazio ou None → levanta erro de validação (se aplicável).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Mockar `user_service.find_by_email` para simular os casos acima.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o método retorna exatamente o objeto retornado pelo serviço.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que a exceção HTTP 404 contém a mensagem correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint está registrado com o método GET e caminho correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `/users/by-email` via cliente HTTP real (ex: `TestClient` do FastAPI):",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso sucesso: e-mail existente retorna 200 e JSON correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso falha: e-mail inexistente retorna 404 com mensagem correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Parâmetro obrigatório: ausência do parâmetro retorna 422.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Parâmetro vazio retorna 404 ou 422 conforme implementação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com o serviço real `user_service` para garantir que a busca funciona com dados reais.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não interfere em outras rotas estáticas ou dinâmicas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint respeita o contrato do `response_model` `UserResponse`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não retorna dados sensíveis (ex: senha, tokens).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com e-mails com maiúsculas/minúsculas (case sensitivity).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência se possível (múltiplas requisições simultâneas).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não há indicação clara na mudança que justifique testes de carga ou desempenho específicos para este endpoint.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso o serviço `user_service.find_by_email` seja custoso, pode-se considerar testes de carga no futuro, mas não há evidência atual.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples, sem validação explícita de formato de e-mail. Pode aceitar strings inválidas, o que pode levar a buscas inúteis ou erros no serviço.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Comportamento para e-mails vazios ou malformados**: Não há tratamento explícito para e-mails vazios ou inválidos, o que pode resultar em comportamento inesperado ou erros não tratados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dependência do serviço `user_service.find_by_email`**: Se o serviço não tratar corretamente casos de múltiplos usuários com mesmo e-mail (se permitido), pode retornar dados incorretos ou inconsistentes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Exposição de dados sensíveis**: O retorno é do tipo `UserResponse`, que no contexto atual parece conter `id`, `name` e `email`. Se futuramente o modelo incluir dados sensíveis, pode haver vazamento.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ausência de autenticação/autorização**: O endpoint não mostra nenhum controle de acesso, o que pode ser um risco dependendo do contexto de uso da API.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível conflito de rotas**: Embora improvável, a rota `/users/by-email` deve ser estática para não conflitar com rotas dinâmicas como `/users/{user_id}`. O arquivo já segue essa prática, mas é importante manter.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O diff adiciona o método `get_user_by_email` no arquivo `python-api/app/api/routes.py`:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O método usa o serviço `user_service.find_by_email(email)` para buscar o usuário.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Caso o usuário não seja encontrado, retorna HTTP 404 com mensagem \"Usuário não encontrado\".",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Caso encontrado, retorna o objeto `UserResponse` correspondente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint está documentado no contexto adicional (`docs/endpoints.md`) com parâmetros e respostas esperadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há testes de integração Java para esse endpoint, indicando que o endpoint já é esperado e testado em outro módulo (Java API), com casos para sucesso, 404 e 400 (parâmetro ausente).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo `routes.py` já possui endpoints similares para busca por ID, email parcial (search), e outros relacionados a usuários.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Adiciona uma nova rota GET `/users/by-email` que permite buscar um usuário pelo e-mail exato.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Facilita consultas diretas por e-mail, que antes só poderiam ser feitas via listagem e filtro manual.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode ser usada por clientes da API para validação rápida da existência de um usuário pelo e-mail.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não altera endpoints existentes, portanto não deve impactar funcionalidades anteriores.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode aumentar a superfície de ataque se não houver controle de acesso (não evidenciado no código).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Depende da implementação correta de `user_service.find_by_email` para garantir retorno correto e consistente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação do parâmetro `email`**: O parâmetro é do tipo `str` simples. Há necessidade de validação explícita do formato de e-mail na rota? Atualmente, o Pydantic não valida parâmetros de query string automaticamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Comportamento para e-mails vazios ou inválidos**: Qual o comportamento esperado? Retornar 404 ou erro de validação?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Permissão e segurança**: O endpoint é público? Há algum controle de autenticação/autorização esperado para essa rota?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Tratamento de múltiplos usuários com mesmo e-mail**: O sistema permite duplicatas? Se sim, qual usuário deve ser retornado? O primeiro? Todos?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Inclusão futura de campos sensíveis no `UserResponse`**: Há preocupação com exposição de dados sensíveis? Atualmente parece seguro, mas deve-se monitorar.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Internacionalização da mensagem de erro**: A mensagem \"Usuário não encontrado\" está em português. É consistente com o restante da API? Há suporte para outros idiomas?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/app/api/routes.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar controle de acesso no endpoint `/users/by-email`: verificar se o endpoint exige autenticação/autorização adequada, ou se está aberto, avaliar riscos de exposição.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint com e-mails contendo caracteres Unicode válidos (ex: acentuação, caracteres internacionais) para garantir suporte internacional.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar resposta do endpoint para e-mails com maiúsculas misturadas e minúsculas, confirmando se a busca é case insensitive conforme esperado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint quando o serviço `user_service.find_by_email` lança exceções inesperadas (ex: timeout, erro interno), garantindo tratamento adequado e retorno HTTP 500.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não permite injeção de código ou ataques via parâmetro `email` (ex: SQL Injection, script injection), validando sanitização ou tratamento seguro.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint mantém a consistência do contrato de resposta mesmo se o modelo `UserResponse` for alterado futuramente para incluir campos sensíveis, simulando cenário de regressão.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo via cliente HTTP real incluindo autenticação (se aplicável), consulta por e-mail válido, inválido, vazio e malformado, validando mensagens e códigos HTTP.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência com múltiplas requisições simultâneas ao endpoint `/users/by-email` para verificar estabilidade e ausência de race conditions.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não conflita com outras rotas dinâmicas ou estáticas do arquivo `routes.py`, especialmente rotas relacionadas a usuários, garantindo roteamento correto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar internacionalização da mensagem de erro \"Usuário não encontrado\" para verificar consistência com o padrão da API e suporte a múltiplos idiomas, se aplicável.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint quando o parâmetro `email` contém apenas espaços em branco ou caracteres invisíveis, garantindo tratamento adequado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint retorna consistentemente HTTP 404 para e-mails inexistentes, mesmo se o serviço `user_service.find_by_email` retornar valores nulos, vazios ou listas vazias.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não retorna dados sensíveis mesmo em casos de erro ou exceção, garantindo que mensagens de erro não exponham informações internas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint responde corretamente a requisições com headers HTTP incomuns ou malformados, garantindo robustez do serviço.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/app/api/routes.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: - **Nova funcionalidade**: inclusão de um novo endpoint REST para busca de usuário por e-mail exato.\n\n- Adiciona uma nova rota GET `/users/by-email` que permite buscar um usuário pelo e-mail exato.\n- ...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os cenários funcionais e de validação do novo endpoint, porém faltam testes críticos relacionados à segurança, controle de acesso e robustez contra falhas inesperadas.\n- É fundamental validar o controle de acesso, pois a ausência dele pode aumentar a superfície de ataque, conforme apontado na revisão.\n- Testes de internacionalização e tratamento de caracteres Unicode são importantes para garantir suporte global e evitar falhas com dados reais.\n- Testes de concorrência e robustez contra exceções do serviço subjacente ajudam a garantir estabilidade em produção.\n- A estratégia reforça a necessidade de monitorar futuras alterações no modelo `UserResponse` para evitar vazamento de dados sensíveis.\n- Recomenda-se incluir testes E2E que simulem o uso real do endpoint, incluindo autenticação se aplicável, para validar o comportamento integrado.\n- A validação contra injeção e ataques via parâmetro `email` é crítica para segurança, mesmo que não explicitamente mencionada no código atual.\n- A consistência das mensagens de erro e o tratamento de casos de borda como espaços em branco no parâmetro devem ser garantidos para evitar comportamentos inesperados."
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.12,
+      "high_risk_enrichment": 11426.27,
+      "test_generation": 18789.54
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/tests/test_api.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\nAdição de testes automatizados para o endpoint `GET /users/by-email`.\n\n# Evidências observadas\n\n- No diff, foram adicionadas duas funções de teste no arquivo `python-api/tests/test_api.py`:\n  - `test_get_user_by_email_success()`: verifica que a requisição GET com um email existente retorna status 200 e dados corretos do usuário.\n  - `test_get_user_by_email_not_found()`: verifica que a requisição GET com um email inexistente retorna status 404 e mensagem de erro específica.\n- O arquivo atual já contém testes para outros endpoints relacionados a usuários, usando o `TestClient` do FastAPI.\n- O contexto adicional mostra que o endpoint `/users/by-email` existe e é testado também em testes Java (ex: `UserControllerIntegrationTest.java`), confirmando que a rota é parte da API.\n- A documentação de testes (`docs/testes.md`) lista testes unitários para vários endpoints, mas não menciona explicitamente testes para `/users/by-email`, indicando que essa adição preenche uma lacuna.\n- O teste usa um email \"ana@example.com\" que, segundo comentário, é um usuário \"seeded\" (pré-existente) no serviço de usuários, o que é consistente com outros testes que assumem usuários seededs como \"Ana Silva\".\n\n# Impacto provável\n\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.\n- Melhora a confiabilidade da API ao garantir que:\n  - A busca por usuário via email retorna corretamente o usuário quando encontrado.\n  - Retorna erro 404 com mensagem adequada quando o usuário não existe.\n- Pode ajudar a detectar regressões futuras nesse endpoint.\n- Não altera comportamento funcional, mas aumenta a segurança contra regressões.\n\n# Riscos identificados\n\n- Como são apenas testes adicionados, o risco de regressão é baixo.\n- Risco potencial de falso positivo se o estado do banco de dados ou do serviço de usuários não estiver consistente (ex: usuário \"ana@example.com\" não estiver seedado em algum ambiente).\n- Se o endpoint `/users/by-email` mudar sua interface (parâmetros, mensagens de erro), os testes podem falhar e demandar atualização.\n- O teste não cobre casos de parâmetros inválidos ou ausentes (ex: email vazio, email mal formatado), o que pode deixar lacunas.\n\n# Cenários de testes manuais\n\n1. **Busca por usuário existente:**\n   - Fazer requisição GET para `/users/by-email?email=ana@example.com`.\n   - Verificar retorno 200.\n   - Confirmar que o JSON contém `email: \"ana@example.com\"` e `name: \"Ana Silva\"`.\n\n2. **Busca por usuário inexistente:**\n   - Fazer requisição GET para `/users/by-email?email=nonexistent@example.com`.\n   - Verificar retorno 404.\n   - Confirmar que o JSON contém `detail: \"Usuário não encontrado\"`.\n\n3. **Parâmetro email ausente:**\n   - Fazer requisição GET para `/users/by-email` sem parâmetro `email`.\n   - Verificar se retorna erro 400 (Bad Request) ou comportamento esperado.\n\n4. **Parâmetro email vazio:**\n   - Fazer requisição GET para `/users/by-email?email=`.\n   - Verificar se retorna erro 404 ou outro comportamento esperado.\n\n5. **Parâmetro email com formato inválido:**\n   - Fazer requisição GET para `/users/by-email?email=invalid-email`.\n   - Verificar resposta e status code.\n\n# Sugestões de testes unitários\n\n- Testar o endpoint `/users/by-email` com:\n  - Email válido e existente (já implementado).\n  - Email válido e inexistente (já implementado).\n  - Email ausente (deve retornar 400 Bad Request).\n  - Email vazio (deve retornar 404 ou erro específico).\n  - Email com formato inválido (deve retornar 422 ou erro de validação).\n- Testar se a resposta não inclui dados sensíveis (ex: senha).\n- Testar o comportamento do serviço de usuários mockado para garantir que o controlador responde corretamente.\n\n# Sugestões de testes de integração\n\n- Testar fluxo completo:\n  - Criar usuário com email específico.\n  - Buscar usuário por email via `/users/by-email`.\n  - Atualizar usuário e verificar se a busca reflete a atualização.\n  - Deletar usuário e verificar se a busca retorna 404.\n- Testar concorrência de buscas por email para garantir consistência.\n- Testar integração com camada de persistência (se aplicável) para garantir que o endpoint reflete o estado real dos dados.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável, pois a mudança é apenas adição de testes funcionais e não altera código de produção.\n\n# Pontos que precisam de esclarecimento\n\n- Qual o comportamento esperado quando o parâmetro `email` está ausente ou vazio? O teste atual não cobre esses casos.\n- O endpoint `/users/by-email` valida o formato do email? Se sim, qual o status code retornado para email inválido?\n- Existe algum limite de taxa ou proteção contra abusos para esse endpoint?\n- O serviço de usuários garante que emails são únicos? (Parece sim, dado o teste de duplicidade em outros testes).\n- A mensagem de erro `\"Usuário não encontrado\"` é fixa e internacionalizada? Há suporte para outros idiomas?\n\n---\n\n**Resumo:** A mudança adiciona testes funcionais importantes para o endpoint `/users/by-email`, cobrindo casos de sucesso e usuário não encontrado. Isso melhora a cobertura e a confiabilidade da API. Recomenda-se complementar com testes para parâmetros inválidos e ausentes, além de testes de integração para fluxos completos. Não há riscos de regressão no código de produção, mas atenção ao estado do ambiente de testes para evitar falsos positivos.",
+    "review_result": {
+      "summary": "Adição de testes automatizados para o endpoint `GET /users/by-email`.\n\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.\n- Melhora a confiabilidade da API ao garantir que:\n  - A busca por usuário via email retorna corretamente o usuário quando encontrado.\n  - Retorna erro 404 com mensagem adequada quando o usuário não existe.\n- Pode ajudar a detectar regressões futuras nesse endpoint.\n- Não altera comportamento funcional, mas aumenta a segurança contra regressões.",
+      "findings": [
+        {
+          "description": "Como são apenas testes adicionados, o risco de regressão é baixo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Risco potencial de falso positivo se o estado do banco de dados ou do serviço de usuários não estiver consistente (ex: usuário \"ana@example.com\" não estiver seedado em algum ambiente).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Se o endpoint `/users/by-email` mudar sua interface (parâmetros, mensagens de erro), os testes podem falhar e demandar atualização.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "O teste não cobre casos de parâmetros inválidos ou ausentes (ex: email vazio, email mal formatado), o que pode deixar lacunas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No diff, foram adicionadas duas funções de teste no arquivo `python-api/tests/test_api.py`:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`test_get_user_by_email_success()`: verifica que a requisição GET com um email existente retorna status 200 e dados corretos do usuário.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`test_get_user_by_email_not_found()`: verifica que a requisição GET com um email inexistente retorna status 404 e mensagem de erro específica.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo atual já contém testes para outros endpoints relacionados a usuários, usando o `TestClient` do FastAPI.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto adicional mostra que o endpoint `/users/by-email` existe e é testado também em testes Java (ex: `UserControllerIntegrationTest.java`), confirmando que a rota é parte da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A documentação de testes (`docs/testes.md`) lista testes unitários para vários endpoints, mas não menciona explicitamente testes para `/users/by-email`, indicando que essa adição preenche uma lacuna.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O teste usa um email \"ana@example.com\" que, segundo comentário, é um usuário \"seeded\" (pré-existente) no serviço de usuários, o que é consistente com outros testes que assumem usuários seededs como \"Ana Silva\".",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Melhora a confiabilidade da API ao garantir que:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A busca por usuário via email retorna corretamente o usuário quando encontrado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Retorna erro 404 com mensagem adequada quando o usuário não existe.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Pode ajudar a detectar regressões futuras nesse endpoint.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não altera comportamento funcional, mas aumenta a segurança contra regressões.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual o comportamento esperado quando o parâmetro `email` está ausente ou vazio? O teste atual não cobre esses casos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint `/users/by-email` valida o formato do email? Se sim, qual o status code retornado para email inválido?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe algum limite de taxa ou proteção contra abusos para esse endpoint?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço de usuários garante que emails são únicos? (Parece sim, dado o teste de duplicidade em outros testes).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A mensagem de erro `\"Usuário não encontrado\"` é fixa e internacionalizada? Há suporte para outros idiomas?",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Busca por usuário existente:**",
+        "Fazer requisição GET para `/users/by-email?email=ana@example.com`.",
+        "Verificar retorno 200.",
+        "Confirmar que o JSON contém `email: \"ana@example.com\"` e `name: \"Ana Silva\"`.",
+        "**Busca por usuário inexistente:**",
+        "Fazer requisição GET para `/users/by-email?email=nonexistent@example.com`.",
+        "Verificar retorno 404.",
+        "Confirmar que o JSON contém `detail: \"Usuário não encontrado\"`.",
+        "**Parâmetro email ausente:**",
+        "Fazer requisição GET para `/users/by-email` sem parâmetro `email`.",
+        "Verificar se retorna erro 400 (Bad Request) ou comportamento esperado.",
+        "**Parâmetro email vazio:**",
+        "Fazer requisição GET para `/users/by-email?email=`.",
+        "Verificar se retorna erro 404 ou outro comportamento esperado.",
+        "**Parâmetro email com formato inválido:**",
+        "Fazer requisição GET para `/users/by-email?email=invalid-email`.",
+        "Verificar resposta e status code.",
+        "Testar o endpoint `/users/by-email` com:",
+        "Email válido e existente (já implementado).",
+        "Email válido e inexistente (já implementado).",
+        "Email ausente (deve retornar 400 Bad Request).",
+        "Email vazio (deve retornar 404 ou erro específico).",
+        "Email com formato inválido (deve retornar 422 ou erro de validação).",
+        "Testar se a resposta não inclui dados sensíveis (ex: senha).",
+        "Testar o comportamento do serviço de usuários mockado para garantir que o controlador responde corretamente.",
+        "Testar fluxo completo:",
+        "Criar usuário com email específico.",
+        "Buscar usuário por email via `/users/by-email`.",
+        "Atualizar usuário e verificar se a busca reflete a atualização.",
+        "Deletar usuário e verificar se a busca retorna 404.",
+        "Testar concorrência de buscas por email para garantir consistência.",
+        "Testar integração com camada de persistência (se aplicável) para garantir que o endpoint reflete o estado real dos dados.",
+        "Não aplicável, pois a mudança é apenas adição de testes funcionais e não altera código de produção."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Busca por usuário existente:**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição GET para `/users/by-email?email=ana@example.com`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar retorno 200.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que o JSON contém `email: \"ana@example.com\"` e `name: \"Ana Silva\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca por usuário inexistente:**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição GET para `/users/by-email?email=nonexistent@example.com`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar retorno 404.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que o JSON contém `detail: \"Usuário não encontrado\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Parâmetro email ausente:**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição GET para `/users/by-email` sem parâmetro `email`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se retorna erro 400 (Bad Request) ou comportamento esperado.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Parâmetro email vazio:**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição GET para `/users/by-email?email=`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se retorna erro 404 ou outro comportamento esperado.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Parâmetro email com formato inválido:**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fazer requisição GET para `/users/by-email?email=invalid-email`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar resposta e status code.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `/users/by-email` com:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Email válido e existente (já implementado).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Email válido e inexistente (já implementado).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Email ausente (deve retornar 400 Bad Request).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Email vazio (deve retornar 404 ou erro específico).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Email com formato inválido (deve retornar 422 ou erro de validação).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se a resposta não inclui dados sensíveis (ex: senha).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o comportamento do serviço de usuários mockado para garantir que o controlador responde corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Criar usuário com email específico.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Buscar usuário por email via `/users/by-email`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Atualizar usuário e verificar se a busca reflete a atualização.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Deletar usuário e verificar se a busca retorna 404.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência de buscas por email para garantir consistência.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com camada de persistência (se aplicável) para garantir que o endpoint reflete o estado real dos dados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável, pois a mudança é apenas adição de testes funcionais e não altera código de produção.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Como são apenas testes adicionados, o risco de regressão é baixo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Risco potencial de falso positivo se o estado do banco de dados ou do serviço de usuários não estiver consistente (ex: usuário \"ana@example.com\" não estiver seedado em algum ambiente).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se o endpoint `/users/by-email` mudar sua interface (parâmetros, mensagens de erro), os testes podem falhar e demandar atualização.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O teste não cobre casos de parâmetros inválidos ou ausentes (ex: email vazio, email mal formatado), o que pode deixar lacunas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No diff, foram adicionadas duas funções de teste no arquivo `python-api/tests/test_api.py`:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `test_get_user_by_email_success()`: verifica que a requisição GET com um email existente retorna status 200 e dados corretos do usuário.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `test_get_user_by_email_not_found()`: verifica que a requisição GET com um email inexistente retorna status 404 e mensagem de erro específica.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo atual já contém testes para outros endpoints relacionados a usuários, usando o `TestClient` do FastAPI.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O contexto adicional mostra que o endpoint `/users/by-email` existe e é testado também em testes Java (ex: `UserControllerIntegrationTest.java`), confirmando que a rota é parte da API.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A documentação de testes (`docs/testes.md`) lista testes unitários para vários endpoints, mas não menciona explicitamente testes para `/users/by-email`, indicando que essa adição preenche uma lacuna.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O teste usa um email \"ana@example.com\" que, segundo comentário, é um usuário \"seeded\" (pré-existente) no serviço de usuários, o que é consistente com outros testes que assumem usuários seededs como \"Ana Silva\".",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Melhora a confiabilidade da API ao garantir que:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A busca por usuário via email retorna corretamente o usuário quando encontrado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Retorna erro 404 com mensagem adequada quando o usuário não existe.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode ajudar a detectar regressões futuras nesse endpoint.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não altera comportamento funcional, mas aumenta a segurança contra regressões.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual o comportamento esperado quando o parâmetro `email` está ausente ou vazio? O teste atual não cobre esses casos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint `/users/by-email` valida o formato do email? Se sim, qual o status code retornado para email inválido?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe algum limite de taxa ou proteção contra abusos para esse endpoint?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço de usuários garante que emails são únicos? (Parece sim, dado o teste de duplicidade em outros testes).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A mensagem de erro `\"Usuário não encontrado\"` é fixa e internacionalizada? Há suporte para outros idiomas?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/tests/test_api.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar limite de tamanho do parâmetro `email` para garantir que emails muito longos sejam tratados adequadamente (ex: retorno 422 ou erro específico).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint com múltiplos parâmetros `email` na query string para verificar se o sistema rejeita ou processa corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar resposta do endpoint quando o serviço de usuários está indisponível ou retorna erro (mockar falha do serviço para garantir tratamento adequado e retorno 500 ou mensagem apropriada).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint protege contra ataques de injeção via parâmetro `email` (ex: SQL Injection, script injection) garantindo que não haja vulnerabilidade.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint respeita limites de taxa (rate limiting) para evitar abusos, simulando múltiplas requisições rápidas e verificando resposta adequada (ex: 429 Too Many Requests).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do endpoint com o sistema de autenticação/autorização para garantir que apenas usuários autorizados possam acessar `/users/by-email`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar internacionalização/localização da mensagem de erro `\"Usuário não encontrado\"` para verificar se o sistema retorna mensagens no idioma correto conforme configuração.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar consistência do endpoint em ambientes com diferentes estados do banco de dados, incluindo dados parcialmente corrompidos ou inconsistentes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de criação, busca, atualização e deleção de usuário via API real, incluindo o endpoint `/users/by-email`, para garantir que o sistema se comporta corretamente em ambiente real.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência e paralelismo em chamadas simultâneas ao endpoint `/users/by-email` para garantir que não haja condições de corrida ou inconsistências.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint em cenários de alta carga para avaliar performance e estabilidade.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/tests/test_api.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Adição de testes automatizados para o endpoint `GET /users/by-email`.\n\n- A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint `/users/by-email`.\n- Melhora a con...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre muito bem os casos funcionais principais e validações básicas do endpoint `/users/by-email`.\n- Os testes adicionais recomendados focam em aspectos críticos de segurança, robustez, performance e integração, que são essenciais para um arquivo classificado como ALTO RISCO.\n- A inclusão de testes para limites de tamanho, múltiplos parâmetros, falhas do serviço, injeção e rate limiting reforça a proteção contra ataques e abusos.\n- Testes de internacionalização e autorização são importantes para garantir conformidade com requisitos não funcionais e segurança.\n- Testes E2E e de concorrência garantem que o endpoint funcione corretamente em ambiente real e sob carga, prevenindo regressões difíceis de detectar em testes unitários.\n- Recomenda-se manter ambiente de testes com dados seededs consistentes para evitar falsos positivos e facilitar manutenção dos testes."
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.13,
+      "high_risk_enrichment": 8293.35,
+      "test_generation": 17856.9
+    },
+    "diagnostic_notes": []
+  }
+]

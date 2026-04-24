@@ -1,0 +1,16 @@
+{
+  "total_files": 4,
+  "risk_distribution": {
+    "LOW": 0,
+    "MEDIUM": 0,
+    "HIGH": 4
+  },
+  "total_steps_executed": 24,
+  "total_steps_skipped": 0,
+  "total_fallbacks_triggered": 0,
+  "policies_applied": [
+    "high_risk_llm_enrichment",
+    "strategy_HIGH"
+  ],
+  "total_duration_ms": 137311.02
+}

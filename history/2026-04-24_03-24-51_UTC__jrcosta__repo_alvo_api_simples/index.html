@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 24 Apr 2026 – 03:24:51 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-24_03-24-51_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>24 Apr 2026 – 03:24:51 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-javascript-apisrctestsuserstestjs">Arquivo analisado: javascript-api/src/<strong>tests</strong>/users.test.js</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Inclusão de testes automatizados (testes de integração) para o endpoint <code>GET /users/by-email</code>.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>javascript-api/src/__tests__/users.test.js</code> com testes para a rota <code>/users/by-email</code>.</li>
+<li>O arquivo contém três testes principais:</li>
+<li>Retorno 200 com o usuário correto quando o email existe.</li>
+<li>Retorno 404 com mensagem específica quando o email não existe.</li>
+<li>Retorno 400 com mensagem específica quando o parâmetro <code>email</code> está ausente.</li>
+<li>O <code>beforeEach</code> reseta o estado do <code>userService.users</code> para um conjunto fixo de usuários, garantindo ambiente controlado para os testes.</li>
+<li>No contexto adicional, não há testes para <code>/users/by-email</code> na pasta <code>javascript-api/tests/</code>, mas há testes similares para usuários em outras rotas.</li>
+<li>Em <code>java-api/src/test/java/com/repoalvo/javaapi/UserControllerIntegrationTest.java</code> há testes para o mesmo endpoint, porém em Java, indicando que a funcionalidade já existe e está sendo testada em outro stack.</li>
+<li>O uso do <code>supertest</code> e <code>app</code> indica que os testes são de integração, testando a rota HTTP real.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint <code>/users/by-email</code>.</li>
+<li>Provavelmente melhora a confiabilidade e a detecção precoce de regressões para essa rota.</li>
+<li>Garante que o endpoint trate corretamente os casos de sucesso, ausência do usuário e falta do parâmetro obrigatório.</li>
+<li>Pode facilitar futuras refatorações ou correções no endpoint, pois há testes automatizados que validam o comportamento esperado.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Como é uma adição de testes, o risco de regressão funcional é baixo.</li>
+<li>Risco potencial de falso positivo/negativo se o mock do <code>userService.users</code> não refletir o comportamento real do serviço, mas isso é mitigado pelo reset no <code>beforeEach</code>.</li>
+<li>Se o endpoint <code>/users/by-email</code> sofrer alterações na API (ex: mudança de parâmetros, mensagens de erro), os testes podem quebrar e demandar atualização.</li>
+<li>Possível duplicidade de testes se já existirem testes similares em outras pastas (ex: <code>javascript-api/tests/users.test.js</code>), o que pode causar manutenção redundante.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Buscar usuário existente pelo email <code>alice@example.com</code> e verificar retorno 200 com dados corretos.</li>
+<li>Buscar usuário com email inexistente <code>notfound@example.com</code> e verificar retorno 404 com mensagem "Usuário não encontrado".</li>
+<li>Fazer requisição para <code>/users/by-email</code> sem o parâmetro <code>email</code> e verificar retorno 400 com mensagem "Parâmetro email é obrigatório".</li>
+<li>Testar com email vazio (<code>email=</code>) para verificar comportamento (não coberto no teste automatizado, mas presente no contexto Java).</li>
+<li>Testar com email mal formatado para verificar se há validação (não coberto no teste automatizado).</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar a função/método do serviço que busca usuário por email isoladamente, cobrindo:</li>
+<li>Retorno correto do usuário quando email existe.</li>
+<li>Retorno nulo ou exceção quando email não existe.</li>
+<li>Validação do parâmetro email (ex: vazio, nulo).</li>
+<li>Testar o controlador (controller) para garantir que ele retorna os códigos HTTP e mensagens corretas conforme o resultado do serviço.</li>
+<li>Mockar o <code>userService</code> para simular diferentes cenários e validar respostas do controller.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Expandir os testes atuais para cobrir:</li>
+<li>Caso de email vazio (<code>email=</code>) retornando 404 ou 400 conforme regra de negócio.</li>
+<li>Testar headers HTTP, como <code>Accept</code> e <code>Content-Type</code>, para garantir conformidade.</li>
+<li>Testar resposta para métodos HTTP não suportados na rota (ex: POST, PUT).</li>
+<li>Testar comportamento com usuários adicionais ou com dados especiais (ex: emails com maiúsculas, espaços).</li>
+<li>Validar que a resposta não inclui dados sensíveis (ex: senha), conforme boas práticas observadas no contexto Java.</li>
+<li>Testar integração com banco de dados real ou mock mais próximo do ambiente de produção para validar consistência.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável. A mudança é apenas inclusão de testes funcionais para endpoint específico, sem alteração de lógica ou performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o comportamento esperado quando o parâmetro <code>email</code> é passado vazio (<code>email=</code>)? O teste Java sugere 404, mas o teste JS não cobre esse caso.</li>
+<li>Existe alguma validação de formato do email no endpoint? Caso sim, testes para emails inválidos deveriam ser adicionados.</li>
+<li>O <code>userService.users</code> é um mock simples; qual a complexidade real do serviço? Há cache, banco de dados, ou outras integrações que possam impactar o comportamento?</li>
+<li>Há planos para unificar os testes de usuários entre as pastas <code>javascript-api/tests/</code> e <code>javascript-api/src/__tests__/</code> para evitar duplicidade?</li>
+<li>As mensagens de erro estão padronizadas? O teste usa mensagens em português, isso está alinhado com o padrão do sistema?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong><br />
+A mudança adiciona testes de integração para o endpoint <code>/users/by-email</code> no ambiente Node.js, cobrindo os principais fluxos de sucesso, usuário não encontrado e falta do parâmetro obrigatório. Isso aumenta a cobertura e a confiabilidade da API. Recomenda-se complementar os testes com casos de email vazio, validação de formato e garantir alinhamento com mensagens e padrões do sistema. Não há riscos de regressão na aplicação, pois não há alteração de código de produção.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcroutesusersjs">Arquivo analisado: javascript-api/src/routes/users.js</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<ul>
+<li><strong>Adição de funcionalidade</strong>: inclusão de um novo endpoint <code>GET /users/by-email</code> para buscar usuário pelo e-mail via query parameter.</li>
+</ul>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff adiciona o seguinte trecho no arquivo <code>javascript-api/src/routes/users.js</code>:</li>
+</ul>
+<pre><code class="language-javascript">router.get('/by-email', (req, res) =&gt; {
+  const email = req.query.email;
+  if (!email) {
+    return res.status(400).json({ detail: &quot;Parâmetro email é obrigatório&quot; });
+  }
+  const user = userService.findByEmail(email);
+  if (!user) {
+    return res.status(404).json({ detail: &quot;Usuário não encontrado&quot; });
+  }
+  return res.json(user);
+});
+</code></pre>
+<ul>
+<li>O arquivo atual já contém outros endpoints relacionados a usuários, incluindo buscas por ID, listagem, criação, etc.</li>
+<li>O contexto do repositório indica que o endpoint <code>/users/by-email</code> já é documentado no README.md e que existe uma implementação equivalente na API Java.</li>
+<li>Há testes existentes no arquivo <code>javascript-api/src/__tests__/users.test.js</code> que cobrem o endpoint <code>/users/by-email</code> com os seguintes casos:</li>
+<li>Retorno 200 com usuário válido quando o e-mail existe.</li>
+<li>Retorno 404 quando o e-mail não existe.</li>
+<li>Retorno 400 quando o parâmetro <code>email</code> está ausente.</li>
+<li>Também há testes de integração Java que cobrem o mesmo endpoint, reforçando a importância e uso esperado do endpoint.</li>
+<li>O serviço <code>userService.findByEmail(email)</code> é utilizado para buscar o usuário, consistente com outras partes do código.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li><strong>Funcionalidade nova</strong>: permite que clientes da API busquem um usuário pelo e-mail via query string, o que facilita buscas diretas sem precisar do ID.</li>
+<li><strong>Validação de entrada</strong>: o endpoint valida a presença do parâmetro <code>email</code> e retorna erro 400 caso esteja ausente.</li>
+<li><strong>Tratamento de usuário não encontrado</strong>: retorna 404 com mensagem clara.</li>
+<li><strong>Resposta JSON</strong>: retorna o objeto completo do usuário encontrado, diferente do endpoint <code>/users/:user_id/email</code> que retorna apenas o e-mail.</li>
+<li><strong>Consistência com outras rotas</strong>: segue padrão de tratamento de erros e respostas já adotado no arquivo.</li>
+<li><strong>Possível aumento no uso do serviço <code>userService.findByEmail</code></strong>: pode impactar performance se a base de usuários crescer, mas não há evidência de preocupação com performance neste contexto.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Ausência de sanitização ou validação do parâmetro <code>email</code></strong>: o código apenas verifica se o parâmetro existe, mas não valida se é um e-mail válido. Isso pode levar a buscas inúteis ou erros silenciosos no serviço.</li>
+<li><strong>Exposição de dados sensíveis</strong>: o endpoint retorna o objeto <code>user</code> completo. Se o objeto usuário contiver campos sensíveis (como senha, tokens, etc.), eles podem ser expostos. No código atual não há indicação clara de campos sensíveis, mas é um risco a ser avaliado.</li>
+<li><strong>Conflito de rotas</strong>: a rota <code>/by-email</code> é estática e não conflita com rotas dinâmicas, mas a ordem das rotas deve ser mantida para evitar captura incorreta.</li>
+<li><strong>Dependência direta do <code>userService.findByEmail</code></strong>: se o método não tratar corretamente casos de e-mails inválidos ou mal formatados, pode haver erros não tratados.</li>
+<li><strong>Possível falta de testes para casos de e-mail vazio (string vazia)</strong>: o código verifica <code>if (!email)</code>, que cobre <code>undefined</code> e <code>null</code>, mas não está claro se string vazia é tratada como inválida (provavelmente sim, pois string vazia é falsy em JS).</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Busca por e-mail válido existente</strong><br />
+   - Requisição: <code>GET /users/by-email?email=ana@example.com</code><br />
+   - Esperado: status 200 e JSON com dados do usuário Ana.</p>
+</li>
+<li>
+<p><strong>Busca por e-mail inexistente</strong><br />
+   - Requisição: <code>GET /users/by-email?email=naoexiste@example.com</code><br />
+   - Esperado: status 404 e JSON com <code>{ detail: "Usuário não encontrado" }</code>.</p>
+</li>
+<li>
+<p><strong>Busca sem parâmetro <code>email</code></strong><br />
+   - Requisição: <code>GET /users/by-email</code><br />
+   - Esperado: status 400 e JSON com <code>{ detail: "Parâmetro email é obrigatório" }</code>.</p>
+</li>
+<li>
+<p><strong>Busca com parâmetro <code>email</code> vazio</strong><br />
+   - Requisição: <code>GET /users/by-email?email=</code><br />
+   - Esperado: status 400 (ou 404 dependendo do tratamento), verificar comportamento.</p>
+</li>
+<li>
+<p><strong>Busca com parâmetro <code>email</code> mal formatado</strong><br />
+   - Requisição: <code>GET /users/by-email?email=invalid-email</code><br />
+   - Esperado: comportamento definido pelo serviço, idealmente 404 ou erro de validação.</p>
+</li>
+<li>
+<p><strong>Verificar que o objeto retornado não contém dados sensíveis</strong><br />
+   - Confirmar que o JSON retornado não inclui campos como senha, tokens, etc.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar que o endpoint retorna 400 quando <code>email</code> está ausente ou vazio.</li>
+<li>Testar que o endpoint retorna 404 quando <code>userService.findByEmail</code> retorna <code>undefined</code>.</li>
+<li>Testar que o endpoint retorna 200 e o objeto correto quando <code>userService.findByEmail</code> retorna um usuário.</li>
+<li>Testar que o endpoint não expõe campos sensíveis no objeto retornado (mockar usuário com campo sensível e verificar exclusão).</li>
+<li>Testar comportamento com e-mails mal formatados (se houver validação no serviço).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo de criação de usuário e busca por e-mail via <code>/users/by-email</code>.</li>
+<li>Testar busca por e-mail inexistente e ausência do parâmetro.</li>
+<li>Testar concorrência de buscas por e-mail para garantir estabilidade.</li>
+<li>Testar integração com o serviço <code>userService</code> para garantir que o método <code>findByEmail</code> está sendo chamado corretamente.</li>
+<li>Testar que o endpoint está documentado e acessível conforme esperado (ex: via Swagger ou documentação).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança é uma adição simples de endpoint sem alteração em lógica pesada ou loops.</li>
+<li>Caso a base de usuários cresça muito, pode ser interessante monitorar performance do método <code>findByEmail</code>, mas não há evidência atual para isso.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O objeto <code>user</code> retornado pelo endpoint contém campos sensíveis? Se sim, há necessidade de filtragem antes do retorno?</li>
+<li>Existe alguma validação formal do parâmetro <code>email</code> (ex: formato válido) no serviço ou camada de rota? Se não, seria recomendável adicionar.</li>
+<li>Qual o comportamento esperado para e-mails vazios ou mal formatados? Atualmente, string vazia é tratada como ausência (status 400), mas e-mails inválidos?</li>
+<li>O serviço <code>userService.findByEmail</code> é síncrono e confiável para uso direto na rota? Há possibilidade de erro ou exceção que deveria ser tratada?</li>
+<li>Há necessidade de autenticação/autorização para este endpoint? Atualmente não há, mas pode ser um ponto de segurança dependendo do contexto.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona um endpoint útil e esperado para busca de usuário por e-mail via query string, com tratamento básico de erros. O código está consistente com o padrão do projeto e já possui testes automatizados cobrindo os casos principais. Os riscos principais são exposição de dados sensíveis e falta de validação do parâmetro <code>email</code>. Recomenda-se validar o formato do e-mail e garantir que o objeto retornado não contenha dados sensíveis. Testes manuais e automatizados devem focar nesses pontos.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappapiroutespy">Arquivo analisado: python-api/app/api/routes.py</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: inclusão de um novo endpoint REST para busca de usuário por e-mail exato.</li>
+</ul>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>
+<p>O diff adiciona o método <code>get_user_by_email</code> no arquivo <code>python-api/app/api/routes.py</code>:<br />
+  ```python<br />
+  @router.get("/users/by-email", response_model=UserResponse, tags=["users"])<br />
+  def get_user_by_email(email: str) -&gt; UserResponse:<br />
+      """Find a user by their exact email address."""<br />
+      user = user_service.find_by_email(email)</p>
+<p>if not user:<br />
+      raise HTTPException(<br />
+          status_code=status.HTTP_404_NOT_FOUND,<br />
+          detail="Usuário não encontrado",<br />
+      )</p>
+<p>return user<br />
+<code>``
+- O método usa o serviço</code>user_service.find_by_email(email)<code>para buscar o usuário.
+- Caso o usuário não seja encontrado, retorna HTTP 404 com mensagem "Usuário não encontrado".
+- Caso encontrado, retorna o objeto</code>UserResponse<code>correspondente.
+- O endpoint está documentado no contexto adicional (</code>docs/endpoints.md<code>) com parâmetros e respostas esperadas.
+- Há testes de integração Java para esse endpoint, indicando que o endpoint já é esperado e testado em outro módulo (Java API), com casos para sucesso, 404 e 400 (parâmetro ausente).
+- O arquivo</code>routes.py` já possui endpoints similares para busca por ID, email parcial (search), e outros relacionados a usuários.</p>
+</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Adiciona uma nova rota GET <code>/users/by-email</code> que permite buscar um usuário pelo e-mail exato.</li>
+<li>Facilita consultas diretas por e-mail, que antes só poderiam ser feitas via listagem e filtro manual.</li>
+<li>Pode ser usada por clientes da API para validação rápida da existência de um usuário pelo e-mail.</li>
+<li>Não altera endpoints existentes, portanto não deve impactar funcionalidades anteriores.</li>
+<li>Pode aumentar a superfície de ataque se não houver controle de acesso (não evidenciado no código).</li>
+<li>Depende da implementação correta de <code>user_service.find_by_email</code> para garantir retorno correto e consistente.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Validação do parâmetro <code>email</code></strong>: O parâmetro é do tipo <code>str</code> simples, sem validação explícita de formato de e-mail. Pode aceitar strings inválidas, o que pode levar a buscas inúteis ou erros no serviço.</li>
+<li><strong>Comportamento para e-mails vazios ou malformados</strong>: Não há tratamento explícito para e-mails vazios ou inválidos, o que pode resultar em comportamento inesperado ou erros não tratados.</li>
+<li><strong>Dependência do serviço <code>user_service.find_by_email</code></strong>: Se o serviço não tratar corretamente casos de múltiplos usuários com mesmo e-mail (se permitido), pode retornar dados incorretos ou inconsistentes.</li>
+<li><strong>Exposição de dados sensíveis</strong>: O retorno é do tipo <code>UserResponse</code>, que no contexto atual parece conter <code>id</code>, <code>name</code> e <code>email</code>. Se futuramente o modelo incluir dados sensíveis, pode haver vazamento.</li>
+<li><strong>Ausência de autenticação/autorização</strong>: O endpoint não mostra nenhum controle de acesso, o que pode ser um risco dependendo do contexto de uso da API.</li>
+<li><strong>Possível conflito de rotas</strong>: Embora improvável, a rota <code>/users/by-email</code> deve ser estática para não conflitar com rotas dinâmicas como <code>/users/{user_id}</code>. O arquivo já segue essa prática, mas é importante manter.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Busca por e-mail existente</strong><br />
+   - Requisição: <code>GET /users/by-email?email=ana@example.com</code><br />
+   - Esperado: HTTP 200 com JSON contendo <code>id</code>, <code>name</code> e <code>email</code> correspondentes ao usuário.</li>
+<li><strong>Busca por e-mail inexistente</strong><br />
+   - Requisição: <code>GET /users/by-email?email=naoexiste@example.com</code><br />
+   - Esperado: HTTP 404 com JSON <code>{ "detail": "Usuário não encontrado" }</code>.</li>
+<li><strong>Busca sem parâmetro <code>email</code></strong><br />
+   - Requisição: <code>GET /users/by-email</code> sem query param <code>email</code><br />
+   - Esperado: HTTP 422 (Unprocessable Entity) ou 400 (Bad Request) por falta de parâmetro obrigatório.</li>
+<li><strong>Busca com parâmetro <code>email</code> vazio</strong><br />
+   - Requisição: <code>GET /users/by-email?email=</code><br />
+   - Esperado: HTTP 404 ou 422, dependendo do tratamento interno.</li>
+<li><strong>Busca com e-mail malformado</strong><br />
+   - Requisição: <code>GET /users/by-email?email=invalid-email</code><br />
+   - Esperado: Possível HTTP 404 ou 422, verificar comportamento.</li>
+<li><strong>Busca com e-mail contendo espaços ou caracteres especiais</strong><br />
+   - Requisição: <code>GET /users/by-email?email=ana @example.com</code><br />
+   - Esperado: Verificar se retorna 404 ou erro de validação.</li>
+<li><strong>Verificar resposta para múltiplos usuários com mesmo e-mail (se possível)</strong><br />
+   - Se o sistema permitir duplicatas, verificar qual usuário é retornado.</li>
+<li><strong>Verificar que o retorno não inclui campos sensíveis</strong><br />
+   - Confirmar que o JSON retornado contém apenas os campos esperados (<code>id</code>, <code>name</code>, <code>email</code>).</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>get_user_by_email</code> com:</li>
+<li>E-mail válido que existe → retorna <code>UserResponse</code> correto.</li>
+<li>E-mail válido que não existe → levanta <code>HTTPException</code> 404.</li>
+<li>E-mail vazio ou None → levanta erro de validação (se aplicável).</li>
+<li>Mockar <code>user_service.find_by_email</code> para simular os casos acima.</li>
+<li>Testar que o método retorna exatamente o objeto retornado pelo serviço.</li>
+<li>Testar que a exceção HTTP 404 contém a mensagem correta.</li>
+<li>Testar que o endpoint está registrado com o método GET e caminho correto.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o endpoint <code>/users/by-email</code> via cliente HTTP real (ex: <code>TestClient</code> do FastAPI):</li>
+<li>Caso sucesso: e-mail existente retorna 200 e JSON correto.</li>
+<li>Caso falha: e-mail inexistente retorna 404 com mensagem correta.</li>
+<li>Parâmetro obrigatório: ausência do parâmetro retorna 422.</li>
+<li>Parâmetro vazio retorna 404 ou 422 conforme implementação.</li>
+<li>Testar integração com o serviço real <code>user_service</code> para garantir que a busca funciona com dados reais.</li>
+<li>Testar que o endpoint não interfere em outras rotas estáticas ou dinâmicas.</li>
+<li>Testar que o endpoint respeita o contrato do <code>response_model</code> <code>UserResponse</code>.</li>
+<li>Testar que o endpoint não retorna dados sensíveis (ex: senha, tokens).</li>
+<li>Testar comportamento com e-mails com maiúsculas/minúsculas (case sensitivity).</li>
+<li>Testar concorrência se possível (múltiplas requisições simultâneas).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há indicação clara na mudança que justifique testes de carga ou desempenho específicos para este endpoint.</li>
+<li>Caso o serviço <code>user_service.find_by_email</code> seja custoso, pode-se considerar testes de carga no futuro, mas não há evidência atual.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Validação do parâmetro <code>email</code></strong>: O parâmetro é do tipo <code>str</code> simples. Há necessidade de validação explícita do formato de e-mail na rota? Atualmente, o Pydantic não valida parâmetros de query string automaticamente.</li>
+<li><strong>Comportamento para e-mails vazios ou inválidos</strong>: Qual o comportamento esperado? Retornar 404 ou erro de validação?</li>
+<li><strong>Permissão e segurança</strong>: O endpoint é público? Há algum controle de autenticação/autorização esperado para essa rota?</li>
+<li><strong>Tratamento de múltiplos usuários com mesmo e-mail</strong>: O sistema permite duplicatas? Se sim, qual usuário deve ser retornado? O primeiro? Todos?</li>
+<li><strong>Inclusão futura de campos sensíveis no <code>UserResponse</code></strong>: Há preocupação com exposição de dados sensíveis? Atualmente parece seguro, mas deve-se monitorar.</li>
+<li><strong>Internacionalização da mensagem de erro</strong>: A mensagem "Usuário não encontrado" está em português. É consistente com o restante da API? Há suporte para outros idiomas?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona um endpoint simples e direto para buscar usuário por e-mail exato, com tratamento básico de erro 404. A implementação é consistente com o padrão do projeto e já possui documentação e testes relacionados no contexto Java. Os principais riscos são ausência de validação do parâmetro e possíveis problemas de segurança e consistência de dados. Recomenda-se testes focados em validação de entrada, resposta correta e tratamento de erros, além de esclarecer pontos de negócio sobre validação e segurança.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiteststest_apipy">Arquivo analisado: python-api/tests/test_api.py</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Adição de testes automatizados para o endpoint <code>GET /users/by-email</code>.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>No diff, foram adicionadas duas funções de teste no arquivo <code>python-api/tests/test_api.py</code>:</li>
+<li><code>test_get_user_by_email_success()</code>: verifica que a requisição GET com um email existente retorna status 200 e dados corretos do usuário.</li>
+<li><code>test_get_user_by_email_not_found()</code>: verifica que a requisição GET com um email inexistente retorna status 404 e mensagem de erro específica.</li>
+<li>O arquivo atual já contém testes para outros endpoints relacionados a usuários, usando o <code>TestClient</code> do FastAPI.</li>
+<li>O contexto adicional mostra que o endpoint <code>/users/by-email</code> existe e é testado também em testes Java (ex: <code>UserControllerIntegrationTest.java</code>), confirmando que a rota é parte da API.</li>
+<li>A documentação de testes (<code>docs/testes.md</code>) lista testes unitários para vários endpoints, mas não menciona explicitamente testes para <code>/users/by-email</code>, indicando que essa adição preenche uma lacuna.</li>
+<li>O teste usa um email "ana@example.com" que, segundo comentário, é um usuário "seeded" (pré-existente) no serviço de usuários, o que é consistente com outros testes que assumem usuários seededs como "Ana Silva".</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>A mudança não altera código de produção, apenas adiciona cobertura de testes para o endpoint <code>/users/by-email</code>.</li>
+<li>Melhora a confiabilidade da API ao garantir que:</li>
+<li>A busca por usuário via email retorna corretamente o usuário quando encontrado.</li>
+<li>Retorna erro 404 com mensagem adequada quando o usuário não existe.</li>
+<li>Pode ajudar a detectar regressões futuras nesse endpoint.</li>
+<li>Não altera comportamento funcional, mas aumenta a segurança contra regressões.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li>Como são apenas testes adicionados, o risco de regressão é baixo.</li>
+<li>Risco potencial de falso positivo se o estado do banco de dados ou do serviço de usuários não estiver consistente (ex: usuário "ana@example.com" não estiver seedado em algum ambiente).</li>
+<li>Se o endpoint <code>/users/by-email</code> mudar sua interface (parâmetros, mensagens de erro), os testes podem falhar e demandar atualização.</li>
+<li>O teste não cobre casos de parâmetros inválidos ou ausentes (ex: email vazio, email mal formatado), o que pode deixar lacunas.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Busca por usuário existente:</strong><br />
+   - Fazer requisição GET para <code>/users/by-email?email=ana@example.com</code>.<br />
+   - Verificar retorno 200.<br />
+   - Confirmar que o JSON contém <code>email: "ana@example.com"</code> e <code>name: "Ana Silva"</code>.</p>
+</li>
+<li>
+<p><strong>Busca por usuário inexistente:</strong><br />
+   - Fazer requisição GET para <code>/users/by-email?email=nonexistent@example.com</code>.<br />
+   - Verificar retorno 404.<br />
+   - Confirmar que o JSON contém <code>detail: "Usuário não encontrado"</code>.</p>
+</li>
+<li>
+<p><strong>Parâmetro email ausente:</strong><br />
+   - Fazer requisição GET para <code>/users/by-email</code> sem parâmetro <code>email</code>.<br />
+   - Verificar se retorna erro 400 (Bad Request) ou comportamento esperado.</p>
+</li>
+<li>
+<p><strong>Parâmetro email vazio:</strong><br />
+   - Fazer requisição GET para <code>/users/by-email?email=</code>.<br />
+   - Verificar se retorna erro 404 ou outro comportamento esperado.</p>
+</li>
+<li>
+<p><strong>Parâmetro email com formato inválido:</strong><br />
+   - Fazer requisição GET para <code>/users/by-email?email=invalid-email</code>.<br />
+   - Verificar resposta e status code.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar o endpoint <code>/users/by-email</code> com:</li>
+<li>Email válido e existente (já implementado).</li>
+<li>Email válido e inexistente (já implementado).</li>
+<li>Email ausente (deve retornar 400 Bad Request).</li>
+<li>Email vazio (deve retornar 404 ou erro específico).</li>
+<li>Email com formato inválido (deve retornar 422 ou erro de validação).</li>
+<li>Testar se a resposta não inclui dados sensíveis (ex: senha).</li>
+<li>Testar o comportamento do serviço de usuários mockado para garantir que o controlador responde corretamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo:</li>
+<li>Criar usuário com email específico.</li>
+<li>Buscar usuário por email via <code>/users/by-email</code>.</li>
+<li>Atualizar usuário e verificar se a busca reflete a atualização.</li>
+<li>Deletar usuário e verificar se a busca retorna 404.</li>
+<li>Testar concorrência de buscas por email para garantir consistência.</li>
+<li>Testar integração com camada de persistência (se aplicável) para garantir que o endpoint reflete o estado real dos dados.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é apenas adição de testes funcionais e não altera código de produção.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o comportamento esperado quando o parâmetro <code>email</code> está ausente ou vazio? O teste atual não cobre esses casos.</li>
+<li>O endpoint <code>/users/by-email</code> valida o formato do email? Se sim, qual o status code retornado para email inválido?</li>
+<li>Existe algum limite de taxa ou proteção contra abusos para esse endpoint?</li>
+<li>O serviço de usuários garante que emails são únicos? (Parece sim, dado o teste de duplicidade em outros testes).</li>
+<li>A mensagem de erro <code>"Usuário não encontrado"</code> é fixa e internacionalizada? Há suporte para outros idiomas?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona testes funcionais importantes para o endpoint <code>/users/by-email</code>, cobrindo casos de sucesso e usuário não encontrado. Isso melhora a cobertura e a confiabilidade da API. Recomenda-se complementar com testes para parâmetros inválidos e ausentes, além de testes de integração para fluxos completos. Não há riscos de regressão no código de produção, mas atenção ao estado do ambiente de testes para evitar falsos positivos.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
