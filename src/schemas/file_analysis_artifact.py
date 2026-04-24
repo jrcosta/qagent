@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from src.schemas.context_result import ContextResult
 from src.schemas.review_result import ReviewResult
 from src.schemas.test_strategy_result import TestStrategyResult
+from src.schemas.generated_test_review_result import GeneratedTestsReviewResult
 
 
 # ---------------------------------------------------------------------------
@@ -42,6 +43,9 @@ class FileAnalysisArtifact(BaseModel):
     )
     test_strategy_result: Optional[TestStrategyResult] = Field(
         None, description="Estratégia de testes derivada da revisão"
+    )
+    generated_test_review_result: Optional[GeneratedTestsReviewResult] = Field(
+        None, description="Resultado da revisão crítica dos testes gerados"
     )
 
     # --- Campos de orquestração ---

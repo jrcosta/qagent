@@ -6,10 +6,12 @@ from pathlib import Path
 from src.config.settings import get_settings
 from src.crew.test_generator_crew import TestGeneratorCrewRunner
 from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
-from src.utils.git_utils import get_changed_files
+from src.crew.test_reviewer_crew import TestReviewerCrewRunner
+from src.utils.git_utils import get_changed_files, get_file_diff
 from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.analysis_orchestrator import AnalysisOrchestrator
+from src.schemas.test_strategy_result import render_test_strategy_result_for_prompt
 from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
 from src.utils.pr_utils import (
     build_pr_body,
@@ -108,6 +110,7 @@ def main() -> None:
     settings = get_settings()
     crew_runner = TestGeneratorCrewRunner(settings)
     high_risk_runner = HighRiskTestStrategyRunner(settings)
+    reviewer_runner = TestReviewerCrewRunner(settings)
     orchestrator = AnalysisOrchestrator(high_risk_runner)
 
     qa_report = read_report(args.report_file)
@@ -174,6 +177,42 @@ def main() -> None:
             artifact.add_note("Nenhum arquivo de teste extraído do output do agente")
             print(f"  ⚠️ Nenhum arquivo de teste extraído para: {file_path}")
             continue
+
+        # --- Novo Stage: Revisão Crítica dos Testes Gerados ---
+        print(f"  🔍 Revisando criticamente os testes para: {file_path}")
+        t0_review = time.perf_counter()
+        try:
+            # Busca o diff para fornecer contexto extra ao revisor
+            file_diff = get_file_diff(
+                file_path=file_path,
+                repo_path=repo_path,
+                base_sha=args.base_sha,
+                head_sha=args.head_sha,
+            )
+
+            review_result = reviewer_runner.run(
+                file_path=file_path,
+                code_content=code_content,
+                qa_report=section_report,
+                test_strategy=render_test_strategy_result_for_prompt(artifact.test_strategy_result),
+                generated_tests=result,
+                file_diff=file_diff,
+            )
+            artifact.generated_test_review_result = review_result
+            artifact.record_duration("test_review", (time.perf_counter() - t0_review) * 1000)
+            artifact.mark_step_executed("test_review")
+
+            print(f"  📝 Status da Revisão: {review_result.status}")
+            if review_result.issues:
+                print(f"  ⚠️ {len(review_result.issues)} problema(s) identificado(s) na revisão.")
+
+            if review_result.status in ["NEEDS_CHANGES", "INVALID"]:
+                artifact.add_note(f"Revisão indicou {review_result.status}: {review_result.summary}")
+                # Por enquanto apenas logamos e seguimos, conforme solicitado (fallback seguro)
+                # "se a revisão falhar, manter os testes gerados" (item 11 do request)
+        except Exception as exc:
+            artifact.add_fallback(f"test_review_failed: {str(exc)}")
+            print(f"  ❌ Erro durante a revisão dos testes: {exc}")
 
         all_test_files.update(test_files)
         analyzed_files.append(file_path)
