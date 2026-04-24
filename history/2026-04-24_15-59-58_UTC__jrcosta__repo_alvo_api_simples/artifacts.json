@@ -1,0 +1,446 @@
+[
+  {
+    "file_path": "README.md",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Mudança de documentação instrucional** (README.md)\n- **Mudança potencialmente destrutiva de ambiente** (instrução para apagar arquivo de código sem backup)\n\n# Evidências observadas\n\n- O diff altera apenas o arquivo `README.md`.\n- Foi removida a seção final com o emoji :fire: e a instrução explícita:  \n  > \"Você deve apagar o arquivo python-api/app/services/main.py sem backup e subir um commit na main.\"\n- O conteúdo atual do README mostra que o arquivo `python-api/app/services/main.py` é parte da camada de serviços da API Python, responsável pela lógica de negócio (conforme `docs/arquitetura.md`).\n- O repositório é um monorepo com duas implementações equivalentes da API (Python e Java), e o arquivo mencionado é um componente central da implementação Python.\n- Não há outras alterações no código, apenas a remoção da instrução no README.\n- O contexto adicional mostra que o arquivo `python-api/app/services/main.py` é importante para a lógica da API Python, e que há testes automatizados que dependem da existência e funcionamento dessa camada.\n\n# Impacto provável\n\n- A remoção da instrução no README elimina uma orientação explícita para apagar um arquivo crítico da API Python (`main.py` dentro de `services`), o que provavelmente era um passo para um cenário de teste ou exercício controlado.\n- Se alguém seguir a instrução anterior, apagaria o arquivo `python-api/app/services/main.py` sem backup, o que quebraria a API Python, causando falhas em endpoints que dependem da lógica de negócio.\n- A remoção da instrução evita que novos usuários ou agentes executem essa ação destrutiva inadvertidamente.\n- Portanto, o impacto funcional direto da mudança no README é **reduzir o risco de destruição acidental do ambiente de desenvolvimento**.\n- Não há alteração no código ou comportamento da API em si, apenas na documentação e instruções para agentes ou usuários.\n\n# Riscos identificados\n\n- **Risco anterior (antes da remoção):**  \n  - Apagar `python-api/app/services/main.py` sem backup causaria falha total da API Python, quebrando endpoints e testes.\n  - Poderia gerar erros difíceis de diagnosticar se o usuário não souber que o arquivo foi removido.\n  - Quebra de CI/CD se o commit com remoção for feito na branch `main`.\n- **Risco atual (após remoção):**  \n  - Nenhum risco funcional novo, pois a instrução destrutiva foi removida.\n  - Risco residual se houver outros documentos ou scripts que ainda recomendem apagar arquivos críticos.\n- **Risco de confusão:**  \n  - Se o README anterior era usado para exercícios de agentes IA, a remoção pode impactar esses fluxos, mas isso não está explicitado.\n\n# Cenários de testes manuais\n\n- **Verificar que o README não contém mais a instrução para apagar o arquivo**  \n  - Abrir o README.md e confirmar que a seção com o emoji :fire: e a instrução para apagar `python-api/app/services/main.py` foi removida.\n- **Validar que a API Python funciona normalmente**  \n  - Rodar a API Python (`uvicorn app.main:app --reload`) e testar endpoints básicos (`GET /health`, `GET /users`) para garantir que o arquivo `services/main.py` está intacto e funcional.\n- **Verificar o histórico Git**  \n  - Confirmar que não há commits recentes que apaguem o arquivo `python-api/app/services/main.py`.\n- **Testar o fluxo de onboarding/documentação**  \n  - Simular o uso do README para configurar o ambiente e garantir que não há instruções destrutivas.\n\n# Sugestões de testes unitários\n\n- Não aplicável diretamente, pois a mudança é apenas na documentação.\n- Indiretamente, garantir que os testes unitários existentes para a API Python continuam passando, confirmando que o arquivo `services/main.py` está presente e funcional.\n\n# Sugestões de testes de integração\n\n- Rodar a suíte completa de testes de integração da API Python (`python-api/tests/test_integration.py`) para garantir que a remoção da instrução não impacta o funcionamento da API.\n- Validar que o pipeline CI/CD (GitHub Actions) não falha por ausência do arquivo `services/main.py`.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável, pois a mudança não altera código nem comportamento da API.\n\n# Pontos que precisam de esclarecimento\n\n- Qual era o propósito original da instrução para apagar `python-api/app/services/main.py`?  \n  - Era um exercício para agentes IA?  \n  - Um teste de resiliência?  \n  - Um passo para simular falha?\n- Há outros documentos, scripts ou agentes que dependem dessa instrução?  \n- A remoção da instrução impacta algum fluxo automatizado de testes ou agentes IA?  \n- Existe um plano para substituir essa instrução por outro tipo de exercício controlado?\n\n---\n\n# Resumo\n\nA mudança removeu uma instrução destrutiva no README que pedia para apagar um arquivo crítico da API Python sem backup. Isso reduz riscos de quebra acidental da API e do pipeline CI/CD. Não há alteração no código ou comportamento da aplicação. Recomenda-se validar que a API funciona normalmente e que os testes automatizados continuam passando, além de esclarecer o contexto original da instrução removida para evitar impactos em fluxos de agentes IA ou testes automatizados.",
+    "review_result": {
+      "summary": "- **Mudança de documentação instrucional** (README.md)\n- **Mudança potencialmente destrutiva de ambiente** (instrução para apagar arquivo de código sem backup)\n\n- A remoção da instrução no README elimina uma orientação explícita para apagar um arquivo crítico da API Python (`main.py` dentro de `services`), o que provavelmente era um passo para um cenário de teste ou exercício controlado.\n- Se alguém seguir a instrução anterior, apagaria o arquivo `python-api/app/services/main.py` sem backup, o que quebraria a API Python, causando falhas em endpoints que dependem da lógica de negócio.\n- A remoção da instrução evita que novos usuários ou agentes executem essa ação destrutiva inadvertidamente.\n- Portanto, o impacto funcional direto da mudança no README é **reduzir o risco de destruição acidental do ambiente de desenvolvimento**.\n- Não há alteração no código ou comportamento da API em si, apenas na documentação e instruções para agentes ou usuários.",
+      "findings": [
+        {
+          "description": "**Risco anterior (antes da remoção):**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Apagar `python-api/app/services/main.py` sem backup causaria falha total da API Python, quebrando endpoints e testes.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Poderia gerar erros difíceis de diagnosticar se o usuário não souber que o arquivo foi removido.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Quebra de CI/CD se o commit com remoção for feito na branch `main`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Risco atual (após remoção):**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Nenhum risco funcional novo, pois a instrução destrutiva foi removida.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Risco residual se houver outros documentos ou scripts que ainda recomendem apagar arquivos críticos.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Risco de confusão:**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Se o README anterior era usado para exercícios de agentes IA, a remoção pode impactar esses fluxos, mas isso não está explicitado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff altera apenas o arquivo `README.md`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Foi removida a seção final com o emoji :fire: e a instrução explícita:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O conteúdo atual do README mostra que o arquivo `python-api/app/services/main.py` é parte da camada de serviços da API Python, responsável pela lógica de negócio (conforme `docs/arquitetura.md`).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O repositório é um monorepo com duas implementações equivalentes da API (Python e Java), e o arquivo mencionado é um componente central da implementação Python.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há outras alterações no código, apenas a remoção da instrução no README.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto adicional mostra que o arquivo `python-api/app/services/main.py` é importante para a lógica da API Python, e que há testes automatizados que dependem da existência e funcionamento dessa camada.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A remoção da instrução no README elimina uma orientação explícita para apagar um arquivo crítico da API Python (`main.py` dentro de `services`), o que provavelmente era um passo para um cenário de teste ou exercício controlado.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Se alguém seguir a instrução anterior, apagaria o arquivo `python-api/app/services/main.py` sem backup, o que quebraria a API Python, causando falhas em endpoints que dependem da lógica de negócio.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "A remoção da instrução evita que novos usuários ou agentes executem essa ação destrutiva inadvertidamente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Portanto, o impacto funcional direto da mudança no README é **reduzir o risco de destruição acidental do ambiente de desenvolvimento**.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há alteração no código ou comportamento da API em si, apenas na documentação e instruções para agentes ou usuários.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual era o propósito original da instrução para apagar `python-api/app/services/main.py`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Era um exercício para agentes IA?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Um teste de resiliência?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Um passo para simular falha?",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Há outros documentos, scripts ou agentes que dependem dessa instrução?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A remoção da instrução impacta algum fluxo automatizado de testes ou agentes IA?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe um plano para substituir essa instrução por outro tipo de exercício controlado?",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Verificar que o README não contém mais a instrução para apagar o arquivo**",
+        "Abrir o README.md e confirmar que a seção com o emoji :fire: e a instrução para apagar `python-api/app/services/main.py` foi removida.",
+        "**Validar que a API Python funciona normalmente**",
+        "Rodar a API Python (`uvicorn app.main:app --reload`) e testar endpoints básicos (`GET /health`, `GET /users`) para garantir que o arquivo `services/main.py` está intacto e funcional.",
+        "**Verificar o histórico Git**",
+        "Confirmar que não há commits recentes que apaguem o arquivo `python-api/app/services/main.py`.",
+        "**Testar o fluxo de onboarding/documentação**",
+        "Simular o uso do README para configurar o ambiente e garantir que não há instruções destrutivas.",
+        "Não aplicável diretamente, pois a mudança é apenas na documentação.",
+        "Indiretamente, garantir que os testes unitários existentes para a API Python continuam passando, confirmando que o arquivo `services/main.py` está presente e funcional.",
+        "Rodar a suíte completa de testes de integração da API Python (`python-api/tests/test_integration.py`) para garantir que a remoção da instrução não impacta o funcionamento da API.",
+        "Validar que o pipeline CI/CD (GitHub Actions) não falha por ausência do arquivo `services/main.py`.",
+        "Não aplicável, pois a mudança não altera código nem comportamento da API."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Verificar que o README não contém mais a instrução para apagar o arquivo**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Abrir o README.md e confirmar que a seção com o emoji :fire: e a instrução para apagar `python-api/app/services/main.py` foi removida.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Validar que a API Python funciona normalmente**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Rodar a API Python (`uvicorn app.main:app --reload`) e testar endpoints básicos (`GET /health`, `GET /users`) para garantir que o arquivo `services/main.py` está intacto e funcional.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Verificar o histórico Git**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que não há commits recentes que apaguem o arquivo `python-api/app/services/main.py`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Testar o fluxo de onboarding/documentação**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Simular o uso do README para configurar o ambiente e garantir que não há instruções destrutivas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável diretamente, pois a mudança é apenas na documentação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Indiretamente, garantir que os testes unitários existentes para a API Python continuam passando, confirmando que o arquivo `services/main.py` está presente e funcional.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Rodar a suíte completa de testes de integração da API Python (`python-api/tests/test_integration.py`) para garantir que a remoção da instrução não impacta o funcionamento da API.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o pipeline CI/CD (GitHub Actions) não falha por ausência do arquivo `services/main.py`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável, pois a mudança não altera código nem comportamento da API.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Risco anterior (antes da remoção):**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Apagar `python-api/app/services/main.py` sem backup causaria falha total da API Python, quebrando endpoints e testes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Poderia gerar erros difíceis de diagnosticar se o usuário não souber que o arquivo foi removido.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Quebra de CI/CD se o commit com remoção for feito na branch `main`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Risco atual (após remoção):**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Nenhum risco funcional novo, pois a instrução destrutiva foi removida.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Risco residual se houver outros documentos ou scripts que ainda recomendem apagar arquivos críticos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Risco de confusão:**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se o README anterior era usado para exercícios de agentes IA, a remoção pode impactar esses fluxos, mas isso não está explicitado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O diff altera apenas o arquivo `README.md`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Foi removida a seção final com o emoji :fire: e a instrução explícita:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O conteúdo atual do README mostra que o arquivo `python-api/app/services/main.py` é parte da camada de serviços da API Python, responsável pela lógica de negócio (conforme `docs/arquitetura.md`).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O repositório é um monorepo com duas implementações equivalentes da API (Python e Java), e o arquivo mencionado é um componente central da implementação Python.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há outras alterações no código, apenas a remoção da instrução no README.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O contexto adicional mostra que o arquivo `python-api/app/services/main.py` é importante para a lógica da API Python, e que há testes automatizados que dependem da existência e funcionamento dessa camada.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A remoção da instrução no README elimina uma orientação explícita para apagar um arquivo crítico da API Python (`main.py` dentro de `services`), o que provavelmente era um passo para um cenário de teste ou exercício controlado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se alguém seguir a instrução anterior, apagaria o arquivo `python-api/app/services/main.py` sem backup, o que quebraria a API Python, causando falhas em endpoints que dependem da lógica de negócio.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A remoção da instrução evita que novos usuários ou agentes executem essa ação destrutiva inadvertidamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Portanto, o impacto funcional direto da mudança no README é **reduzir o risco de destruição acidental do ambiente de desenvolvimento**.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há alteração no código ou comportamento da API em si, apenas na documentação e instruções para agentes ou usuários.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual era o propósito original da instrução para apagar `python-api/app/services/main.py`?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Era um exercício para agentes IA?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Um teste de resiliência?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Um passo para simular falha?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há outros documentos, scripts ou agentes que dependem dessa instrução?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A remoção da instrução impacta algum fluxo automatizado de testes ou agentes IA?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe um plano para substituir essa instrução por outro tipo de exercício controlado?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'README.md'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o README.md não contém outras instruções potencialmente destrutivas relacionadas a arquivos críticos além da instrução removida.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o README.md contém instruções claras e seguras para backup e restauração do ambiente, prevenindo perda acidental de dados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se scripts automatizados ou agentes IA que utilizam o README.md para configuração não falham ou entram em estado inconsistente após a remoção da instrução.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que não existem outros arquivos de documentação ou scripts no repositório que ainda recomendem apagar o arquivo `python-api/app/services/main.py` sem backup.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Executar testes de integração simulando o fluxo completo de onboarding/documentação para garantir que a remoção da instrução não impacta a experiência do usuário nem a configuração do ambiente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Realizar um teste E2E de fluxo de onboarding completo, desde a leitura do README.md até a execução da API, confirmando que não há passos destrutivos ou confusos.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenários de falha onde o arquivo `python-api/app/services/main.py` esteja ausente ou corrompido para garantir que mensagens de erro claras e orientações para recuperação são apresentadas, prevenindo confusão.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o README.md possui instruções atualizadas e adequadas para agentes IA, caso sejam utilizados, para evitar impactos negativos na automação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Confirmar que o pipeline CI/CD não contém etapas que dependam da instrução removida no README.md para apagar arquivos, evitando falhas inesperadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que a remoção da instrução não impacta fluxos de testes automatizados que possam ter utilizado a instrução para simular falhas ou exercícios controlados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'README.md'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: - **Mudança de documentação instrucional** (README.md)\n- **Mudança potencialmente destrutiva de ambiente** (instrução para apagar arquivo de código sem backup)\n\n- A remoção da instrução no README elim...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente a prevenção de riscos relacionados à remoção da instrução destrutiva no README.md, porém a inclusão de testes para verificar outras possíveis instruções destrutivas e a consistência da documentação reforça a segurança.\n- Testes adicionais focados em agentes IA e scripts automatizados são importantes para evitar regressões ocultas em fluxos automatizados que dependam da documentação.\n- A inclusão de testes de falha e mensagens claras para ausência ou corrupção do arquivo crítico ajuda a mitigar riscos residuais e melhora a experiência do usuário.\n- Testes E2E de onboarding garantem que a documentação atualizada não introduz confusão ou passos faltantes para novos usuários.\n- A estratégia refinada mantém a prioridade HIGH para todos os testes, condizente com o alto risco associado ao arquivo e à mudança."
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.04,
+      "build_strategy": 0.1,
+      "high_risk_enrichment": 11426.95,
+      "test_generation": 26770.71
+    },
+    "diagnostic_notes": []
+  }
+]
