@@ -1,6 +1,6 @@
 # QAgent 🚀
 
-Um ecossistema de agentes de IA focado em **QA**, **Geração de Testes** e **Aprendizado Contínuo** para repositórios automatizados, garantindo qualidade, segurança e aprimoramento em cada ciclo.
+Pipeline multi-stage com agentes especializados e roteamento condicional para **análise de QA**, **geração de testes** e **aprendizado contínuo** em repositórios automatizados.
 
 ![Python](https://img.shields.io/badge/Python-3.14.7+-3776AB?logo=python&logoColor=white)
 ![CrewAI](https://img.shields.io/badge/CrewAI-Agent%20Orchestration-6B46C1)
@@ -12,74 +12,99 @@ Um ecossistema de agentes de IA focado em **QA**, **Geração de Testes** e **Ap
 
 ## Visão Geral
 
-O QAgent fornece diferentes agentes de IA trabalhando em conjunto para garantir qualidade e extrair inteligência dos ciclos de pull request:
+O QAgent é um pipeline multi-stage que coordena agentes de IA especializados para garantir qualidade e extrair inteligência dos ciclos de pull request. Cada etapa do pipeline produz um artefato estruturado que alimenta a etapa seguinte, com handoffs explícitos e contratos tipados via Pydantic.
 
-| Agente | Descrição |
-|--------|-----------|
-| **QA Agent** | Analisa mudanças de código a partir do *diff*, identificando riscos, tipo de mudança e sugerindo cenários de testes manuais e automatizados. |
-| **Test Generator Agent** | Gera código real de testes automatizados com base na análise do QA Agent e submete PRs automáticos no repositório alvo. |
-| **Memory Agent** | Extrai lições aprendidas a partir de comentários de Code Review e as persiste em um banco vetorial (**LanceDB**) para aprimorar futuras gerações. |
+| Agente / Componente | Descrição |
+|----------------------|-----------|
+| **QA Agent** | Analisa mudanças de código a partir do *diff*, identificando riscos, tipo de mudança e sugerindo cenários de testes. |
+| **High Risk Strategy Agent** | Agente especializado acionado **seletivamente** quando o risco é classificado como HIGH. Enriquece a estratégia de testes via LLM. |
+| **Test Generator Agent** | Gera código real de testes automatizados com base na análise e estratégia, submetendo PRs automáticos no repositório alvo. |
+| **Memory Agent** | Extrai lições aprendidas de comentários de Code Review e as persiste em banco vetorial (**LanceDB**) para futuras gerações. |
 
 > 📚 **Documentação detalhada:** [Sistema de Memórias & Code Review](docs/memories.md) — como o QAgent captura lições de PRs e as reutiliza via busca vetorial.
 
 ---
 
-## Funcionalidades Principais
+## Arquitetura Atual
 
-- **Análise Inteligente de Diff** — filtra automaticamente arquivos irrelevantes (lock, lint, configs) e foca no que importa.
-- **Relatórios de Risco** — identifica quebras de contrato, vazamento de credenciais e regressões prováveis.
-- **Integração via CI** — invocado pelos repositórios alvo via GitHub Actions (`workflow_dispatch` / `repository_dispatch`).
-- **Geração e Push de Testes** — cria testes usando o contexto da `main` e abre PRs automaticamente.
-- **Inteligência Vetorial (RAG)** — retém conhecimento coletivo de reviews passados usando embeddings e busca por similaridade (*cosine distance*).
+O QAgent utiliza uma arquitetura multi-stage com contratos estruturados entre etapas, roteamento condicional por nível de risco e um orquestrador explícito que coordena o pipeline para cada arquivo analisado.
 
----
+### Princípios
 
-## Orquestração dos Agentes
+- **Contratos tipados** — cada etapa produz e consome schemas Pydantic (`ContextResult`, `ReviewResult`, `TestStrategyResult`, `FileAnalysisArtifact`)
+- **Handoffs explícitos** — os dados fluem por artefatos estruturados, sem estado implícito
+- **Roteamento condicional** — o nível de risco determina qual política de estratégia é aplicada e se o agente HIGH risk é acionado
+- **Fallback determinístico** — regras de decisão são determinísticas; o LLM é acionado apenas onde agrega valor (enriquecimento HIGH risk)
+- **Observabilidade** — cada etapa registra duração, execução/skip e políticas aplicadas no próprio artefato
+
+### Fluxo do Pipeline
 
 ```mermaid
 flowchart TD
     subgraph TRIGGER ["🔔 Trigger"]
-        PUSH["Push no Repo Alvo"]
-        PR_COMMENT["Comentário em PR"]
+        PUSH["Push / PR no Repo Alvo"]
     end
 
-    subgraph QA_FLOW ["🔍 Fluxo de Análise de QA"]
+    subgraph ANALYSIS ["🔍 Pipeline de Análise (por arquivo)"]
         DIFF["Extrai diff dos<br/>arquivos alterados"]
-        CTX1["RepoContextBuilder<br/>monta contexto"]
-        QA_AGENT["🤖 QA Agent<br/><i>CrewAI · Groq LLM</i>"]
-        REPORT["📄 Relatório de QA<br/><i>riscos · cenários · impacto</i>"]
+        CTX["ContextResult<br/><i>RepoContextBuilder</i>"]
+        QA["🤖 QA Agent<br/><i>CrewAI · Groq LLM</i>"]
+        RR["ReviewResult<br/><i>findings · summary · test_needs</i>"]
+
+        EVAL["artifact_evaluator<br/><i>classifica risco</i>"]
+        RISK{{"Nível de Risco"}}
+        STRAT_LOW["Estratégia LOW"]
+        STRAT_MED["Estratégia MEDIUM"]
+        STRAT_HIGH["Estratégia HIGH"]
+
+        HR_AGENT["🔬 High Risk Strategy Agent<br/><i>enriquecimento via LLM</i>"]
+        TSR["TestStrategyResult"]
+        EVAL_FINAL["artifact_evaluator<br/><i>avaliação final</i>"]
+        ARTIFACT["📦 FileAnalysisArtifact"]
     end
 
-    subgraph TEST_FLOW ["🧪 Fluxo de Geração de Testes"]
-        CTX2["RepoContextBuilder<br/>monta contexto"]
-        MEM_QUERY["🧠 Busca semântica<br/>no LanceDB"]
+    subgraph TESTGEN ["🧪 Geração de Testes"]
         TEST_AGENT["🤖 Test Generator Agent<br/><i>CrewAI · Groq LLM</i>"]
-        CODE["📝 Código de testes gerado"]
-        PR_OPEN["🚀 Cria branch, push<br/>e abre PR no repo alvo"]
-        COPILOT_REQ["💬 Posta comentário<br/>pedindo validação"]
+        CODE["📝 Código de testes"]
+        PR_OPEN["🚀 Branch + PR automático"]
     end
 
-    subgraph MEM_FLOW ["💾 Fluxo de Memória"]
-        DISPATCH["repository_dispatch<br/>com payload do comentário"]
-        MEM_AGENT["🤖 Memory Agent<br/><i>CrewAI · Groq LLM</i>"]
-        DEDUP["Deduplicação vetorial<br/><i>cosine distance</i>"]
-        LANCEDB[("🗄️ LanceDB<br/>data/lancedb")]
+    subgraph EXPORT ["📊 Exportação"]
+        JSON["artifacts.json"]
+        SUMMARY["run_summary.json"]
     end
 
-    PUSH -->|"workflow_dispatch"| DIFF
-    DIFF --> CTX1 --> QA_AGENT --> REPORT
+    subgraph MEM_FLOW ["💾 Memória"]
+        MEM_AGENT["🤖 Memory Agent"]
+        LANCEDB[("🗄️ LanceDB")]
+    end
 
-    REPORT --> CTX2
-    CTX2 --> MEM_QUERY
-    MEM_QUERY -->|"lições relevantes"| TEST_AGENT
-    LANCEDB -.->|"embeddings"| MEM_QUERY
-    TEST_AGENT --> CODE --> PR_OPEN --> COPILOT_REQ
-    COPILOT_REQ -.->|"Copilot responde<br/>no PR"| PR_COMMENT
+    PUSH --> DIFF --> CTX --> QA --> RR
+    RR --> EVAL --> RISK
+    RISK -->|LOW| STRAT_LOW --> TSR
+    RISK -->|MEDIUM| STRAT_MED --> TSR
+    RISK -->|HIGH| STRAT_HIGH --> HR_AGENT --> TSR
+    TSR --> EVAL_FINAL --> ARTIFACT
 
-    PR_COMMENT -->|"repository_dispatch"| DISPATCH
-    DISPATCH --> MEM_AGENT
-    MEM_AGENT --> DEDUP --> LANCEDB
+    ARTIFACT --> TEST_AGENT --> CODE --> PR_OPEN
+    ARTIFACT --> JSON
+    ARTIFACT --> SUMMARY
+
+    PR_OPEN -.->|"comentário em PR"| MEM_AGENT --> LANCEDB
+    LANCEDB -.->|"lições via RAG"| TEST_AGENT
 ```
+
+### Componentes Principais
+
+| Componente | Localização | Responsabilidade |
+|------------|-------------|------------------|
+| **AnalysisOrchestrator** | `src/services/analysis_orchestrator.py` | Coordena o pipeline pós-QA review para um arquivo: avaliação de risco → estratégia → enriquecimento HIGH risk → avaliação final. |
+| **FileAnalysisArtifact** | `src/schemas/file_analysis_artifact.py` | Artefato consolidado que carrega todos os dados de uma análise (review, estratégia, risco, observabilidade). |
+| **artifact_evaluator** | `src/services/artifact_evaluator.py` | Avalia o artefato e preenche campos de orquestração (risk_level, review_quality, test_generation_recommendation) com regras determinísticas. |
+| **test_strategy_builder** | `src/services/test_strategy_builder.py` | Constrói a estratégia de testes com políticas adaptativas por nível de risco (LOW/MEDIUM/HIGH). |
+| **HighRiskTestStrategyRunner** | `src/crew/high_risk_strategy_crew.py` | Agente LLM especializado que refina a estratégia de testes para arquivos HIGH risk. Inclui fallback seguro para a estratégia base. |
+| **artifact_exporter** | `src/services/artifact_exporter.py` | Exporta artefatos estruturados para JSON e gera resumo da execução. |
+| **RepoContextBuilder** | `src/services/context_builder.py` | Extrai contexto do repositório (estrutura, dependências, convenções) para alimentar os agentes. |
 
 ---
 
@@ -104,15 +129,24 @@ qagent/
 ├─ data/lancedb/              # Banco vetorial de memórias
 ├─ src/
 │  ├─ agent/                  # Perfis dos Agentes (Role, Goal, Backstory)
-│  ├─ crew/                   # Orquestração CrewAI (QA, TestGen, Memory)
+│  ├─ crew/                   # Runners CrewAI (QA, TestGen, HighRisk, Memory)
 │  ├─ config/                 # Settings e LLM
 │  ├─ prompts/                # Prompts de sistema
-│  ├─ schemas/                # Schemas Pydantic
-│  ├─ services/               # Context Builder e LLM Client
+│  ├─ schemas/                # Contratos estruturados (Pydantic)
+│  │  ├─ file_analysis_artifact.py
+│  │  ├─ context_result.py
+│  │  ├─ review_result.py
+│  │  └─ test_strategy_result.py
+│  ├─ services/               # Lógica de negócio e orquestração
+│  │  ├─ analysis_orchestrator.py
+│  │  ├─ artifact_evaluator.py
+│  │  ├─ artifact_exporter.py
+│  │  ├─ context_builder.py
+│  │  └─ test_strategy_builder.py
 │  ├─ tools/                  # Ferramentas customizadas (Memory, Repo)
 │  ├─ utils/                  # Git, formatação, PR utils
-│  ├─ main.py                 # Entrypoint — Agente de QA
-│  └─ main_test_generator.py  # Entrypoint — Agente Gerador de Testes
+│  ├─ main.py                 # Entrypoint — Análise de QA
+│  └─ main_test_generator.py  # Entrypoint — Geração de Testes
 ├─ tests/                     # Testes unitários do QAgent
 ├─ templates/                 # Exemplos de GitHub Actions
 └─ requirements.txt
@@ -162,4 +196,13 @@ python -m src.main_test_generator --repo-path ./meu-repo
 
 ## Status do Projeto
 
-Em pleno desenvolvimento e evolução. As análises e a geração de testes agora contam com abstração completa do pipeline de memória (RAG) utilizando **LanceDB**, elevando a inteligência da CrewAI para os próximos ciclos de CI.
+Em desenvolvimento ativo. A arquitetura evolui de forma incremental, priorizando mudanças pequenas e seguras. O pipeline atualmente conta com:
+
+- Orquestração explícita por arquivo via `AnalysisOrchestrator`
+- Contratos estruturados entre todas as etapas
+- Roteamento condicional com políticas adaptativas por risco
+- Agente especializado para cenários de alto risco
+- Observabilidade integrada (duração, steps, políticas)
+- Exportação de artefatos para JSON
+
+O sistema mantém fallbacks determinísticos e regras de decisão explícitas. A intervenção humana é esperada na revisão dos PRs gerados.
