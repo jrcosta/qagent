@@ -2,6 +2,14 @@ import subprocess
 from pathlib import Path
 
 
+IGNORED_FILES = {
+    ".gitignore",
+    ".dockerignore",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+}
+
 IGNORED_DIRECTORIES = {
     ".git",
     ".venv",
@@ -89,6 +97,9 @@ def should_analyze_file(file_path: str, repo_path: Path) -> bool:
         return False
 
     if any(part in IGNORED_DIRECTORIES for part in path.parts):
+        return False
+
+    if path.name in IGNORED_FILES:
         return False
 
     return path.is_file()
