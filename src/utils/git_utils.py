@@ -3,7 +3,6 @@ from pathlib import Path
 
 
 IGNORED_EXTENSIONS = {
-    ".md",
     ".txt",
     ".png",
     ".jpg",
