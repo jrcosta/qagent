@@ -1,0 +1,1 @@
+# Nenhum arquivo alterado relevante encontrado para análise.
