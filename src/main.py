@@ -6,9 +6,8 @@ from src.config.settings import get_settings
 from src.crew.qa_crew import QACrewRunner
 from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
-from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
-from src.services.artifact_evaluator import evaluate_artifact
+from src.services.analysis_orchestrator import AnalysisOrchestrator
 from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
 
 
@@ -69,6 +68,7 @@ def main() -> None:
     settings = get_settings()
     crew_runner = QACrewRunner(settings)
     high_risk_runner = HighRiskTestStrategyRunner(settings)
+    orchestrator = AnalysisOrchestrator(high_risk_runner)
 
     changed_files = get_changed_files(
         repo_path=repo_path,
@@ -119,42 +119,8 @@ def main() -> None:
         artifact.mark_step_executed("qa_review")
         artifact.record_duration("qa_review", qa_duration)
 
-        t0 = time.perf_counter()
-        evaluate_artifact(artifact)
-        artifact.record_duration("evaluate_risk", (time.perf_counter() - t0) * 1000)
-        artifact.mark_step_executed("evaluate_risk")
-
-        # 2. Constrói estratégia adaptativa baseada no risco
-        t0 = time.perf_counter()
-        test_strategy_result = build_test_strategy_from_review(
-            file_path=file_path,
-            review_result=crew_result.review_result,
-            risk_level=artifact.risk_level,
-        )
-        artifact.test_strategy_result = test_strategy_result
-        artifact.record_duration("build_strategy", (time.perf_counter() - t0) * 1000)
-        artifact.mark_step_executed("build_strategy")
-        artifact.add_policy(f"strategy_{artifact.risk_level}")
-
-        # 2b. Enriquecimento via LLM para HIGH risk
-        if artifact.risk_level == "HIGH":
-            print(f"  🔬 Acionando agente especializado HIGH risk para: {file_path}")
-            t0 = time.perf_counter()
-            artifact.test_strategy_result = high_risk_runner.run(
-                file_path=file_path,
-                review_result=crew_result.review_result,
-                base_strategy=test_strategy_result,
-                context_result=artifact.context_result,
-            )
-            artifact.record_duration("high_risk_enrichment", (time.perf_counter() - t0) * 1000)
-            artifact.mark_step_executed("high_risk_enrichment")
-            artifact.add_policy("high_risk_llm_enrichment")
-        else:
-            artifact.mark_step_skipped("high_risk_enrichment", f"risk_level={artifact.risk_level}")
-
-        # 3. Reavalia após estratégia (atualiza test_generation_recommendation)
-        evaluate_artifact(artifact)
-        artifact.mark_step_executed("evaluate_final")
+        # --- Pipeline de avaliação e estratégia ---
+        orchestrator.run_artifact_pipeline(artifact)
         artifacts.append(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
