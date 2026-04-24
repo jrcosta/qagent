@@ -2,24 +2,6 @@ import subprocess
 from pathlib import Path
 
 
-IGNORED_EXTENSIONS = {
-    ".md",
-    ".txt",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".svg",
-    ".lock",
-    ".json",
-    ".yml",
-    ".yaml",
-    ".xml",
-    ".ini",
-    ".cfg",
-    ".toml",
-}
-
 IGNORED_FILES = {
     ".gitignore",
     ".dockerignore",
@@ -118,9 +100,6 @@ def should_analyze_file(file_path: str, repo_path: Path) -> bool:
         return False
 
     if path.name in IGNORED_FILES:
-        return False
-
-    if path.suffix.lower() in IGNORED_EXTENSIONS:
         return False
 
     return path.is_file()
