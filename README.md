@@ -45,7 +45,7 @@ flowchart TD
         PUSH["Push / PR no Repo Alvo"]
     end
 
-    subgraph ANALYSIS [" 🔍 Pipeline de Análise (por arquivo)"]
+    subgraph ANALYSIS ["🔍 Pipeline de Análise (por arquivo)"]
         DIFF["Extrai diff dos<br/>arquivos alterados"]
         CTX["ContextResult<br/><i>RepoContextBuilder</i>"]
         QA["🤖 QA Agent<br/><i>CrewAI · Groq LLM</i>"]
