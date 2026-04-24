@@ -9,6 +9,7 @@ from src.utils.git_utils import get_changed_files, get_file_diff
 from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.artifact_evaluator import evaluate_artifact
+from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
 
 
 def parse_args():
@@ -63,6 +64,7 @@ def build_report(sections: list[str]) -> str:
 def main() -> None:
     args = parse_args()
     repo_path = Path(args.repo_path).resolve()
+    pipeline_start = time.perf_counter()
 
     settings = get_settings()
     crew_runner = QACrewRunner(settings)
@@ -170,8 +172,17 @@ def main() -> None:
     final_report = build_report(analyses)
     save_output(final_report, args.output_file)
 
+    # Exportar artefatos estruturados
+    output_dir = str(Path(args.output_file).parent)
+    total_duration_ms = (time.perf_counter() - pipeline_start) * 1000
+
+    artifacts_path = export_artifacts_to_json(artifacts, output_dir)
+    summary_path = export_run_summary(artifacts, output_dir, total_duration_ms)
+
     print("\nAnálise salva em:")
     print(args.output_file)
+    print(f"📦 Artefatos: {artifacts_path}")
+    print(f"📊 Resumo: {summary_path}")
 
 
 if __name__ == "__main__":

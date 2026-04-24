@@ -136,6 +136,8 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--analysis-file", default="outputs/analysis.md",
                         help="Caminho do relatório markdown")
+    parser.add_argument("--artifacts-dir", default="",
+                        help="Diretório com artifacts.json e run_summary.json (padrão: mesmo diretório do analysis-file)")
     parser.add_argument("--target-owner", default="", help="Owner do repo analisado")
     parser.add_argument("--target-repo", default="", help="Nome do repo analisado")
     return parser.parse_args()
@@ -197,7 +199,7 @@ def md_to_html(md_text: str) -> str:
 # Page writers
 # ---------------------------------------------------------------------------
 
-def write_run_pages(slug: str, analysis_md: str) -> None:
+def write_run_pages(slug: str, analysis_md: str, artifacts_dir: Path | None = None) -> None:
     run_dir = HISTORY_DIR / slug
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -212,6 +214,29 @@ def write_run_pages(slug: str, analysis_md: str) -> None:
     (run_dir / "meta.json").write_text(
         json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+
+    # Copy structured artifacts if available
+    has_artifacts = False
+    has_summary = False
+    if artifacts_dir and artifacts_dir.is_dir():
+        for json_name in ("artifacts.json", "run_summary.json"):
+            src = artifacts_dir / json_name
+            if src.exists():
+                shutil.copy2(src, run_dir / json_name)
+                if json_name == "artifacts.json":
+                    has_artifacts = True
+                else:
+                    has_summary = True
+
+    # Build data links bar
+    data_links = []
+    if has_artifacts:
+        data_links.append('<a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a>')
+    if has_summary:
+        data_links.append('<a href="run_summary.json">📊 run_summary.json</a>')
+    data_bar = ""
+    if data_links:
+        data_bar = f'<div class="meta-box" style="margin-top:12px;font-size:.85rem">{" ".join(data_links)}</div>'
 
     # Save HTML
     (run_dir / "index.html").write_text(
@@ -234,6 +259,7 @@ def write_run_pages(slug: str, analysis_md: str) -> None:
       <div class="meta-item"><label>Repositório</label><span>{html_mod.escape(repo_label)}</span></div>
       <div class="meta-item"><label>Execução</label><span>{html_mod.escape(info["friendly"])}</span></div>
     </div>
+    {data_bar}
     <article class="report">
       {rendered}
     </article>
@@ -313,13 +339,19 @@ def main() -> None:
     args = parse_args()
     analysis_file = Path(args.analysis_file)
 
+    # Resolve artifacts dir
+    if args.artifacts_dir:
+        artifacts_dir = Path(args.artifacts_dir)
+    else:
+        artifacts_dir = analysis_file.parent
+
     ensure_site_dirs()
     copy_previous_history()
 
     analysis_md = read_analysis(analysis_file)
     slug = run_slug(args.target_owner, args.target_repo)
 
-    write_run_pages(slug, analysis_md)
+    write_run_pages(slug, analysis_md, artifacts_dir)
     runs = list_runs()
     write_index(runs)
 

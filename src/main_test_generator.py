@@ -11,6 +11,7 @@ from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.services.test_strategy_builder import build_test_strategy_from_review
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.artifact_evaluator import evaluate_artifact
+from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
 from src.utils.pr_utils import (
     build_pr_body,
     create_branch_and_commit,
@@ -120,6 +121,8 @@ def main() -> None:
 
     all_test_files: dict[str, str] = {}
     analyzed_files: list[str] = []
+    artifacts: list[FileAnalysisArtifact] = []
+    pipeline_start = time.perf_counter()
 
     for file_path in changed_files:
         print(f"\n🧪 Gerando testes para: {file_path}")
@@ -211,6 +214,17 @@ def main() -> None:
 
         for tf in test_files:
             print(f"  ✅ Teste gerado: {tf}")
+
+        artifacts.append(artifact)
+
+    # Exportar artefatos estruturados
+    if artifacts:
+        output_dir = str(Path(args.report_file).parent)
+        total_duration_ms = (time.perf_counter() - pipeline_start) * 1000
+        artifacts_path = export_artifacts_to_json(artifacts, output_dir)
+        summary_path = export_run_summary(artifacts, output_dir, total_duration_ms)
+        print(f"\n📦 Artefatos: {artifacts_path}")
+        print(f"📊 Resumo: {summary_path}")
 
     if not all_test_files:
         print("\n❌ Nenhum teste foi gerado.")
