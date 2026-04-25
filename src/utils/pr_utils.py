@@ -62,7 +62,11 @@ def create_branch_and_commit(
     run_git(["config", "user.name", "qagent[bot]"], repo_path)
     run_git(["config", "user.email", "qagent[bot]@users.noreply.github.com"], repo_path)
 
-    run_git(["checkout", "-b", branch_name], repo_path)
+    # Tenta criar a branch, se falhar (já existe), apenas faz checkout
+    try:
+        run_git(["checkout", "-b", branch_name], repo_path)
+    except Exception:
+        run_git(["checkout", branch_name], repo_path)
 
     for file_path in test_files:
         run_git(["add", file_path], repo_path)
@@ -122,9 +126,19 @@ def open_pull_request(
     title: str,
     body: str,
 ) -> str:
-    """Abre um Pull Request no GitHub e retorna a URL."""
+    """Abre um Pull Request no GitHub ou retorna um existente e retorna a URL."""
     gh = Github(github_token)
     repo = gh.get_repo(repo_full_name)
+
+    # Verifica se já existe um PR aberto para esta branch
+    # O head deve ser no formato "owner:branch"
+    owner = repo.owner.login
+    pulls = repo.get_pulls(state="open", head=f"{owner}:{branch_name}", base=base_branch)
+    
+    if pulls.totalCount > 0:
+        pr = pulls[0]
+        print(f"  Existing PR found: {pr.html_url}")
+        return pr.html_url
 
     pr = repo.create_pull(
         title=title,
