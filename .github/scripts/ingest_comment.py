@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT))
 from src.config.settings import get_settings  # noqa: E402
 from src.crew.memory_crew import MemoryCrewRunner  # noqa: E402
 from src.tools.memory_tools import DB_PATH, DATA_DIR, _get_table, get_encoder  # noqa: E402
+from src.utils.review_comment_utils import QAGENT_TEST_REVIEW_MEMORY_TAG  # noqa: E402
 
 
 def read_dispatch_payload() -> dict:
@@ -109,6 +110,13 @@ def main():
 
     if not comment_body or len(comment_body.strip()) < 10:
         print("Comment too short or empty; exiting.")
+        return
+
+    if QAGENT_TEST_REVIEW_MEMORY_TAG not in comment_body:
+        print(
+            "Comment ignored: missing "
+            f"{QAGENT_TEST_REVIEW_MEMORY_TAG} marker."
+        )
         return
 
     print(f"🧠 Running memory summariser for PR #{pr_number} in {repo} ...")

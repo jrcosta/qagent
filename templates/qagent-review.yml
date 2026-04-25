@@ -49,6 +49,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Executar revisão crítica dos testes
+        run: |
+          cd qagent
+          python -m src.main_test_reviewer \
+            --repo-path .. \
+            --artifacts-file ../outputs/artifacts.json \
+            --fail-on-findings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publicar relatório
         uses: actions/upload-artifact@v4
         with:

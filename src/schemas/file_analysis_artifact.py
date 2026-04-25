@@ -47,6 +47,13 @@ class FileAnalysisArtifact(BaseModel):
     generated_test_review_result: Optional[GeneratedTestsReviewResult] = Field(
         None, description="Resultado da revisão crítica dos testes gerados"
     )
+    generated_tests_raw: Optional[str] = Field(
+        None, description="Saída bruta do agente gerador de testes"
+    )
+    generated_test_files: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Arquivos de teste gerados, indexados pelo caminho relativo",
+    )
 
     # --- Campos de orquestração ---
     risk_level: RiskLevel = Field(
@@ -106,5 +113,4 @@ class FileAnalysisArtifact(BaseModel):
     def record_duration(self, step: str, duration_ms: float) -> None:
         """Registra a duração de uma etapa em milissegundos."""
         self.step_durations_ms[step] = round(duration_ms, 2)
-
 
