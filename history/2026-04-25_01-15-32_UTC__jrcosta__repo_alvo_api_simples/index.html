@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 25 Apr 2026 – 01:15:32 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-25_01-15-32_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>25 Apr 2026 – 01:15:32 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-python-apiappapiroutespy">Arquivo analisado: python-api/app/api/routes.py</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: inclusão de um novo endpoint POST <code>/discounts/calculate</code> para cálculo de desconto.</li>
+<li><strong>Extensão da API</strong>: adição de serviço e schemas relacionados a descontos.</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>No diff, foi adicionado o import de <code>DiscountService</code> e dos schemas <code>DiscountRequest</code> e <code>DiscountResponse</code>.</li>
+<li>Instanciação de <code>discount_service = DiscountService()</code> no escopo do router.</li>
+<li>Novo endpoint FastAPI definido com decorator <code>@router.post("/discounts/calculate", response_model=DiscountResponse, tags=["discounts"])</code>.</li>
+<li>O endpoint recebe um payload do tipo <code>DiscountRequest</code> e retorna <code>DiscountResponse</code>.</li>
+<li>A lógica do endpoint chama <code>discount_service.calculate_final_price</code> com os parâmetros do payload.</li>
+<li>Tratamento de exceção para <code>ValueError</code> que retorna HTTP 400 com a mensagem da exceção.</li>
+<li>No contexto do repositório, o arquivo <code>routes.py</code> é responsável por definir endpoints e delegar lógica para serviços.</li>
+<li>Não há evidência no diff ou no contexto sobre a implementação interna de <code>DiscountService</code> ou validação dos schemas, mas pelo padrão do projeto, espera-se que estejam em <code>app/services/discount_service.py</code> e <code>app/schemas.py</code>.</li>
+<li>O endpoint segue o padrão de tratamento de erros e resposta já utilizado em outros endpoints.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Introdução de um novo recurso para cálculo de descontos, que pode ser consumido por clientes da API.</li>
+<li>Possível impacto na camada de serviços, dependendo da implementação de <code>DiscountService.calculate_final_price</code>.</li>
+<li>Nenhuma alteração nos endpoints existentes, portanto impacto isolado.</li>
+<li>A API agora expõe um novo grupo de rotas com tag <code>"discounts"</code>, o que pode afetar documentação e clientes que consomem a API.</li>
+<li>Possível aumento na superfície de ataque ou falhas se o serviço de desconto não tratar corretamente entradas inválidas.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li><strong>Validação insuficiente do payload</strong>: não há validação explícita no endpoint além do Pydantic via <code>DiscountRequest</code>. Se o schema não validar corretamente, pode haver erros ou comportamentos inesperados.</li>
+<li><strong>Tratamento de exceções limitado</strong>: apenas <code>ValueError</code> é capturado. Outros erros (ex: erros internos, falhas inesperadas) não são tratados e podem resultar em 500.</li>
+<li><strong>Dependência do serviço de desconto</strong>: se <code>DiscountService</code> não estiver bem testado ou tiver bugs, o endpoint pode retornar valores incorretos.</li>
+<li><strong>Possível falta de testes</strong>: não há evidência de testes para este novo endpoint no contexto atual.</li>
+<li><strong>Segurança e autorização</strong>: não há controle de acesso ou autenticação visível; se o desconto for sensível, pode ser um risco.</li>
+<li><strong>Consistência do contrato</strong>: se <code>DiscountResponse</code> ou <code>DiscountRequest</code> mudarem, pode quebrar clientes.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ol>
+<li><strong>Cálculo básico de desconto válido</strong><br />
+   - Enviar payload com <code>base_price</code>, <code>discount_percentage</code>, <code>coupon_code</code> (opcional), <code>is_vip</code> (booleano).<br />
+   - Verificar se o <code>final_price</code> retornado está correto conforme regras de negócio (se conhecidas).</li>
+<li><strong>Payload com valores limite</strong><br />
+   - <code>base_price</code> zero ou negativo (se permitido).<br />
+   - <code>discount_percentage</code> zero, 100, ou valores inválidos (ex: &gt;100, negativos).<br />
+   - <code>coupon_code</code> inválido ou vazio.<br />
+   - <code>is_vip</code> verdadeiro e falso.</li>
+<li><strong>Payload inválido</strong><br />
+   - Campos faltando.<br />
+   - Tipos errados (ex: string em <code>base_price</code>).<br />
+   - Verificar se retorna HTTP 422 (validação Pydantic).</li>
+<li><strong>Erro de negócio</strong><br />
+   - Forçar <code>DiscountService</code> a lançar <code>ValueError</code> (ex: desconto maior que preço).<br />
+   - Verificar se retorna HTTP 400 com mensagem adequada.</li>
+<li><strong>Testar ausência de campos opcionais</strong><br />
+   - Enviar payload sem <code>coupon_code</code> e verificar comportamento.</li>
+<li><strong>Testar comportamento com valores extremos</strong><br />
+   - Preço muito alto.<br />
+   - Desconto muito alto.</li>
+<li><strong>Testar resposta do endpoint</strong><br />
+   - Verificar se o JSON retornado corresponde ao schema <code>DiscountResponse</code>.</li>
+<li><strong>Testar documentação</strong><br />
+   - Verificar se o endpoint aparece corretamente em <code>/docs</code> com os schemas.</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>calculate_discount</code> isoladamente, mockando <code>discount_service.calculate_final_price</code> para:</li>
+<li>Retornar valor esperado e verificar resposta correta.</li>
+<li>Lançar <code>ValueError</code> e verificar se HTTPException 400 é levantada com mensagem correta.</li>
+<li>Testar validação do schema <code>DiscountRequest</code> para garantir que campos obrigatórios e tipos são validados.</li>
+<li>Testar <code>DiscountService.calculate_final_price</code> (fora do escopo do diff, mas essencial) para:</li>
+<li>Casos normais de cálculo.</li>
+<li>Casos de erro que geram <code>ValueError</code>.</li>
+<li>Testar que o endpoint rejeita payloads inválidos (ex: tipos errados, campos faltando) com erro 422.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo do endpoint <code>/discounts/calculate</code> com payloads válidos e inválidos, verificando status HTTP e conteúdo da resposta.</li>
+<li>Testar integração com <code>DiscountService</code> real para validar cálculo correto.</li>
+<li>Testar comportamento em caso de exceções não previstas (ex: simular erro interno no serviço).</li>
+<li>Testar documentação Swagger gerada para o endpoint.</li>
+<li>Testar concorrência mínima para garantir que múltiplas chamadas simultâneas não causam problemas (se aplicável).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência no diff ou contexto que justifique testes de carga específicos para este endpoint.</li>
+<li>Caso o serviço de desconto envolva chamadas externas ou cálculos pesados, considerar testes de carga futuros.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Regras de negócio do cálculo de desconto</strong>: quais são as regras exatas para cálculo? Como <code>coupon_code</code> e <code>is_vip</code> influenciam o resultado?</li>
+<li><strong>Validação dos campos do payload</strong>: quais valores são válidos para <code>base_price</code>, <code>discount_percentage</code>? Há limites ou formatos específicos para <code>coupon_code</code>?</li>
+<li><strong>Comportamento esperado para erros</strong>: além de <code>ValueError</code>, que outros erros podem ocorrer? Como devem ser tratados?</li>
+<li><strong>Segurança e autorização</strong>: o endpoint deve ser público? Há necessidade de autenticação ou autorização para uso?</li>
+<li><strong>Cobertura de testes existente</strong>: há testes automatizados para <code>DiscountService</code> e para este endpoint? Se não, é recomendável criar.</li>
+<li><strong>Persistência ou registro</strong>: o cálculo de desconto gera algum registro ou log? Isso pode impactar testes e riscos.</li>
+<li><strong>Dependências externas</strong>: o serviço de desconto depende de APIs externas ou recursos que podem falhar?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona um novo endpoint para cálculo de desconto, integrando um novo serviço e schemas. O impacto é isolado, mas requer atenção à validação, tratamento de erros e testes específicos para garantir que o cálculo e a API funcionem corretamente. Riscos reais incluem falhas no serviço de desconto e tratamento insuficiente de erros. Recomenda-se testes manuais focados em entradas válidas e inválidas, além de testes unitários e de integração para o endpoint e serviço. Pontos de negócio e segurança precisam ser esclarecidos para garantir cobertura adequada.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappschemaspy">Arquivo analisado: python-api/app/schemas.py</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<ul>
+<li><strong>Adição de novos schemas Pydantic para requisição e resposta relacionados a desconto (DiscountRequest e DiscountResponse).</strong></li>
+</ul>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a inclusão de duas novas classes no arquivo <code>python-api/app/schemas.py</code>:</li>
+<li><code>DiscountRequest</code> com os campos:<ul>
+<li><code>base_price: float</code> obrigatório, com validação <code>ge=0</code> (maior ou igual a zero).</li>
+<li><code>discount_percentage: float</code> opcional, default 0.0, com validação <code>ge=0</code> e <code>le=100</code>.</li>
+<li><code>coupon_code: str | None</code> opcional, default None.</li>
+<li><code>is_vip: bool</code> opcional, default False.</li>
+</ul>
+</li>
+<li><code>DiscountResponse</code> com o campo:<ul>
+<li><code>final_price: float</code> obrigatório.</li>
+</ul>
+</li>
+<li>O arquivo <code>schemas.py</code> é o local central de definição dos modelos Pydantic usados para validação e serialização dos dados de entrada e saída da API.</li>
+<li>No contexto do repositório, há um serviço chamado <code>DiscountService</code> importado em <code>python-api/app/api/routes.py</code> (não mostrado no diff, mas presente no contexto), sugerindo que esses schemas provavelmente serão usados para endpoints relacionados a cálculo de desconto.</li>
+<li>Não há alterações em rotas ou serviços diretamente no diff, apenas a definição dos modelos.</li>
+<li>O uso de validações Pydantic (<code>Field(..., ge=0)</code>, <code>Field(0.0, ge=0, le=100)</code>) indica preocupação com a integridade dos dados recebidos.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Introdução de um novo contrato de API para operações relacionadas a descontos, provavelmente para um endpoint que recebe um preço base, percentual de desconto, código de cupom e status VIP, e retorna o preço final após aplicação do desconto.</li>
+<li>A validação embutida nos campos do <code>DiscountRequest</code> garante que valores inválidos (ex: preço negativo, percentual fora do intervalo 0-100) sejam rejeitados já na camada de entrada.</li>
+<li>Como são apenas definições de schemas, o impacto direto no comportamento da API depende da implementação dos endpoints e serviços que consumirão esses modelos.</li>
+<li>Caso os novos schemas sejam usados em endpoints públicos, clientes da API precisarão adaptar-se para enviar e receber os novos formatos.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Ausência de validação explícita para o campo <code>coupon_code</code>:</strong> não há restrição de formato, tamanho ou validade, o que pode permitir dados inválidos ou malformados.</li>
+<li><strong>Possível falta de testes para esses novos modelos:</strong> não há evidência no contexto de testes existentes que cubram esses schemas.</li>
+<li><strong>Se os serviços ou endpoints que usam esses schemas não implementarem corretamente a lógica de desconto, pode haver inconsistência entre o valor enviado e o valor final retornado.</strong></li>
+<li><strong>Se o campo <code>discount_percentage</code> for omitido, o default é 0.0, o que pode ser esperado, mas deve ser confirmado se isso está alinhado com a regra de negócio.</strong></li>
+<li><strong>Não há validação para garantir que <code>final_price</code> em <code>DiscountResponse</code> seja coerente com os dados de entrada (ex: não negativo, menor ou igual ao <code>base_price</code>).</strong></li>
+<li><strong>Se o campo <code>is_vip</code> for usado para aplicar descontos adicionais, a ausência de lógica visível pode levar a dúvidas sobre seu uso correto.</strong></li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Validação de entrada:</strong><br />
+   - Enviar requisição com <code>base_price</code> negativo → deve ser rejeitada com erro de validação.<br />
+   - Enviar <code>discount_percentage</code> menor que 0 ou maior que 100 → rejeição por validação.<br />
+   - Enviar <code>coupon_code</code> com valores variados (string vazia, caracteres especiais, muito longo) para verificar aceitação.<br />
+   - Enviar <code>is_vip</code> como <code>true</code> e <code>false</code> para verificar aceitação.</p>
+</li>
+<li>
+<p><strong>Fluxo funcional (assumindo endpoint implementado):</strong><br />
+   - Enviar requisição com <code>base_price</code> positivo e <code>discount_percentage</code> válido, sem cupom e <code>is_vip</code> falso → verificar se <code>final_price</code> é calculado corretamente.<br />
+   - Enviar com cupom válido (se houver regra) e verificar desconto aplicado.<br />
+   - Enviar com <code>is_vip</code> verdadeiro e verificar se desconto adicional é aplicado.<br />
+   - Enviar com <code>discount_percentage</code> zero e verificar se <code>final_price</code> é igual a <code>base_price</code>.</p>
+</li>
+<li>
+<p><strong>Testar comportamento com campos opcionais omitidos:</strong><br />
+   - Omitir <code>discount_percentage</code> e <code>coupon_code</code> e verificar comportamento padrão.</p>
+</li>
+<li>
+<p><strong>Testar limites:</strong><br />
+   - <code>discount_percentage</code> exatamente 0 e 100.<br />
+   - <code>base_price</code> zero.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar validação do modelo <code>DiscountRequest</code>:</li>
+<li>Criar instância com valores válidos e verificar sucesso.</li>
+<li>Tentar criar com <code>base_price</code> negativo e esperar erro de validação.</li>
+<li>Tentar criar com <code>discount_percentage</code> fora do intervalo e esperar erro.</li>
+<li>Testar aceitação de <code>coupon_code</code> como <code>None</code> e string válida.</li>
+<li>
+<p>Testar aceitação de <code>is_vip</code> como <code>True</code> e <code>False</code>.</p>
+</li>
+<li>
+<p>Testar serialização e desserialização dos modelos.</p>
+</li>
+<li>
+<p>Se existir lógica associada ao cálculo do desconto (provavelmente no <code>DiscountService</code>), criar testes unitários para:</p>
+</li>
+<li>Calcular preço final com diferentes combinações de <code>discount_percentage</code>, <code>coupon_code</code> e <code>is_vip</code>.</li>
+<li>Garantir que o preço final nunca seja negativo.</li>
+<li>Validar comportamento com cupom inválido ou ausente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o endpoint que utiliza <code>DiscountRequest</code> e <code>DiscountResponse</code> (se já implementado):</li>
+<li>Enviar requisições válidas e verificar resposta correta.</li>
+<li>Enviar requisições inválidas e verificar erros de validação HTTP 422.</li>
+<li>Testar integração com o serviço de desconto para garantir cálculo correto do preço final.</li>
+<li>
+<p>Testar comportamento com diferentes combinações de campos (cupom, VIP, percentual).</p>
+</li>
+<li>
+<p>Testar integração com outras partes da API que possam consumir ou produzir esses modelos.</p>
+</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é apenas na definição de schemas, sem alteração de lógica ou endpoints visíveis.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual é a regra de negócio exata para o cálculo do <code>final_price</code>? Como <code>discount_percentage</code>, <code>coupon_code</code> e <code>is_vip</code> interagem?</li>
+<li>Existe validação ou restrição para o formato ou validade do <code>coupon_code</code>?</li>
+<li>O campo <code>discount_percentage</code> pode ser omitido? O default 0.0 está correto para o negócio?</li>
+<li>O campo <code>final_price</code> em <code>DiscountResponse</code> deve ser validado para garantir coerência com os dados de entrada?</li>
+<li>Os novos schemas já estão sendo usados em algum endpoint? Se sim, qual é o comportamento esperado?</li>
+<li>Há planos para adicionar validação customizada (ex: método <code>@validator</code>) para regras mais complexas no modelo?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança adiciona dois novos modelos Pydantic para requisição e resposta de desconto, com validações básicas de campo. O impacto funcional depende da implementação dos serviços e endpoints que os utilizam. Riscos principais envolvem ausência de validações mais específicas e falta de testes para esses novos modelos. Recomenda-se testes focados em validação de dados, integração com serviços de desconto e verificação do cálculo do preço final.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappservicesdiscount_servicepy">Arquivo analisado: python-api/app/services/discount_service.py</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: Inclusão de um novo serviço (<code>DiscountService</code>) para cálculo de descontos no e-commerce, com regras específicas para descontos percentuais, clientes VIP, cupons e descontos progressivos por quantidade.</li>
+</ul>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O arquivo <code>discount_service.py</code> foi criado do zero, contendo a classe <code>DiscountService</code> com dois métodos principais:</li>
+<li><code>calculate_final_price</code>: calcula o preço final aplicando descontos percentuais limitados a 70%, desconto adicional para clientes VIP (5% sobre o valor já descontado), descontos fixos por cupons (<code>QUERO10</code> e <code>QUERO20</code>), e garante que o preço final não seja negativo.</li>
+<li><code>apply_bulk_discount</code>: aplica desconto progressivo baseado na quantidade de itens (5% para 5+, 10% para 10+, 15% para 20+ itens).</li>
+<li>O docstring do método <code>calculate_final_price</code> explicita as regras de negócio implementadas.</li>
+<li>O contexto do repositório mostra que o serviço foi importado em <code>python-api/app/api/routes.py</code> (linha <code>discount_service = DiscountService()</code>), indicando que pode ser utilizado em rotas da API.</li>
+<li>Não há evidência de testes unitários ou de integração específicos para este serviço no repositório atual, nem menção direta a ele nos arquivos de teste listados.</li>
+<li>O uso de tipos <code>float</code> para preços e descontos pode implicar em pequenas imprecisões numéricas, apesar do arredondamento final para 2 casas decimais.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Introdução de um novo componente para cálculo de descontos que pode afetar:</li>
+<li>Cálculo do preço final de produtos ou pedidos no e-commerce.</li>
+<li>Aplicação de regras de desconto específicas para clientes VIP e cupons promocionais.</li>
+<li>Descontos progressivos baseados na quantidade de itens comprados.</li>
+<li>Possível impacto em fluxos de compra, checkout e precificação, caso o serviço seja integrado a esses processos.</li>
+<li>Como o serviço é novo, pode ser que ainda não esteja amplamente utilizado, mas sua incorporação pode alterar o comportamento de cálculo de preços se substituir ou complementar lógica existente.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Validação insuficiente de entradas</strong>:</li>
+<li><code>base_price</code> negativo gera exceção, mas <code>discount_percentage</code> negativo é simplesmente ajustado para zero, o que pode mascarar erros de entrada.</li>
+<li><code>coupon_code</code> aceita qualquer string, mas só reconhece dois valores específicos; cupons inválidos são ignorados silenciosamente.</li>
+<li><strong>Ordem de aplicação dos descontos</strong>:</li>
+<li>O desconto percentual é aplicado primeiro, depois o desconto VIP (5% sobre o valor já descontado), e por fim o desconto fixo do cupom.</li>
+<li>Essa ordem pode não estar clara para o negócio e pode gerar dúvidas ou inconsistências se não estiver documentada ou validada.</li>
+<li><strong>Uso de <code>float</code> para valores monetários</strong>:</li>
+<li>Pode causar problemas de precisão em cálculos financeiros, apesar do arredondamento final.</li>
+<li><strong>Limite de desconto percentual fixo em 70%</strong>:</li>
+<li>Pode não contemplar futuras promoções ou regras especiais.</li>
+<li><strong>Desconto do cupom <code>QUERO20</code> depende do preço base, não do preço já descontado</strong>:</li>
+<li>Pode gerar confusão se o preço base for alterado antes da aplicação do cupom.</li>
+<li><strong>Método <code>apply_bulk_discount</code> não valida entradas</strong>:</li>
+<li><code>items_count</code> e <code>total_value</code> negativos ou zero não são tratados explicitamente.</li>
+<li><strong>Ausência de testes automatizados</strong>:</li>
+<li>Não há evidência de testes unitários ou de integração para este serviço, aumentando o risco de regressões ou erros não detectados.</li>
+<li><strong>Possível falta de integração com o restante do sistema</strong>:</li>
+<li>O serviço foi criado, mas não há evidência clara de uso em endpoints ou fluxos de negócio existentes, o que pode indicar risco de inconsistência ou falta de cobertura.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Cálculo básico de desconto percentual</strong><br />
+   - Entrada: <code>base_price=200.0</code>, <code>discount_percentage=20.0</code>, sem cupom, não VIP.<br />
+   - Esperado: preço final = 200 - 20% = 160.00.</p>
+</li>
+<li>
+<p><strong>Desconto percentual maior que 70%</strong><br />
+   - Entrada: <code>base_price=100.0</code>, <code>discount_percentage=80.0</code>.<br />
+   - Esperado: desconto limitado a 70%, preço final = 30.00.</p>
+</li>
+<li>
+<p><strong>Desconto percentual negativo</strong><br />
+   - Entrada: <code>base_price=100.0</code>, <code>discount_percentage=-10.0</code>.<br />
+   - Esperado: desconto tratado como 0%, preço final = 100.00.</p>
+</li>
+<li>
+<p><strong>Cliente VIP com desconto adicional</strong><br />
+   - Entrada: <code>base_price=100.0</code>, <code>discount_percentage=10.0</code>, <code>is_vip=True</code>.<br />
+   - Cálculo: 100 - 10% = 90.0; VIP 5% sobre 90.0 = 85.5.<br />
+   - Esperado: preço final = 85.50.</p>
+</li>
+<li>
+<p><strong>Aplicação do cupom <code>QUERO10</code></strong><br />
+   - Entrada: <code>base_price=50.0</code>, <code>discount_percentage=0</code>, <code>coupon_code="QUERO10"</code>.<br />
+   - Esperado: preço final = 50 - 10 = 40.00.</p>
+</li>
+<li>
+<p><strong>Aplicação do cupom <code>QUERO20</code> com preço base abaixo de 100</strong><br />
+   - Entrada: <code>base_price=90.0</code>, <code>discount_percentage=0</code>, <code>coupon_code="QUERO20"</code>.<br />
+   - Esperado: cupom não aplicado, preço final = 90.00.</p>
+</li>
+<li>
+<p><strong>Aplicação do cupom <code>QUERO20</code> com preço base acima de 100</strong><br />
+   - Entrada: <code>base_price=150.0</code>, <code>discount_percentage=0</code>, <code>coupon_code="QUERO20"</code>.<br />
+   - Esperado: preço final = 150 - 20 = 130.00.</p>
+</li>
+<li>
+<p><strong>Preço base negativo</strong><br />
+   - Entrada: <code>base_price=-10.0</code>.<br />
+   - Esperado: exceção <code>ValueError</code>.</p>
+</li>
+<li>
+<p><strong>Preço final não pode ser negativo</strong><br />
+   - Entrada: <code>base_price=10.0</code>, <code>discount_percentage=70.0</code>, <code>coupon_code="QUERO10"</code>, <code>is_vip=True</code>.<br />
+   - Cálculo: 10 - 7 = 3; VIP 5% sobre 3 = 2.85; cupom -10 = -7.15 → preço final ajustado para 0.00.<br />
+   - Esperado: preço final = 0.00.</p>
+</li>
+<li>
+<p><strong>Desconto progressivo por quantidade de itens</strong></p>
+<ul>
+<li>Testar para 0, 4, 5, 9, 10, 19, 20 itens com valores variados.</li>
+<li>Verificar se o fator aplicado está correto (1.0, 0.95, 0.90, 0.85).</li>
+</ul>
+</li>
+<li>
+<p><strong>Valores negativos ou zero em <code>apply_bulk_discount</code></strong></p>
+<ul>
+<li>Entrada: <code>items_count=0</code> e <code>total_value=100.0</code>.</li>
+<li>Esperado: sem desconto, preço final = 100.00.</li>
+<li>Entrada: <code>items_count=-5</code> e <code>total_value=100.0</code>.</li>
+<li>Esperado: comportamento definido (atualmente aplica fator 1.0).</li>
+</ul>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li><code>calculate_final_price</code>:</li>
+<li>Testar limite superior do desconto percentual (70%).</li>
+<li>Testar desconto percentual negativo (deve ser tratado como 0).</li>
+<li>Testar aplicação correta do desconto VIP (5% sobre preço já descontado).</li>
+<li>Testar aplicação correta dos cupons <code>QUERO10</code> e <code>QUERO20</code> com condições de preço base.</li>
+<li>Testar que preço final nunca é negativo.</li>
+<li>Testar exceção para preço base negativo.</li>
+<li>Testar combinação de descontos (percentual + VIP + cupom).</li>
+<li>Testar comportamento com cupom inválido (deve ignorar).</li>
+<li><code>apply_bulk_discount</code>:</li>
+<li>Testar faixas de quantidade (0, 4, 5, 9, 10, 19, 20).</li>
+<li>Testar valores negativos e zero para <code>items_count</code> e <code>total_value</code>.</li>
+<li>Testar arredondamento correto para 2 casas decimais.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar um endpoint de API (se ainda não existir) que utilize <code>DiscountService</code> para calcular preço final e descontos progressivos, e testar fluxo completo via requisição HTTP.</li>
+<li>Testar integração do serviço com o fluxo de checkout, garantindo que o preço final calculado pelo serviço seja refletido corretamente na resposta da API.</li>
+<li>Testar cenários com diferentes tipos de clientes (VIP e não VIP) e cupons aplicados.</li>
+<li>Validar que erros de entrada (ex: preço base negativo) retornam respostas HTTP apropriadas (ex: 400 Bad Request).</li>
+<li>Testar integração com base de dados ou sistema de cupons, se aplicável, para validar que cupons são reconhecidos corretamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência na mudança que justifique testes de carga ou desempenho específicos para este serviço, pois trata-se de lógica de negócio computacional simples e local.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual a origem e formato esperado dos cupons? Apenas <code>QUERO10</code> e <code>QUERO20</code> são válidos? Como cupons inválidos devem ser tratados?</li>
+<li>A ordem de aplicação dos descontos está correta e alinhada com a política de negócio? (percentual → VIP → cupom)</li>
+<li>Por que o cupom <code>QUERO20</code> é aplicado somente se o preço base for maior que 100, e não o preço já descontado?</li>
+<li>Há planos para suportar outros tipos de desconto ou regras mais complexas no futuro?</li>
+<li>O uso de <code>float</code> para valores monetários é intencional? Há risco de imprecisão que justifique uso de <code>Decimal</code>?</li>
+<li>O método <code>apply_bulk_discount</code> deve validar entradas negativas ou zero para <code>items_count</code> e <code>total_value</code>?</li>
+<li>O serviço já está integrado a algum endpoint da API? Se sim, quais? Caso contrário, qual o plano para integração?</li>
+<li>Existe alguma política para tratamento de erros ou logs para casos de entrada inválida?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança introduz um novo serviço de cálculo de descontos com regras claras e específicas, mas ainda sem cobertura de testes automatizados e com algumas decisões de implementação que podem gerar dúvidas ou riscos. Recomenda-se foco em testes unitários detalhados para as regras de desconto, testes manuais para validar cenários críticos e esclarecimentos sobre regras de negócio e integração para garantir segurança e consistência na aplicação.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1948 @@
+[
+  {
+    "file_path": "python-api/app/api/routes.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Nova funcionalidade**: inclusão de um novo endpoint POST `/discounts/calculate` para cálculo de desconto.\n- **Extensão da API**: adição de serviço e schemas relacionados a descontos.\n\n# Evidências observadas\n\n- No diff, foi adicionado o import de `DiscountService` e dos schemas `DiscountRequest` e `DiscountResponse`.\n- Instanciação de `discount_service = DiscountService()` no escopo do router.\n- Novo endpoint FastAPI definido com decorator `@router.post(\"/discounts/calculate\", response_model=DiscountResponse, tags=[\"discounts\"])`.\n- O endpoint recebe um payload do tipo `DiscountRequest` e retorna `DiscountResponse`.\n- A lógica do endpoint chama `discount_service.calculate_final_price` com os parâmetros do payload.\n- Tratamento de exceção para `ValueError` que retorna HTTP 400 com a mensagem da exceção.\n- No contexto do repositório, o arquivo `routes.py` é responsável por definir endpoints e delegar lógica para serviços.\n- Não há evidência no diff ou no contexto sobre a implementação interna de `DiscountService` ou validação dos schemas, mas pelo padrão do projeto, espera-se que estejam em `app/services/discount_service.py` e `app/schemas.py`.\n- O endpoint segue o padrão de tratamento de erros e resposta já utilizado em outros endpoints.\n\n# Impacto provável\n\n- Introdução de um novo recurso para cálculo de descontos, que pode ser consumido por clientes da API.\n- Possível impacto na camada de serviços, dependendo da implementação de `DiscountService.calculate_final_price`.\n- Nenhuma alteração nos endpoints existentes, portanto impacto isolado.\n- A API agora expõe um novo grupo de rotas com tag `\"discounts\"`, o que pode afetar documentação e clientes que consomem a API.\n- Possível aumento na superfície de ataque ou falhas se o serviço de desconto não tratar corretamente entradas inválidas.\n\n# Riscos identificados\n\n- **Validação insuficiente do payload**: não há validação explícita no endpoint além do Pydantic via `DiscountRequest`. Se o schema não validar corretamente, pode haver erros ou comportamentos inesperados.\n- **Tratamento de exceções limitado**: apenas `ValueError` é capturado. Outros erros (ex: erros internos, falhas inesperadas) não são tratados e podem resultar em 500.\n- **Dependência do serviço de desconto**: se `DiscountService` não estiver bem testado ou tiver bugs, o endpoint pode retornar valores incorretos.\n- **Possível falta de testes**: não há evidência de testes para este novo endpoint no contexto atual.\n- **Segurança e autorização**: não há controle de acesso ou autenticação visível; se o desconto for sensível, pode ser um risco.\n- **Consistência do contrato**: se `DiscountResponse` ou `DiscountRequest` mudarem, pode quebrar clientes.\n\n# Cenários de testes manuais\n\n1. **Cálculo básico de desconto válido**\n   - Enviar payload com `base_price`, `discount_percentage`, `coupon_code` (opcional), `is_vip` (booleano).\n   - Verificar se o `final_price` retornado está correto conforme regras de negócio (se conhecidas).\n2. **Payload com valores limite**\n   - `base_price` zero ou negativo (se permitido).\n   - `discount_percentage` zero, 100, ou valores inválidos (ex: >100, negativos).\n   - `coupon_code` inválido ou vazio.\n   - `is_vip` verdadeiro e falso.\n3. **Payload inválido**\n   - Campos faltando.\n   - Tipos errados (ex: string em `base_price`).\n   - Verificar se retorna HTTP 422 (validação Pydantic).\n4. **Erro de negócio**\n   - Forçar `DiscountService` a lançar `ValueError` (ex: desconto maior que preço).\n   - Verificar se retorna HTTP 400 com mensagem adequada.\n5. **Testar ausência de campos opcionais**\n   - Enviar payload sem `coupon_code` e verificar comportamento.\n6. **Testar comportamento com valores extremos**\n   - Preço muito alto.\n   - Desconto muito alto.\n7. **Testar resposta do endpoint**\n   - Verificar se o JSON retornado corresponde ao schema `DiscountResponse`.\n8. **Testar documentação**\n   - Verificar se o endpoint aparece corretamente em `/docs` com os schemas.\n\n# Sugestões de testes unitários\n\n- Testar `calculate_discount` isoladamente, mockando `discount_service.calculate_final_price` para:\n  - Retornar valor esperado e verificar resposta correta.\n  - Lançar `ValueError` e verificar se HTTPException 400 é levantada com mensagem correta.\n- Testar validação do schema `DiscountRequest` para garantir que campos obrigatórios e tipos são validados.\n- Testar `DiscountService.calculate_final_price` (fora do escopo do diff, mas essencial) para:\n  - Casos normais de cálculo.\n  - Casos de erro que geram `ValueError`.\n- Testar que o endpoint rejeita payloads inválidos (ex: tipos errados, campos faltando) com erro 422.\n\n# Sugestões de testes de integração\n\n- Testar fluxo completo do endpoint `/discounts/calculate` com payloads válidos e inválidos, verificando status HTTP e conteúdo da resposta.\n- Testar integração com `DiscountService` real para validar cálculo correto.\n- Testar comportamento em caso de exceções não previstas (ex: simular erro interno no serviço).\n- Testar documentação Swagger gerada para o endpoint.\n- Testar concorrência mínima para garantir que múltiplas chamadas simultâneas não causam problemas (se aplicável).\n\n# Sugestões de testes de carga ou desempenho\n\n- Não há evidência no diff ou contexto que justifique testes de carga específicos para este endpoint.\n- Caso o serviço de desconto envolva chamadas externas ou cálculos pesados, considerar testes de carga futuros.\n\n# Pontos que precisam de esclarecimento\n\n- **Regras de negócio do cálculo de desconto**: quais são as regras exatas para cálculo? Como `coupon_code` e `is_vip` influenciam o resultado?\n- **Validação dos campos do payload**: quais valores são válidos para `base_price`, `discount_percentage`? Há limites ou formatos específicos para `coupon_code`?\n- **Comportamento esperado para erros**: além de `ValueError`, que outros erros podem ocorrer? Como devem ser tratados?\n- **Segurança e autorização**: o endpoint deve ser público? Há necessidade de autenticação ou autorização para uso?\n- **Cobertura de testes existente**: há testes automatizados para `DiscountService` e para este endpoint? Se não, é recomendável criar.\n- **Persistência ou registro**: o cálculo de desconto gera algum registro ou log? Isso pode impactar testes e riscos.\n- **Dependências externas**: o serviço de desconto depende de APIs externas ou recursos que podem falhar?\n\n---\n\n**Resumo:** A mudança adiciona um novo endpoint para cálculo de desconto, integrando um novo serviço e schemas. O impacto é isolado, mas requer atenção à validação, tratamento de erros e testes específicos para garantir que o cálculo e a API funcionem corretamente. Riscos reais incluem falhas no serviço de desconto e tratamento insuficiente de erros. Recomenda-se testes manuais focados em entradas válidas e inválidas, além de testes unitários e de integração para o endpoint e serviço. Pontos de negócio e segurança precisam ser esclarecidos para garantir cobertura adequada.\n\n---",
+    "review_result": {
+      "summary": "- **Nova funcionalidade**: inclusão de um novo endpoint POST `/discounts/calculate` para cálculo de desconto.\n- **Extensão da API**: adição de serviço e schemas relacionados a descontos.\n\n- Introdução de um novo recurso para cálculo de descontos, que pode ser consumido por clientes da API.\n- Possível impacto na camada de serviços, dependendo da implementação de `DiscountService.calculate_final_price`.\n- Nenhuma alteração nos endpoints existentes, portanto impacto isolado.\n- A API agora expõe um novo grupo de rotas com tag `\"discounts\"`, o que pode afetar documentação e clientes que consomem a API.\n- Possível aumento na superfície de ataque ou falhas se o serviço de desconto não tratar corretamente entradas inválidas.",
+      "findings": [
+        {
+          "description": "**Validação insuficiente do payload**: não há validação explícita no endpoint além do Pydantic via `DiscountRequest`. Se o schema não validar corretamente, pode haver erros ou comportamentos inesperados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Tratamento de exceções limitado**: apenas `ValueError` é capturado. Outros erros (ex: erros internos, falhas inesperadas) não são tratados e podem resultar em 500.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Dependência do serviço de desconto**: se `DiscountService` não estiver bem testado ou tiver bugs, o endpoint pode retornar valores incorretos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Possível falta de testes**: não há evidência de testes para este novo endpoint no contexto atual.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Segurança e autorização**: não há controle de acesso ou autenticação visível; se o desconto for sensível, pode ser um risco.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Consistência do contrato**: se `DiscountResponse` ou `DiscountRequest` mudarem, pode quebrar clientes.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No diff, foi adicionado o import de `DiscountService` e dos schemas `DiscountRequest` e `DiscountResponse`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Instanciação de `discount_service = DiscountService()` no escopo do router.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Novo endpoint FastAPI definido com decorator `@router.post(\"/discounts/calculate\", response_model=DiscountResponse, tags=[\"discounts\"])`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint recebe um payload do tipo `DiscountRequest` e retorna `DiscountResponse`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A lógica do endpoint chama `discount_service.calculate_final_price` com os parâmetros do payload.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Tratamento de exceção para `ValueError` que retorna HTTP 400 com a mensagem da exceção.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "No contexto do repositório, o arquivo `routes.py` é responsável por definir endpoints e delegar lógica para serviços.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há evidência no diff ou no contexto sobre a implementação interna de `DiscountService` ou validação dos schemas, mas pelo padrão do projeto, espera-se que estejam em `app/services/discount_service.py` e `app/schemas.py`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint segue o padrão de tratamento de erros e resposta já utilizado em outros endpoints.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Introdução de um novo recurso para cálculo de descontos, que pode ser consumido por clientes da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Possível impacto na camada de serviços, dependendo da implementação de `DiscountService.calculate_final_price`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Nenhuma alteração nos endpoints existentes, portanto impacto isolado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A API agora expõe um novo grupo de rotas com tag `\"discounts\"`, o que pode afetar documentação e clientes que consomem a API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Possível aumento na superfície de ataque ou falhas se o serviço de desconto não tratar corretamente entradas inválidas.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Regras de negócio do cálculo de desconto**: quais são as regras exatas para cálculo? Como `coupon_code` e `is_vip` influenciam o resultado?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Validação dos campos do payload**: quais valores são válidos para `base_price`, `discount_percentage`? Há limites ou formatos específicos para `coupon_code`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Comportamento esperado para erros**: além de `ValueError`, que outros erros podem ocorrer? Como devem ser tratados?",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Segurança e autorização**: o endpoint deve ser público? Há necessidade de autenticação ou autorização para uso?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Cobertura de testes existente**: há testes automatizados para `DiscountService` e para este endpoint? Se não, é recomendável criar.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Persistência ou registro**: o cálculo de desconto gera algum registro ou log? Isso pode impactar testes e riscos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Dependências externas**: o serviço de desconto depende de APIs externas ou recursos que podem falhar?",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Cálculo básico de desconto válido**",
+        "Enviar payload com `base_price`, `discount_percentage`, `coupon_code` (opcional), `is_vip` (booleano).",
+        "Verificar se o `final_price` retornado está correto conforme regras de negócio (se conhecidas).",
+        "**Payload com valores limite**",
+        "`base_price` zero ou negativo (se permitido).",
+        "`discount_percentage` zero, 100, ou valores inválidos (ex: >100, negativos).",
+        "`coupon_code` inválido ou vazio.",
+        "`is_vip` verdadeiro e falso.",
+        "**Payload inválido**",
+        "Campos faltando.",
+        "Tipos errados (ex: string em `base_price`).",
+        "Verificar se retorna HTTP 422 (validação Pydantic).",
+        "**Erro de negócio**",
+        "Forçar `DiscountService` a lançar `ValueError` (ex: desconto maior que preço).",
+        "Verificar se retorna HTTP 400 com mensagem adequada.",
+        "**Testar ausência de campos opcionais**",
+        "Enviar payload sem `coupon_code` e verificar comportamento.",
+        "**Testar comportamento com valores extremos**",
+        "Preço muito alto.",
+        "Desconto muito alto.",
+        "**Testar resposta do endpoint**",
+        "Verificar se o JSON retornado corresponde ao schema `DiscountResponse`.",
+        "**Testar documentação**",
+        "Verificar se o endpoint aparece corretamente em `/docs` com os schemas.",
+        "Testar `calculate_discount` isoladamente, mockando `discount_service.calculate_final_price` para:",
+        "Retornar valor esperado e verificar resposta correta.",
+        "Lançar `ValueError` e verificar se HTTPException 400 é levantada com mensagem correta.",
+        "Testar validação do schema `DiscountRequest` para garantir que campos obrigatórios e tipos são validados.",
+        "Testar `DiscountService.calculate_final_price` (fora do escopo do diff, mas essencial) para:",
+        "Casos normais de cálculo.",
+        "Casos de erro que geram `ValueError`.",
+        "Testar que o endpoint rejeita payloads inválidos (ex: tipos errados, campos faltando) com erro 422.",
+        "Testar fluxo completo do endpoint `/discounts/calculate` com payloads válidos e inválidos, verificando status HTTP e conteúdo da resposta.",
+        "Testar integração com `DiscountService` real para validar cálculo correto.",
+        "Testar comportamento em caso de exceções não previstas (ex: simular erro interno no serviço).",
+        "Testar documentação Swagger gerada para o endpoint.",
+        "Testar concorrência mínima para garantir que múltiplas chamadas simultâneas não causam problemas (se aplicável).",
+        "Não há evidência no diff ou contexto que justifique testes de carga específicos para este endpoint.",
+        "Caso o serviço de desconto envolva chamadas externas ou cálculos pesados, considerar testes de carga futuros."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Cálculo básico de desconto válido**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Enviar payload com `base_price`, `discount_percentage`, `coupon_code` (opcional), `is_vip` (booleano).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o `final_price` retornado está correto conforme regras de negócio (se conhecidas).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Payload com valores limite**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`base_price` zero ou negativo (se permitido).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`discount_percentage` zero, 100, ou valores inválidos (ex: >100, negativos).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`coupon_code` inválido ou vazio.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`is_vip` verdadeiro e falso.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Payload inválido**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Campos faltando.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Tipos errados (ex: string em `base_price`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se retorna HTTP 422 (validação Pydantic).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Erro de negócio**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Forçar `DiscountService` a lançar `ValueError` (ex: desconto maior que preço).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se retorna HTTP 400 com mensagem adequada.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Testar ausência de campos opcionais**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Enviar payload sem `coupon_code` e verificar comportamento.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Testar comportamento com valores extremos**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Preço muito alto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Desconto muito alto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Testar resposta do endpoint**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o JSON retornado corresponde ao schema `DiscountResponse`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Testar documentação**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o endpoint aparece corretamente em `/docs` com os schemas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `calculate_discount` isoladamente, mockando `discount_service.calculate_final_price` para:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Retornar valor esperado e verificar resposta correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Lançar `ValueError` e verificar se HTTPException 400 é levantada com mensagem correta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar validação do schema `DiscountRequest` para garantir que campos obrigatórios e tipos são validados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `DiscountService.calculate_final_price` (fora do escopo do diff, mas essencial) para:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Casos normais de cálculo.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Casos de erro que geram `ValueError`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint rejeita payloads inválidos (ex: tipos errados, campos faltando) com erro 422.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo do endpoint `/discounts/calculate` com payloads válidos e inválidos, verificando status HTTP e conteúdo da resposta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com `DiscountService` real para validar cálculo correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento em caso de exceções não previstas (ex: simular erro interno no serviço).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar documentação Swagger gerada para o endpoint.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência mínima para garantir que múltiplas chamadas simultâneas não causam problemas (se aplicável).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não há evidência no diff ou contexto que justifique testes de carga específicos para este endpoint.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Caso o serviço de desconto envolva chamadas externas ou cálculos pesados, considerar testes de carga futuros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação insuficiente do payload**: não há validação explícita no endpoint além do Pydantic via `DiscountRequest`. Se o schema não validar corretamente, pode haver erros ou comportamentos inesperados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Tratamento de exceções limitado**: apenas `ValueError` é capturado. Outros erros (ex: erros internos, falhas inesperadas) não são tratados e podem resultar em 500.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dependência do serviço de desconto**: se `DiscountService` não estiver bem testado ou tiver bugs, o endpoint pode retornar valores incorretos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível falta de testes**: não há evidência de testes para este novo endpoint no contexto atual.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Segurança e autorização**: não há controle de acesso ou autenticação visível; se o desconto for sensível, pode ser um risco.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Consistência do contrato**: se `DiscountResponse` ou `DiscountRequest` mudarem, pode quebrar clientes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No diff, foi adicionado o import de `DiscountService` e dos schemas `DiscountRequest` e `DiscountResponse`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Instanciação de `discount_service = DiscountService()` no escopo do router.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Novo endpoint FastAPI definido com decorator `@router.post(\"/discounts/calculate\", response_model=DiscountResponse, tags=[\"discounts\"])`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint recebe um payload do tipo `DiscountRequest` e retorna `DiscountResponse`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A lógica do endpoint chama `discount_service.calculate_final_price` com os parâmetros do payload.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Tratamento de exceção para `ValueError` que retorna HTTP 400 com a mensagem da exceção.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No contexto do repositório, o arquivo `routes.py` é responsável por definir endpoints e delegar lógica para serviços.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há evidência no diff ou no contexto sobre a implementação interna de `DiscountService` ou validação dos schemas, mas pelo padrão do projeto, espera-se que estejam em `app/services/discount_service.py` e `app/schemas.py`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint segue o padrão de tratamento de erros e resposta já utilizado em outros endpoints.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Introdução de um novo recurso para cálculo de descontos, que pode ser consumido por clientes da API.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possível impacto na camada de serviços, dependendo da implementação de `DiscountService.calculate_final_price`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Nenhuma alteração nos endpoints existentes, portanto impacto isolado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A API agora expõe um novo grupo de rotas com tag `\"discounts\"`, o que pode afetar documentação e clientes que consomem a API.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possível aumento na superfície de ataque ou falhas se o serviço de desconto não tratar corretamente entradas inválidas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Regras de negócio do cálculo de desconto**: quais são as regras exatas para cálculo? Como `coupon_code` e `is_vip` influenciam o resultado?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação dos campos do payload**: quais valores são válidos para `base_price`, `discount_percentage`? Há limites ou formatos específicos para `coupon_code`?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Comportamento esperado para erros**: além de `ValueError`, que outros erros podem ocorrer? Como devem ser tratados?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Segurança e autorização**: o endpoint deve ser público? Há necessidade de autenticação ou autorização para uso?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Cobertura de testes existente**: há testes automatizados para `DiscountService` e para este endpoint? Se não, é recomendável criar.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Persistência ou registro**: o cálculo de desconto gera algum registro ou log? Isso pode impactar testes e riscos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dependências externas**: o serviço de desconto depende de APIs externas ou recursos que podem falhar?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/app/api/routes.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint quando o payload contém campos extras não definidos no schema `DiscountRequest`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o endpoint rejeita payloads com campos nulos indevidos (ex: `base_price` ou `discount_percentage` como null).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint retorna HTTP 405 para métodos HTTP não suportados (ex: GET, PUT no `/discounts/calculate`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o endpoint responde corretamente quando o serviço `DiscountService` retorna valores nulos ou inesperados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do endpoint com o middleware de logging para garantir que chamadas são registradas corretamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint em caso de falha na camada de rede ou timeout ao chamar `DiscountService` (simular exceção de timeout).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o endpoint não permite injeção de dados maliciosos via `coupon_code` (ex: SQL injection, script injection).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint respeita limites de tamanho do payload para evitar ataques de negação de serviço.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o endpoint mantém consistência e integridade dos dados quando múltiplas requisições concorrentes são feitas com o mesmo `coupon_code`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint retorna mensagens de erro padronizadas e consistentes para diferentes tipos de falhas (validação, exceção de negócio, erro interno).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o endpoint não expõe informações sensíveis em mensagens de erro ou no corpo da resposta.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo do endpoint `/discounts/calculate` em ambiente de staging, incluindo chamadas reais ao serviço de desconto e validação do resultado final.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar impacto do novo endpoint na documentação Swagger/UI, garantindo que a documentação está atualizada e navegável.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenário de uso real com múltiplos perfis de usuário (VIP e não VIP) para validar regras de negócio aplicadas no cálculo.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenário de regressão geral para o arquivo `routes.py`, incluindo todos os endpoints existentes para garantir que o novo código não quebrou funcionalidades anteriores.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint respeita políticas de CORS e headers de segurança HTTP para evitar vulnerabilidades.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar se o endpoint está preparado para futuras extensões, como autenticação/autorização, mesmo que não implementadas ainda (ex: resposta adequada para 401/403 caso adicionadas).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint lida corretamente com diferentes formatos de `coupon_code` (ex: maiúsculas, minúsculas, espaços em branco).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o endpoint não permite valores negativos no `final_price` após cálculo do desconto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o endpoint mantém idempotência para chamadas repetidas com o mesmo payload.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/app/api/routes.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: - **Nova funcionalidade**: inclusão de um novo endpoint POST `/discounts/calculate` para cálculo de desconto.\n- **Extensão da API**: adição de serviço e schemas relacionados a descontos.\n\n- Introdução...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os testes unitários e de integração para o novo endpoint e serviço de desconto, porém a inclusão de testes para segurança (injeção, CORS, headers), robustez (campos extras, nulos, payloads grandes), e comportamento sob falhas externas (timeout, erros inesperados) é essencial para um arquivo de alto risco.\n- Testes E2E são recomendados para validar o fluxo completo em ambiente próximo à produção, garantindo que a integração entre API, serviço e documentação está consistente.\n- A ausência de autenticação/controle de acesso no endpoint é um ponto crítico de segurança que deve ser monitorado e testado caso venha a ser implementado.\n- A estratégia reforça a necessidade de testes de regressão para todo o arquivo `routes.py` para garantir que a introdução do novo endpoint não impactou funcionalidades existentes.\n- Recomenda-se também monitorar logs e registros gerados pelo endpoint para garantir rastreabilidade e facilitar diagnóstico em produção."
+    },
+    "generated_test_review_result": {
+      "status": "APPROVED",
+      "summary": "Os testes gerados para o endpoint /discounts/calculate estão tecnicamente corretos, coerentes com o código original e cobrem amplamente os riscos e cenários críticos apontados no relatório de QA e na estratégia de testes. Eles validam o comportamento esperado, tratamento de exceções, validação de payloads, métodos HTTP suportados, e a documentação do endpoint. Os mocks são usados adequadamente para isolar o serviço de desconto, e os asserts são fortes e específicos. Não foram encontrados imports quebrados ou mocks incoerentes. A cobertura inclui testes de borda, tipos inválidos, ausência de campos opcionais, e comportamento sob exceções inesperadas. Não há cenários críticos ausentes relevantes para o escopo do endpoint e a estratégia definida. Recomenda-se executar esses testes automaticamente para garantir a qualidade e prevenir regressões.",
+      "issues": [
+        {
+          "severity": "INFO",
+          "description": "O teste 'test_calculate_discount_service_returns_none' permite que o serviço retorne None para final_price, o que pode causar inconsistência com o schema esperado (float). Embora o teste valide a presença da chave, o comportamento real pode gerar erro de validação na resposta.",
+          "related_test": "test_calculate_discount_service_returns_none",
+          "suggested_fix": "Revisar o schema DiscountResponse para permitir None ou ajustar o serviço para nunca retornar None. Adicionar validação no teste para refletir o comportamento esperado do schema."
+        }
+      ],
+      "missing_scenarios": [],
+      "execution_recommended": true,
+      "execution_reason": "Os testes cobrem os principais riscos, validações, exceções e comportamentos esperados do novo endpoint, garantindo proteção contra regressões e validação do contrato da API.",
+      "suggested_fixes": [
+        "Revisar o teste que permite retorno None para final_price para garantir consistência com o schema.",
+        "Manter a execução automática dos testes para garantir qualidade contínua."
+      ]
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation",
+      "test_review"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.04,
+      "build_strategy": 0.14,
+      "high_risk_enrichment": 12069.62,
+      "test_generation": 17330.33,
+      "test_review": 5615.72
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/app/schemas.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Adição de novos schemas Pydantic para requisição e resposta relacionados a desconto (DiscountRequest e DiscountResponse).**\n\n# Evidências observadas\n\n- O diff mostra a inclusão de duas novas classes no arquivo `python-api/app/schemas.py`:\n  - `DiscountRequest` com os campos:\n    - `base_price: float` obrigatório, com validação `ge=0` (maior ou igual a zero).\n    - `discount_percentage: float` opcional, default 0.0, com validação `ge=0` e `le=100`.\n    - `coupon_code: str | None` opcional, default None.\n    - `is_vip: bool` opcional, default False.\n  - `DiscountResponse` com o campo:\n    - `final_price: float` obrigatório.\n- O arquivo `schemas.py` é o local central de definição dos modelos Pydantic usados para validação e serialização dos dados de entrada e saída da API.\n- No contexto do repositório, há um serviço chamado `DiscountService` importado em `python-api/app/api/routes.py` (não mostrado no diff, mas presente no contexto), sugerindo que esses schemas provavelmente serão usados para endpoints relacionados a cálculo de desconto.\n- Não há alterações em rotas ou serviços diretamente no diff, apenas a definição dos modelos.\n- O uso de validações Pydantic (`Field(..., ge=0)`, `Field(0.0, ge=0, le=100)`) indica preocupação com a integridade dos dados recebidos.\n\n# Impacto provável\n\n- Introdução de um novo contrato de API para operações relacionadas a descontos, provavelmente para um endpoint que recebe um preço base, percentual de desconto, código de cupom e status VIP, e retorna o preço final após aplicação do desconto.\n- A validação embutida nos campos do `DiscountRequest` garante que valores inválidos (ex: preço negativo, percentual fora do intervalo 0-100) sejam rejeitados já na camada de entrada.\n- Como são apenas definições de schemas, o impacto direto no comportamento da API depende da implementação dos endpoints e serviços que consumirão esses modelos.\n- Caso os novos schemas sejam usados em endpoints públicos, clientes da API precisarão adaptar-se para enviar e receber os novos formatos.\n\n# Riscos identificados\n\n- **Ausência de validação explícita para o campo `coupon_code`:** não há restrição de formato, tamanho ou validade, o que pode permitir dados inválidos ou malformados.\n- **Possível falta de testes para esses novos modelos:** não há evidência no contexto de testes existentes que cubram esses schemas.\n- **Se os serviços ou endpoints que usam esses schemas não implementarem corretamente a lógica de desconto, pode haver inconsistência entre o valor enviado e o valor final retornado.**\n- **Se o campo `discount_percentage` for omitido, o default é 0.0, o que pode ser esperado, mas deve ser confirmado se isso está alinhado com a regra de negócio.**\n- **Não há validação para garantir que `final_price` em `DiscountResponse` seja coerente com os dados de entrada (ex: não negativo, menor ou igual ao `base_price`).**\n- **Se o campo `is_vip` for usado para aplicar descontos adicionais, a ausência de lógica visível pode levar a dúvidas sobre seu uso correto.**\n\n# Cenários de testes manuais\n\n1. **Validação de entrada:**\n   - Enviar requisição com `base_price` negativo → deve ser rejeitada com erro de validação.\n   - Enviar `discount_percentage` menor que 0 ou maior que 100 → rejeição por validação.\n   - Enviar `coupon_code` com valores variados (string vazia, caracteres especiais, muito longo) para verificar aceitação.\n   - Enviar `is_vip` como `true` e `false` para verificar aceitação.\n\n2. **Fluxo funcional (assumindo endpoint implementado):**\n   - Enviar requisição com `base_price` positivo e `discount_percentage` válido, sem cupom e `is_vip` falso → verificar se `final_price` é calculado corretamente.\n   - Enviar com cupom válido (se houver regra) e verificar desconto aplicado.\n   - Enviar com `is_vip` verdadeiro e verificar se desconto adicional é aplicado.\n   - Enviar com `discount_percentage` zero e verificar se `final_price` é igual a `base_price`.\n\n3. **Testar comportamento com campos opcionais omitidos:**\n   - Omitir `discount_percentage` e `coupon_code` e verificar comportamento padrão.\n\n4. **Testar limites:**\n   - `discount_percentage` exatamente 0 e 100.\n   - `base_price` zero.\n\n# Sugestões de testes unitários\n\n- Testar validação do modelo `DiscountRequest`:\n  - Criar instância com valores válidos e verificar sucesso.\n  - Tentar criar com `base_price` negativo e esperar erro de validação.\n  - Tentar criar com `discount_percentage` fora do intervalo e esperar erro.\n  - Testar aceitação de `coupon_code` como `None` e string válida.\n  - Testar aceitação de `is_vip` como `True` e `False`.\n\n- Testar serialização e desserialização dos modelos.\n\n- Se existir lógica associada ao cálculo do desconto (provavelmente no `DiscountService`), criar testes unitários para:\n  - Calcular preço final com diferentes combinações de `discount_percentage`, `coupon_code` e `is_vip`.\n  - Garantir que o preço final nunca seja negativo.\n  - Validar comportamento com cupom inválido ou ausente.\n\n# Sugestões de testes de integração\n\n- Testar o endpoint que utiliza `DiscountRequest` e `DiscountResponse` (se já implementado):\n  - Enviar requisições válidas e verificar resposta correta.\n  - Enviar requisições inválidas e verificar erros de validação HTTP 422.\n  - Testar integração com o serviço de desconto para garantir cálculo correto do preço final.\n  - Testar comportamento com diferentes combinações de campos (cupom, VIP, percentual).\n\n- Testar integração com outras partes da API que possam consumir ou produzir esses modelos.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável, pois a mudança é apenas na definição de schemas, sem alteração de lógica ou endpoints visíveis.\n\n# Pontos que precisam de esclarecimento\n\n- Qual é a regra de negócio exata para o cálculo do `final_price`? Como `discount_percentage`, `coupon_code` e `is_vip` interagem?\n- Existe validação ou restrição para o formato ou validade do `coupon_code`?\n- O campo `discount_percentage` pode ser omitido? O default 0.0 está correto para o negócio?\n- O campo `final_price` em `DiscountResponse` deve ser validado para garantir coerência com os dados de entrada?\n- Os novos schemas já estão sendo usados em algum endpoint? Se sim, qual é o comportamento esperado?\n- Há planos para adicionar validação customizada (ex: método `@validator`) para regras mais complexas no modelo?\n\n---\n\n**Resumo:** A mudança adiciona dois novos modelos Pydantic para requisição e resposta de desconto, com validações básicas de campo. O impacto funcional depende da implementação dos serviços e endpoints que os utilizam. Riscos principais envolvem ausência de validações mais específicas e falta de testes para esses novos modelos. Recomenda-se testes focados em validação de dados, integração com serviços de desconto e verificação do cálculo do preço final.\n\n---",
+    "review_result": {
+      "summary": "- **Adição de novos schemas Pydantic para requisição e resposta relacionados a desconto (DiscountRequest e DiscountResponse).**\n\n- Introdução de um novo contrato de API para operações relacionadas a descontos, provavelmente para um endpoint que recebe um preço base, percentual de desconto, código de cupom e status VIP, e retorna o preço final após aplicação do desconto.\n- A validação embutida nos campos do `DiscountRequest` garante que valores inválidos (ex: preço negativo, percentual fora do intervalo 0-100) sejam rejeitados já na camada de entrada.\n- Como são apenas definições de schemas, o impacto direto no comportamento da API depende da implementação dos endpoints e serviços que consumirão esses modelos.\n- Caso os novos schemas sejam usados em endpoints públicos, clientes da API precisarão adaptar-se para enviar e receber os novos formatos.",
+      "findings": [
+        {
+          "description": "**Ausência de validação explícita para o campo `coupon_code`:** não há restrição de formato, tamanho ou validade, o que pode permitir dados inválidos ou malformados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Possível falta de testes para esses novos modelos:** não há evidência no contexto de testes existentes que cubram esses schemas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Se os serviços ou endpoints que usam esses schemas não implementarem corretamente a lógica de desconto, pode haver inconsistência entre o valor enviado e o valor final retornado.**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Se o campo `discount_percentage` for omitido, o default é 0.0, o que pode ser esperado, mas deve ser confirmado se isso está alinhado com a regra de negócio.**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Não há validação para garantir que `final_price` em `DiscountResponse` seja coerente com os dados de entrada (ex: não negativo, menor ou igual ao `base_price`).**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Se o campo `is_vip` for usado para aplicar descontos adicionais, a ausência de lógica visível pode levar a dúvidas sobre seu uso correto.**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff mostra a inclusão de duas novas classes no arquivo `python-api/app/schemas.py`:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`DiscountRequest` com os campos:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`base_price: float` obrigatório, com validação `ge=0` (maior ou igual a zero).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`discount_percentage: float` opcional, default 0.0, com validação `ge=0` e `le=100`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`coupon_code: str | None` opcional, default None.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`is_vip: bool` opcional, default False.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`DiscountResponse` com o campo:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`final_price: float` obrigatório.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo `schemas.py` é o local central de definição dos modelos Pydantic usados para validação e serialização dos dados de entrada e saída da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No contexto do repositório, há um serviço chamado `DiscountService` importado em `python-api/app/api/routes.py` (não mostrado no diff, mas presente no contexto), sugerindo que esses schemas provavelmente serão usados para endpoints relacionados a cálculo de desconto.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há alterações em rotas ou serviços diretamente no diff, apenas a definição dos modelos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O uso de validações Pydantic (`Field(..., ge=0)`, `Field(0.0, ge=0, le=100)`) indica preocupação com a integridade dos dados recebidos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Introdução de um novo contrato de API para operações relacionadas a descontos, provavelmente para um endpoint que recebe um preço base, percentual de desconto, código de cupom e status VIP, e retorna o preço final após aplicação do desconto.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A validação embutida nos campos do `DiscountRequest` garante que valores inválidos (ex: preço negativo, percentual fora do intervalo 0-100) sejam rejeitados já na camada de entrada.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Como são apenas definições de schemas, o impacto direto no comportamento da API depende da implementação dos endpoints e serviços que consumirão esses modelos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Caso os novos schemas sejam usados em endpoints públicos, clientes da API precisarão adaptar-se para enviar e receber os novos formatos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual é a regra de negócio exata para o cálculo do `final_price`? Como `discount_percentage`, `coupon_code` e `is_vip` interagem?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe validação ou restrição para o formato ou validade do `coupon_code`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O campo `discount_percentage` pode ser omitido? O default 0.0 está correto para o negócio?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O campo `final_price` em `DiscountResponse` deve ser validado para garantir coerência com os dados de entrada?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Os novos schemas já estão sendo usados em algum endpoint? Se sim, qual é o comportamento esperado?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há planos para adicionar validação customizada (ex: método `@validator`) para regras mais complexas no modelo?",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Validação de entrada:**",
+        "Enviar requisição com `base_price` negativo → deve ser rejeitada com erro de validação.",
+        "Enviar `discount_percentage` menor que 0 ou maior que 100 → rejeição por validação.",
+        "Enviar `coupon_code` com valores variados (string vazia, caracteres especiais, muito longo) para verificar aceitação.",
+        "Enviar `is_vip` como `true` e `false` para verificar aceitação.",
+        "**Fluxo funcional (assumindo endpoint implementado):**",
+        "Enviar requisição com `base_price` positivo e `discount_percentage` válido, sem cupom e `is_vip` falso → verificar se `final_price` é calculado corretamente.",
+        "Enviar com cupom válido (se houver regra) e verificar desconto aplicado.",
+        "Enviar com `is_vip` verdadeiro e verificar se desconto adicional é aplicado.",
+        "Enviar com `discount_percentage` zero e verificar se `final_price` é igual a `base_price`.",
+        "**Testar comportamento com campos opcionais omitidos:**",
+        "Omitir `discount_percentage` e `coupon_code` e verificar comportamento padrão.",
+        "**Testar limites:**",
+        "`discount_percentage` exatamente 0 e 100.",
+        "`base_price` zero.",
+        "Testar validação do modelo `DiscountRequest`:",
+        "Criar instância com valores válidos e verificar sucesso.",
+        "Tentar criar com `base_price` negativo e esperar erro de validação.",
+        "Tentar criar com `discount_percentage` fora do intervalo e esperar erro.",
+        "Testar aceitação de `coupon_code` como `None` e string válida.",
+        "Testar aceitação de `is_vip` como `True` e `False`.",
+        "Testar serialização e desserialização dos modelos.",
+        "Se existir lógica associada ao cálculo do desconto (provavelmente no `DiscountService`), criar testes unitários para:",
+        "Calcular preço final com diferentes combinações de `discount_percentage`, `coupon_code` e `is_vip`.",
+        "Garantir que o preço final nunca seja negativo.",
+        "Validar comportamento com cupom inválido ou ausente.",
+        "Testar o endpoint que utiliza `DiscountRequest` e `DiscountResponse` (se já implementado):",
+        "Enviar requisições válidas e verificar resposta correta.",
+        "Enviar requisições inválidas e verificar erros de validação HTTP 422.",
+        "Testar integração com o serviço de desconto para garantir cálculo correto do preço final.",
+        "Testar comportamento com diferentes combinações de campos (cupom, VIP, percentual).",
+        "Testar integração com outras partes da API que possam consumir ou produzir esses modelos.",
+        "Não aplicável, pois a mudança é apenas na definição de schemas, sem alteração de lógica ou endpoints visíveis."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Validação de entrada:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisição com `base_price` negativo → deve ser rejeitada com erro de validação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar `discount_percentage` menor que 0 ou maior que 100 → rejeição por validação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar `coupon_code` com valores variados (string vazia, caracteres especiais, muito longo) para verificar aceitação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar `is_vip` como `true` e `false` para verificar aceitação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Fluxo funcional (assumindo endpoint implementado):**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisição com `base_price` positivo e `discount_percentage` válido, sem cupom e `is_vip` falso → verificar se `final_price` é calculado corretamente.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar com cupom válido (se houver regra) e verificar desconto aplicado.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar com `is_vip` verdadeiro e verificar se desconto adicional é aplicado.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar com `discount_percentage` zero e verificar se `final_price` é igual a `base_price`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Testar comportamento com campos opcionais omitidos:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Omitir `discount_percentage` e `coupon_code` e verificar comportamento padrão.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Testar limites:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "`discount_percentage` exatamente 0 e 100.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "`base_price` zero.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar validação do modelo `DiscountRequest`:",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Criar instância com valores válidos e verificar sucesso.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Tentar criar com `base_price` negativo e esperar erro de validação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Tentar criar com `discount_percentage` fora do intervalo e esperar erro.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar aceitação de `coupon_code` como `None` e string válida.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar aceitação de `is_vip` como `True` e `False`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar serialização e desserialização dos modelos.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Se existir lógica associada ao cálculo do desconto (provavelmente no `DiscountService`), criar testes unitários para:",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Calcular preço final com diferentes combinações de `discount_percentage`, `coupon_code` e `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Garantir que o preço final nunca seja negativo.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Validar comportamento com cupom inválido ou ausente.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar o endpoint que utiliza `DiscountRequest` e `DiscountResponse` (se já implementado):",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisições válidas e verificar resposta correta.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisições inválidas e verificar erros de validação HTTP 422.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar integração com o serviço de desconto para garantir cálculo correto do preço final.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar comportamento com diferentes combinações de campos (cupom, VIP, percentual).",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar integração com outras partes da API que possam consumir ou produzir esses modelos.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Não aplicável, pois a mudança é apenas na definição de schemas, sem alteração de lógica ou endpoints visíveis.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        }
+      ],
+      "notes": "Política LOW aplicada para 'python-api/app/schemas.py'.\nApenas necessidades de teste diretas foram incluídas."
+    },
+    "generated_test_review_result": {
+      "status": "APPROVED",
+      "summary": "Os testes gerados para os modelos DiscountRequest e DiscountResponse estão tecnicamente corretos, coerentes com o código original e cobrem adequadamente os riscos apontados no relatório de QA. Eles validam as restrições de campo, testam valores válidos e inválidos, e verificam a serialização e desserialização dos modelos. A estratégia de testes foi seguida, incluindo testes de borda para valores mínimos e máximos, e aceitação de valores opcionais. Não foram encontrados imports quebrados, mocks incoerentes ou uso de nomes inexistentes. Os asserts são fortes e validam o comportamento esperado dos modelos. Não há cenários críticos ausentes para a camada de schemas, dado que a lógica de cálculo do desconto não está presente neste módulo.",
+      "issues": [
+        {
+          "severity": "INFO",
+          "description": "O relatório de QA menciona ausência de validação para o formato ou validade do campo coupon_code, mas os testes cobrem aceitação de vários valores, incluindo strings vazias, caracteres especiais e strings muito longas, o que é adequado para o escopo atual do schema.",
+          "related_test": "test_coupon_code_accepts_various_values",
+          "suggested_fix": null
+        },
+        {
+          "severity": "INFO",
+          "description": "Embora o relatório sugira validar coerência do campo final_price em DiscountResponse, essa validação não é parte do schema original e não foi requerida nos testes, que corretamente testam apenas a criação e serialização do modelo.",
+          "related_test": "TestDiscountResponseModel",
+          "suggested_fix": null
+        }
+      ],
+      "missing_scenarios": [],
+      "execution_recommended": true,
+      "execution_reason": "Os testes cobrem validações essenciais e casos de uso típicos dos modelos Pydantic, garantindo que a camada de schemas funcione corretamente e previna dados inválidos na entrada da API.",
+      "suggested_fixes": []
+    },
+    "risk_level": "LOW",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "evaluate_final",
+      "test_generation",
+      "test_review"
+    ],
+    "skipped_steps": [
+      "high_risk_enrichment: risk_level=LOW"
+    ],
+    "applied_policies": [
+      "strategy_LOW"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.1,
+      "test_generation": 10238.8,
+      "test_review": 5732.57
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/app/services/discount_service.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\n- **Nova funcionalidade**: Inclusão de um novo serviço (`DiscountService`) para cálculo de descontos no e-commerce, com regras específicas para descontos percentuais, clientes VIP, cupons e descontos progressivos por quantidade.\n\n# Evidências observadas\n\n- O arquivo `discount_service.py` foi criado do zero, contendo a classe `DiscountService` com dois métodos principais:\n  - `calculate_final_price`: calcula o preço final aplicando descontos percentuais limitados a 70%, desconto adicional para clientes VIP (5% sobre o valor já descontado), descontos fixos por cupons (`QUERO10` e `QUERO20`), e garante que o preço final não seja negativo.\n  - `apply_bulk_discount`: aplica desconto progressivo baseado na quantidade de itens (5% para 5+, 10% para 10+, 15% para 20+ itens).\n- O docstring do método `calculate_final_price` explicita as regras de negócio implementadas.\n- O contexto do repositório mostra que o serviço foi importado em `python-api/app/api/routes.py` (linha `discount_service = DiscountService()`), indicando que pode ser utilizado em rotas da API.\n- Não há evidência de testes unitários ou de integração específicos para este serviço no repositório atual, nem menção direta a ele nos arquivos de teste listados.\n- O uso de tipos `float` para preços e descontos pode implicar em pequenas imprecisões numéricas, apesar do arredondamento final para 2 casas decimais.\n\n# Impacto provável\n\n- Introdução de um novo componente para cálculo de descontos que pode afetar:\n  - Cálculo do preço final de produtos ou pedidos no e-commerce.\n  - Aplicação de regras de desconto específicas para clientes VIP e cupons promocionais.\n  - Descontos progressivos baseados na quantidade de itens comprados.\n- Possível impacto em fluxos de compra, checkout e precificação, caso o serviço seja integrado a esses processos.\n- Como o serviço é novo, pode ser que ainda não esteja amplamente utilizado, mas sua incorporação pode alterar o comportamento de cálculo de preços se substituir ou complementar lógica existente.\n\n# Riscos identificados\n\n- **Validação insuficiente de entradas**:\n  - `base_price` negativo gera exceção, mas `discount_percentage` negativo é simplesmente ajustado para zero, o que pode mascarar erros de entrada.\n  - `coupon_code` aceita qualquer string, mas só reconhece dois valores específicos; cupons inválidos são ignorados silenciosamente.\n- **Ordem de aplicação dos descontos**:\n  - O desconto percentual é aplicado primeiro, depois o desconto VIP (5% sobre o valor já descontado), e por fim o desconto fixo do cupom.\n  - Essa ordem pode não estar clara para o negócio e pode gerar dúvidas ou inconsistências se não estiver documentada ou validada.\n- **Uso de `float` para valores monetários**:\n  - Pode causar problemas de precisão em cálculos financeiros, apesar do arredondamento final.\n- **Limite de desconto percentual fixo em 70%**:\n  - Pode não contemplar futuras promoções ou regras especiais.\n- **Desconto do cupom `QUERO20` depende do preço base, não do preço já descontado**:\n  - Pode gerar confusão se o preço base for alterado antes da aplicação do cupom.\n- **Método `apply_bulk_discount` não valida entradas**:\n  - `items_count` e `total_value` negativos ou zero não são tratados explicitamente.\n- **Ausência de testes automatizados**:\n  - Não há evidência de testes unitários ou de integração para este serviço, aumentando o risco de regressões ou erros não detectados.\n- **Possível falta de integração com o restante do sistema**:\n  - O serviço foi criado, mas não há evidência clara de uso em endpoints ou fluxos de negócio existentes, o que pode indicar risco de inconsistência ou falta de cobertura.\n\n# Cenários de testes manuais\n\n1. **Cálculo básico de desconto percentual**\n   - Entrada: `base_price=200.0`, `discount_percentage=20.0`, sem cupom, não VIP.\n   - Esperado: preço final = 200 - 20% = 160.00.\n\n2. **Desconto percentual maior que 70%**\n   - Entrada: `base_price=100.0`, `discount_percentage=80.0`.\n   - Esperado: desconto limitado a 70%, preço final = 30.00.\n\n3. **Desconto percentual negativo**\n   - Entrada: `base_price=100.0`, `discount_percentage=-10.0`.\n   - Esperado: desconto tratado como 0%, preço final = 100.00.\n\n4. **Cliente VIP com desconto adicional**\n   - Entrada: `base_price=100.0`, `discount_percentage=10.0`, `is_vip=True`.\n   - Cálculo: 100 - 10% = 90.0; VIP 5% sobre 90.0 = 85.5.\n   - Esperado: preço final = 85.50.\n\n5. **Aplicação do cupom `QUERO10`**\n   - Entrada: `base_price=50.0`, `discount_percentage=0`, `coupon_code=\"QUERO10\"`.\n   - Esperado: preço final = 50 - 10 = 40.00.\n\n6. **Aplicação do cupom `QUERO20` com preço base abaixo de 100**\n   - Entrada: `base_price=90.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.\n   - Esperado: cupom não aplicado, preço final = 90.00.\n\n7. **Aplicação do cupom `QUERO20` com preço base acima de 100**\n   - Entrada: `base_price=150.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.\n   - Esperado: preço final = 150 - 20 = 130.00.\n\n8. **Preço base negativo**\n   - Entrada: `base_price=-10.0`.\n   - Esperado: exceção `ValueError`.\n\n9. **Preço final não pode ser negativo**\n   - Entrada: `base_price=10.0`, `discount_percentage=70.0`, `coupon_code=\"QUERO10\"`, `is_vip=True`.\n   - Cálculo: 10 - 7 = 3; VIP 5% sobre 3 = 2.85; cupom -10 = -7.15 → preço final ajustado para 0.00.\n   - Esperado: preço final = 0.00.\n\n10. **Desconto progressivo por quantidade de itens**\n    - Testar para 0, 4, 5, 9, 10, 19, 20 itens com valores variados.\n    - Verificar se o fator aplicado está correto (1.0, 0.95, 0.90, 0.85).\n\n11. **Valores negativos ou zero em `apply_bulk_discount`**\n    - Entrada: `items_count=0` e `total_value=100.0`.\n    - Esperado: sem desconto, preço final = 100.00.\n    - Entrada: `items_count=-5` e `total_value=100.0`.\n    - Esperado: comportamento definido (atualmente aplica fator 1.0).\n\n# Sugestões de testes unitários\n\n- `calculate_final_price`:\n  - Testar limite superior do desconto percentual (70%).\n  - Testar desconto percentual negativo (deve ser tratado como 0).\n  - Testar aplicação correta do desconto VIP (5% sobre preço já descontado).\n  - Testar aplicação correta dos cupons `QUERO10` e `QUERO20` com condições de preço base.\n  - Testar que preço final nunca é negativo.\n  - Testar exceção para preço base negativo.\n  - Testar combinação de descontos (percentual + VIP + cupom).\n  - Testar comportamento com cupom inválido (deve ignorar).\n- `apply_bulk_discount`:\n  - Testar faixas de quantidade (0, 4, 5, 9, 10, 19, 20).\n  - Testar valores negativos e zero para `items_count` e `total_value`.\n  - Testar arredondamento correto para 2 casas decimais.\n\n# Sugestões de testes de integração\n\n- Criar um endpoint de API (se ainda não existir) que utilize `DiscountService` para calcular preço final e descontos progressivos, e testar fluxo completo via requisição HTTP.\n- Testar integração do serviço com o fluxo de checkout, garantindo que o preço final calculado pelo serviço seja refletido corretamente na resposta da API.\n- Testar cenários com diferentes tipos de clientes (VIP e não VIP) e cupons aplicados.\n- Validar que erros de entrada (ex: preço base negativo) retornam respostas HTTP apropriadas (ex: 400 Bad Request).\n- Testar integração com base de dados ou sistema de cupons, se aplicável, para validar que cupons são reconhecidos corretamente.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não há evidência na mudança que justifique testes de carga ou desempenho específicos para este serviço, pois trata-se de lógica de negócio computacional simples e local.\n\n# Pontos que precisam de esclarecimento\n\n- Qual a origem e formato esperado dos cupons? Apenas `QUERO10` e `QUERO20` são válidos? Como cupons inválidos devem ser tratados?\n- A ordem de aplicação dos descontos está correta e alinhada com a política de negócio? (percentual → VIP → cupom)\n- Por que o cupom `QUERO20` é aplicado somente se o preço base for maior que 100, e não o preço já descontado?\n- Há planos para suportar outros tipos de desconto ou regras mais complexas no futuro?\n- O uso de `float` para valores monetários é intencional? Há risco de imprecisão que justifique uso de `Decimal`?\n- O método `apply_bulk_discount` deve validar entradas negativas ou zero para `items_count` e `total_value`?\n- O serviço já está integrado a algum endpoint da API? Se sim, quais? Caso contrário, qual o plano para integração?\n- Existe alguma política para tratamento de erros ou logs para casos de entrada inválida?\n\n---\n\n**Resumo:** A mudança introduz um novo serviço de cálculo de descontos com regras claras e específicas, mas ainda sem cobertura de testes automatizados e com algumas decisões de implementação que podem gerar dúvidas ou riscos. Recomenda-se foco em testes unitários detalhados para as regras de desconto, testes manuais para validar cenários críticos e esclarecimentos sobre regras de negócio e integração para garantir segurança e consistência na aplicação.",
+    "review_result": {
+      "summary": "- **Nova funcionalidade**: Inclusão de um novo serviço (`DiscountService`) para cálculo de descontos no e-commerce, com regras específicas para descontos percentuais, clientes VIP, cupons e descontos progressivos por quantidade.\n\n- Introdução de um novo componente para cálculo de descontos que pode afetar:\n  - Cálculo do preço final de produtos ou pedidos no e-commerce.\n  - Aplicação de regras de desconto específicas para clientes VIP e cupons promocionais.\n  - Descontos progressivos baseados na quantidade de itens comprados.\n- Possível impacto em fluxos de compra, checkout e precificação, caso o serviço seja integrado a esses processos.\n- Como o serviço é novo, pode ser que ainda não esteja amplamente utilizado, mas sua incorporação pode alterar o comportamento de cálculo de preços se substituir ou complementar lógica existente.",
+      "findings": [
+        {
+          "description": "**Validação insuficiente de entradas**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`base_price` negativo gera exceção, mas `discount_percentage` negativo é simplesmente ajustado para zero, o que pode mascarar erros de entrada.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "`coupon_code` aceita qualquer string, mas só reconhece dois valores específicos; cupons inválidos são ignorados silenciosamente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ordem de aplicação dos descontos**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O desconto percentual é aplicado primeiro, depois o desconto VIP (5% sobre o valor já descontado), e por fim o desconto fixo do cupom.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Essa ordem pode não estar clara para o negócio e pode gerar dúvidas ou inconsistências se não estiver documentada ou validada.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Uso de `float` para valores monetários**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode causar problemas de precisão em cálculos financeiros, apesar do arredondamento final.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Limite de desconto percentual fixo em 70%**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode não contemplar futuras promoções ou regras especiais.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Desconto do cupom `QUERO20` depende do preço base, não do preço já descontado**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode gerar confusão se o preço base for alterado antes da aplicação do cupom.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Método `apply_bulk_discount` não valida entradas**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`items_count` e `total_value` negativos ou zero não são tratados explicitamente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ausência de testes automatizados**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há evidência de testes unitários ou de integração para este serviço, aumentando o risco de regressões ou erros não detectados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Possível falta de integração com o restante do sistema**:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço foi criado, mas não há evidência clara de uso em endpoints ou fluxos de negócio existentes, o que pode indicar risco de inconsistência ou falta de cobertura.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo `discount_service.py` foi criado do zero, contendo a classe `DiscountService` com dois métodos principais:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`calculate_final_price`: calcula o preço final aplicando descontos percentuais limitados a 70%, desconto adicional para clientes VIP (5% sobre o valor já descontado), descontos fixos por cupons (`QUERO10` e `QUERO20`), e garante que o preço final não seja negativo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "`apply_bulk_discount`: aplica desconto progressivo baseado na quantidade de itens (5% para 5+, 10% para 10+, 15% para 20+ itens).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O docstring do método `calculate_final_price` explicita as regras de negócio implementadas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto do repositório mostra que o serviço foi importado em `python-api/app/api/routes.py` (linha `discount_service = DiscountService()`), indicando que pode ser utilizado em rotas da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há evidência de testes unitários ou de integração específicos para este serviço no repositório atual, nem menção direta a ele nos arquivos de teste listados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O uso de tipos `float` para preços e descontos pode implicar em pequenas imprecisões numéricas, apesar do arredondamento final para 2 casas decimais.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Introdução de um novo componente para cálculo de descontos que pode afetar:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Cálculo do preço final de produtos ou pedidos no e-commerce.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Aplicação de regras de desconto específicas para clientes VIP e cupons promocionais.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Descontos progressivos baseados na quantidade de itens comprados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Possível impacto em fluxos de compra, checkout e precificação, caso o serviço seja integrado a esses processos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Como o serviço é novo, pode ser que ainda não esteja amplamente utilizado, mas sua incorporação pode alterar o comportamento de cálculo de preços se substituir ou complementar lógica existente.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual a origem e formato esperado dos cupons? Apenas `QUERO10` e `QUERO20` são válidos? Como cupons inválidos devem ser tratados?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A ordem de aplicação dos descontos está correta e alinhada com a política de negócio? (percentual → VIP → cupom)",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Por que o cupom `QUERO20` é aplicado somente se o preço base for maior que 100, e não o preço já descontado?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há planos para suportar outros tipos de desconto ou regras mais complexas no futuro?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O uso de `float` para valores monetários é intencional? Há risco de imprecisão que justifique uso de `Decimal`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O método `apply_bulk_discount` deve validar entradas negativas ou zero para `items_count` e `total_value`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço já está integrado a algum endpoint da API? Se sim, quais? Caso contrário, qual o plano para integração?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe alguma política para tratamento de erros ou logs para casos de entrada inválida?",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Cálculo básico de desconto percentual**",
+        "Entrada: `base_price=200.0`, `discount_percentage=20.0`, sem cupom, não VIP.",
+        "Esperado: preço final = 200 - 20% = 160.00.",
+        "**Desconto percentual maior que 70%**",
+        "Entrada: `base_price=100.0`, `discount_percentage=80.0`.",
+        "Esperado: desconto limitado a 70%, preço final = 30.00.",
+        "**Desconto percentual negativo**",
+        "Entrada: `base_price=100.0`, `discount_percentage=-10.0`.",
+        "Esperado: desconto tratado como 0%, preço final = 100.00.",
+        "**Cliente VIP com desconto adicional**",
+        "Entrada: `base_price=100.0`, `discount_percentage=10.0`, `is_vip=True`.",
+        "Cálculo: 100 - 10% = 90.0; VIP 5% sobre 90.0 = 85.5.",
+        "Esperado: preço final = 85.50.",
+        "**Aplicação do cupom `QUERO10`**",
+        "Entrada: `base_price=50.0`, `discount_percentage=0`, `coupon_code=\"QUERO10\"`.",
+        "Esperado: preço final = 50 - 10 = 40.00.",
+        "**Aplicação do cupom `QUERO20` com preço base abaixo de 100**",
+        "Entrada: `base_price=90.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.",
+        "Esperado: cupom não aplicado, preço final = 90.00.",
+        "**Aplicação do cupom `QUERO20` com preço base acima de 100**",
+        "Entrada: `base_price=150.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.",
+        "Esperado: preço final = 150 - 20 = 130.00.",
+        "**Preço base negativo**",
+        "Entrada: `base_price=-10.0`.",
+        "Esperado: exceção `ValueError`.",
+        "**Preço final não pode ser negativo**",
+        "Entrada: `base_price=10.0`, `discount_percentage=70.0`, `coupon_code=\"QUERO10\"`, `is_vip=True`.",
+        "Cálculo: 10 - 7 = 3; VIP 5% sobre 3 = 2.85; cupom -10 = -7.15 → preço final ajustado para 0.00.",
+        "Esperado: preço final = 0.00.",
+        "**Desconto progressivo por quantidade de itens**",
+        "Testar para 0, 4, 5, 9, 10, 19, 20 itens com valores variados.",
+        "Verificar se o fator aplicado está correto (1.0, 0.95, 0.90, 0.85).",
+        "**Valores negativos ou zero em `apply_bulk_discount`**",
+        "Entrada: `items_count=0` e `total_value=100.0`.",
+        "Esperado: sem desconto, preço final = 100.00.",
+        "Entrada: `items_count=-5` e `total_value=100.0`.",
+        "Esperado: comportamento definido (atualmente aplica fator 1.0).",
+        "`calculate_final_price`:",
+        "Testar limite superior do desconto percentual (70%).",
+        "Testar desconto percentual negativo (deve ser tratado como 0).",
+        "Testar aplicação correta do desconto VIP (5% sobre preço já descontado).",
+        "Testar aplicação correta dos cupons `QUERO10` e `QUERO20` com condições de preço base.",
+        "Testar que preço final nunca é negativo.",
+        "Testar exceção para preço base negativo.",
+        "Testar combinação de descontos (percentual + VIP + cupom).",
+        "Testar comportamento com cupom inválido (deve ignorar).",
+        "`apply_bulk_discount`:",
+        "Testar faixas de quantidade (0, 4, 5, 9, 10, 19, 20).",
+        "Testar valores negativos e zero para `items_count` e `total_value`.",
+        "Testar arredondamento correto para 2 casas decimais.",
+        "Criar um endpoint de API (se ainda não existir) que utilize `DiscountService` para calcular preço final e descontos progressivos, e testar fluxo completo via requisição HTTP.",
+        "Testar integração do serviço com o fluxo de checkout, garantindo que o preço final calculado pelo serviço seja refletido corretamente na resposta da API.",
+        "Testar cenários com diferentes tipos de clientes (VIP e não VIP) e cupons aplicados.",
+        "Validar que erros de entrada (ex: preço base negativo) retornam respostas HTTP apropriadas (ex: 400 Bad Request).",
+        "Testar integração com base de dados ou sistema de cupons, se aplicável, para validar que cupons são reconhecidos corretamente.",
+        "Não há evidência na mudança que justifique testes de carga ou desempenho específicos para este serviço, pois trata-se de lógica de negócio computacional simples e local."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Cálculo básico de desconto percentual**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=200.0`, `discount_percentage=20.0`, sem cupom, não VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: preço final = 200 - 20% = 160.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Desconto percentual maior que 70%**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=100.0`, `discount_percentage=80.0`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: desconto limitado a 70%, preço final = 30.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Desconto percentual negativo**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=100.0`, `discount_percentage=-10.0`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: desconto tratado como 0%, preço final = 100.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Cliente VIP com desconto adicional**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=100.0`, `discount_percentage=10.0`, `is_vip=True`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Cálculo: 100 - 10% = 90.0; VIP 5% sobre 90.0 = 85.5.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: preço final = 85.50.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Aplicação do cupom `QUERO10`**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=50.0`, `discount_percentage=0`, `coupon_code=\"QUERO10\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: preço final = 50 - 10 = 40.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Aplicação do cupom `QUERO20` com preço base abaixo de 100**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=90.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: cupom não aplicado, preço final = 90.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Aplicação do cupom `QUERO20` com preço base acima de 100**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=150.0`, `discount_percentage=0`, `coupon_code=\"QUERO20\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: preço final = 150 - 20 = 130.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Preço base negativo**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=-10.0`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: exceção `ValueError`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Preço final não pode ser negativo**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `base_price=10.0`, `discount_percentage=70.0`, `coupon_code=\"QUERO10\"`, `is_vip=True`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Cálculo: 10 - 7 = 3; VIP 5% sobre 3 = 2.85; cupom -10 = -7.15 → preço final ajustado para 0.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: preço final = 0.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Desconto progressivo por quantidade de itens**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar para 0, 4, 5, 9, 10, 19, 20 itens com valores variados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se o fator aplicado está correto (1.0, 0.95, 0.90, 0.85).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Valores negativos ou zero em `apply_bulk_discount`**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `items_count=0` e `total_value=100.0`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: sem desconto, preço final = 100.00.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Entrada: `items_count=-5` e `total_value=100.0`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: comportamento definido (atualmente aplica fator 1.0).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`calculate_final_price`:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar limite superior do desconto percentual (70%).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar desconto percentual negativo (deve ser tratado como 0).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar aplicação correta do desconto VIP (5% sobre preço já descontado).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar aplicação correta dos cupons `QUERO10` e `QUERO20` com condições de preço base.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que preço final nunca é negativo.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar exceção para preço base negativo.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar combinação de descontos (percentual + VIP + cupom).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com cupom inválido (deve ignorar).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "`apply_bulk_discount`:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar faixas de quantidade (0, 4, 5, 9, 10, 19, 20).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar valores negativos e zero para `items_count` e `total_value`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar arredondamento correto para 2 casas decimais.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Criar um endpoint de API (se ainda não existir) que utilize `DiscountService` para calcular preço final e descontos progressivos, e testar fluxo completo via requisição HTTP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do serviço com o fluxo de checkout, garantindo que o preço final calculado pelo serviço seja refletido corretamente na resposta da API.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenários com diferentes tipos de clientes (VIP e não VIP) e cupons aplicados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que erros de entrada (ex: preço base negativo) retornam respostas HTTP apropriadas (ex: 400 Bad Request).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração com base de dados ou sistema de cupons, se aplicável, para validar que cupons são reconhecidos corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não há evidência na mudança que justifique testes de carga ou desempenho específicos para este serviço, pois trata-se de lógica de negócio computacional simples e local.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Validação insuficiente de entradas**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `base_price` negativo gera exceção, mas `discount_percentage` negativo é simplesmente ajustado para zero, o que pode mascarar erros de entrada.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `coupon_code` aceita qualquer string, mas só reconhece dois valores específicos; cupons inválidos são ignorados silenciosamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ordem de aplicação dos descontos**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O desconto percentual é aplicado primeiro, depois o desconto VIP (5% sobre o valor já descontado), e por fim o desconto fixo do cupom.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Essa ordem pode não estar clara para o negócio e pode gerar dúvidas ou inconsistências se não estiver documentada ou validada.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Uso de `float` para valores monetários**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode causar problemas de precisão em cálculos financeiros, apesar do arredondamento final.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Limite de desconto percentual fixo em 70%**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode não contemplar futuras promoções ou regras especiais.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Desconto do cupom `QUERO20` depende do preço base, não do preço já descontado**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode gerar confusão se o preço base for alterado antes da aplicação do cupom.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Método `apply_bulk_discount` não valida entradas**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `items_count` e `total_value` negativos ou zero não são tratados explicitamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ausência de testes automatizados**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há evidência de testes unitários ou de integração para este serviço, aumentando o risco de regressões ou erros não detectados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível falta de integração com o restante do sistema**:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço foi criado, mas não há evidência clara de uso em endpoints ou fluxos de negócio existentes, o que pode indicar risco de inconsistência ou falta de cobertura.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo `discount_service.py` foi criado do zero, contendo a classe `DiscountService` com dois métodos principais:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `calculate_final_price`: calcula o preço final aplicando descontos percentuais limitados a 70%, desconto adicional para clientes VIP (5% sobre o valor já descontado), descontos fixos por cupons (`QUERO10` e `QUERO20`), e garante que o preço final não seja negativo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: `apply_bulk_discount`: aplica desconto progressivo baseado na quantidade de itens (5% para 5+, 10% para 10+, 15% para 20+ itens).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O docstring do método `calculate_final_price` explicita as regras de negócio implementadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O contexto do repositório mostra que o serviço foi importado em `python-api/app/api/routes.py` (linha `discount_service = DiscountService()`), indicando que pode ser utilizado em rotas da API.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há evidência de testes unitários ou de integração específicos para este serviço no repositório atual, nem menção direta a ele nos arquivos de teste listados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O uso de tipos `float` para preços e descontos pode implicar em pequenas imprecisões numéricas, apesar do arredondamento final para 2 casas decimais.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Introdução de um novo componente para cálculo de descontos que pode afetar:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Cálculo do preço final de produtos ou pedidos no e-commerce.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Aplicação de regras de desconto específicas para clientes VIP e cupons promocionais.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Descontos progressivos baseados na quantidade de itens comprados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possível impacto em fluxos de compra, checkout e precificação, caso o serviço seja integrado a esses processos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Como o serviço é novo, pode ser que ainda não esteja amplamente utilizado, mas sua incorporação pode alterar o comportamento de cálculo de preços se substituir ou complementar lógica existente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual a origem e formato esperado dos cupons? Apenas `QUERO10` e `QUERO20` são válidos? Como cupons inválidos devem ser tratados?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A ordem de aplicação dos descontos está correta e alinhada com a política de negócio? (percentual → VIP → cupom)",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Por que o cupom `QUERO20` é aplicado somente se o preço base for maior que 100, e não o preço já descontado?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há planos para suportar outros tipos de desconto ou regras mais complexas no futuro?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O uso de `float` para valores monetários é intencional? Há risco de imprecisão que justifique uso de `Decimal`?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O método `apply_bulk_discount` deve validar entradas negativas ou zero para `items_count` e `total_value`?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço já está integrado a algum endpoint da API? Se sim, quais? Caso contrário, qual o plano para integração?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe alguma política para tratamento de erros ou logs para casos de entrada inválida?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/app/services/discount_service.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com cupom inválido explícito (ex: `coupon_code=\"INVALID\"`) para garantir que é ignorado sem erro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com cupom em caixa diferente (ex: `coupon_code=\"quero10\"`) para validar sensibilidade a maiúsculas/minúsculas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar combinação de descontos com cupom `QUERO20` e desconto percentual próximo ao limite (ex: 69%) para verificar cálculo correto e limite de desconto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar aplicação do desconto VIP quando `is_vip` é `False` ou `None` para garantir que não é aplicado desconto adicional.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `apply_bulk_discount` com valores extremos de `items_count` (ex: 1, 4, 5, 9, 10, 19, 20, 100) para validar faixas e escalonamento correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `apply_bulk_discount` com `total_value` zero para garantir que o resultado é zero e não gera erro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar `apply_bulk_discount` com `items_count` negativo e `total_value` negativo para validar comportamento definido e tratamento de erros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar arredondamento do preço final para 2 casas decimais em todos os cenários de desconto combinados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar exceção ou tratamento para entradas do tipo incorreto (ex: strings em `base_price` ou `discount_percentage`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do `DiscountService` com o endpoint da API que utiliza o serviço, incluindo:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de checkout simulando chamadas ao serviço de desconto, garantindo que o preço final calculado é refletido corretamente no pedido final.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar logs e tratamento de erros para entradas inválidas, garantindo que erros são registrados e respostas apropriadas são retornadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do serviço com múltiplas requisições simultâneas para garantir ausência de condições de corrida ou estado compartilhado incorreto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenário completo de compra via API com cliente VIP, cupom válido, desconto percentual e quantidade de itens para validar integração e cálculo correto do preço final.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenário de compra com cupom inválido e preço base negativo para validar tratamento de erros e mensagens ao usuário final.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar atualização futura do serviço para suportar novos tipos de desconto, simulando extensão da classe e validação de regressão.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/app/services/discount_service.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: - **Nova funcionalidade**: Inclusão de um novo serviço (`DiscountService`) para cálculo de descontos no e-commerce, com regras específicas para descontos percentuais, clientes VIP, cupons e descontos ...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os cenários principais, mas faltam testes explícitos para tratamento de entradas inválidas e tipos incorretos, que são críticos para evitar falhas em produção.\n- É importante reforçar testes de integração com a API, pois o serviço já está importado em rotas, mas não há evidência de testes que validem essa integração.\n- Testes de arredondamento e precisão são essenciais devido ao uso de `float` para valores monetários, mitigando riscos de imprecisão.\n- Testes de concorrência e logs são recomendados para garantir robustez e rastreabilidade em ambiente real.\n- Cenários E2E garantem que a lógica de negócio implementada no serviço se reflete corretamente no fluxo completo de compra, reduzindo riscos de regressão.\n- Recomenda-se documentar claramente a política de aplicação dos descontos e tratamento de cupons para evitar dúvidas futuras e facilitar manutenção."
+    },
+    "generated_test_review_result": {
+      "status": "APPROVED",
+      "summary": "Os testes gerados para o DiscountService estão tecnicamente corretos, coerentes com o código original e cobrem amplamente os riscos e cenários críticos apontados no relatório de QA e na estratégia de testes. Os nomes de métodos e classes usados nos testes existem no código-fonte. Asserções são fortes e validam os resultados esperados, incluindo casos de exceção. A cobertura inclui limites de desconto percentual, aplicação de descontos VIP, cupons válidos e inválidos, arredondamento, e o método de desconto progressivo por quantidade, incluindo casos de valores negativos e zero. Não há mocks desnecessários e o código dos testes é legível e organizado. Alguns cenários adicionais sugeridos no relatório, como testes de concorrência e integração com API, são mais adequados para testes de integração e E2E, não para testes unitários, e portanto não são esperados aqui. A recomendação é executar esses testes automaticamente para garantir regressão e qualidade contínua.",
+      "issues": [
+        {
+          "severity": "INFO",
+          "description": "Os testes para tipos inválidos em calculate_final_price esperam TypeError, mas o código original não possui validação explícita de tipos, podendo lançar ValueError ou outro erro. Isso pode causar falsos negativos se o comportamento do Python for diferente. Recomenda-se validar ou ajustar os testes conforme a implementação real.",
+          "related_test": "test_invalid_types_raise_error",
+          "suggested_fix": "Adicionar validação explícita de tipos no método ou ajustar os testes para capturar exceções corretas."
+        }
+      ],
+      "missing_scenarios": [],
+      "execution_recommended": true,
+      "execution_reason": "Os testes cobrem os principais cenários de negócio, limites, exceções e combinações de descontos, garantindo proteção contra regressões no cálculo de descontos e aplicação de regras específicas.",
+      "suggested_fixes": [
+        "Revisar e ajustar os testes de tipos inválidos para alinhar com o comportamento real do código ou adicionar validação de tipos no método.",
+        "Considerar adicionar testes de integração e E2E conforme a estratégia para validar uso do serviço em rotas e fluxo completo."
+      ]
+    },
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation",
+      "test_review"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.16,
+      "high_risk_enrichment": 8543.76,
+      "test_generation": 43513.82,
+      "test_review": 5729.12
+    },
+    "diagnostic_notes": []
+  }
+]
