@@ -1,0 +1,1422 @@
+[
+  {
+    "file_path": "python-api/app/api/routes.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\nMelhoria funcional / extensão de funcionalidade no endpoint de busca de usuários (`GET /users/search`).\n\n---\n\n# Evidências observadas\n\n- O diff altera a função `search_users(q: str) -> list[UserResponse]` no arquivo `python-api/app/api/routes.py`.\n- Foi adicionada uma lógica para interpretar buscas que começam com o prefixo `\"vip:\"` (case insensitive).\n- Se o termo de busca começar com `\"vip:\"`, a busca passa a filtrar apenas usuários com o atributo `is_vip` igual a `True`.\n- O termo de busca efetivo é ajustado para o que vem após `\"vip:\"`.\n- Caso contrário, o comportamento anterior é mantido: busca por substring no nome do usuário, ignorando case.\n- O retorno continua sendo uma lista de objetos `UserResponse`.\n- O endpoint está documentado no arquivo `docs/endpoints.md` como `GET /users/search?q={termo}`, que busca usuários cujo nome contenha o termo (case-insensitive).\n- Não há menção anterior no código ou documentação sobre filtro VIP na busca.\n- O serviço `user_service.list_users()` retorna todos os usuários, sem paginação ou filtro.\n- O modelo `UserResponse` (presumido pelo contexto) inclui o campo `is_vip` (implícito pela checagem `u.is_vip` no código).\n- Testes existentes em `python-api/tests/test_api.py` incluem `test_search_users_returns_matching_results` que valida busca por nome, mas não indicam cobertura para filtro VIP.\n\n---\n\n# Impacto provável\n\n- O endpoint `/users/search` agora suporta um filtro especial para usuários VIP, ativado quando o parâmetro `q` começa com `\"vip:\"`.\n- Isso altera o comportamento da busca, restringindo resultados a usuários VIP quando o prefixo é usado.\n- Para buscas sem o prefixo, o comportamento permanece o mesmo.\n- Clientes que utilizam o endpoint podem obter resultados diferentes se usarem o prefixo `\"vip:\"`.\n- Pode ser uma funcionalidade nova para segmentar usuários VIP sem necessidade de endpoint separado.\n- Não há alteração na estrutura do retorno, mantendo compatibilidade com o modelo `UserResponse`.\n- A mudança não afeta outros endpoints ou funcionalidades, pois é isolada no método de busca.\n\n---\n\n# Riscos identificados\n\n- **Falta de validação do termo após \"vip:\"**: Se o termo for apenas `\"vip:\"` sem texto adicional, a busca será feita com termo vazio (`term = q[4:]`), o que pode retornar todos os usuários VIP, possivelmente não intencional.\n- **Dependência do campo `is_vip`**: Se algum usuário não tiver o atributo `is_vip` definido, pode causar erro de atributo (AttributeError). O código assume que todos os usuários têm esse campo.\n- **Incompatibilidade com clientes antigos**: Clientes que não esperavam o filtro VIP podem enviar queries começando com `\"vip:\"` e obter resultados inesperados.\n- **Ausência de paginação**: O método `user_service.list_users()` é chamado sem parâmetros, retornando todos os usuários, o que pode causar problemas de performance se a base crescer.\n- **Ausência de testes específicos para filtro VIP**: Não há evidência de testes cobrindo o novo comportamento, o que pode levar a regressões ou bugs não detectados.\n- **Possível confusão no uso do prefixo**: O prefixo `\"vip:\"` é fixo e case-insensitive, mas não há documentação explícita para o cliente sobre essa funcionalidade.\n- **Não há tratamento para espaços ou caracteres especiais após \"vip:\"**: Pode haver problemas se o termo contiver espaços ou estiver mal formatado.\n\n---\n\n# Cenários de testes manuais\n\n1. **Busca simples sem prefixo**  \n   - Requisição: `GET /users/search?q=ana`  \n   - Esperado: Retorna lista de usuários cujo nome contenha \"ana\" (case-insensitive), incluindo VIP e não VIP.\n\n2. **Busca com prefixo VIP e termo válido**  \n   - Requisição: `GET /users/search?q=vip:ana`  \n   - Esperado: Retorna somente usuários VIP cujo nome contenha \"ana\" (case-insensitive).\n\n3. **Busca com prefixo VIP e termo vazio**  \n   - Requisição: `GET /users/search?q=vip:`  \n   - Esperado: Retorna todos os usuários VIP (pois o termo é vazio e filtro VIP está ativo).\n\n4. **Busca com prefixo VIP e termo que não existe**  \n   - Requisição: `GET /users/search?q=vip:xyz`  \n   - Esperado: Retorna lista vazia se nenhum VIP tem \"xyz\" no nome.\n\n5. **Busca com prefixo VIP em diferentes cases**  \n   - Requisição: `GET /users/search?q=VIP:ana` e `GET /users/search?q=ViP:ana`  \n   - Esperado: Comportamento idêntico ao prefixo em minúsculas, filtro VIP ativo.\n\n6. **Busca com termo que contenha \"vip:\" no meio do nome**  \n   - Requisição: `GET /users/search?q=olivip:ia`  \n   - Esperado: Busca normal por substring \"olivip:ia\" no nome, sem filtro VIP.\n\n7. **Busca com usuários sem atributo `is_vip` (se possível)**  \n   - Preparar usuário sem `is_vip` e testar se a busca falha ou ignora.\n\n---\n\n# Sugestões de testes unitários\n\n- Testar a função `search_users` com:\n  - Query sem prefixo `\"vip:\"` retorna todos os usuários que contenham o termo no nome.\n  - Query com prefixo `\"vip:\"` retorna apenas usuários VIP que contenham o termo no nome.\n  - Query `\"vip:\"` (termo vazio) retorna todos os usuários VIP.\n  - Query com prefixo em diferentes cases (`\"VIP:\"`, `\"ViP:\"`).\n  - Usuário sem `is_vip` (mock) para verificar se o código trata ausência do atributo.\n- Testar que o resultado é uma lista de `UserResponse`.\n- Testar que usuários não VIP são filtrados corretamente quando prefixo VIP é usado.\n\n---\n\n# Sugestões de testes de integração\n\n- Testar o endpoint `GET /users/search` com diferentes queries conforme os cenários manuais acima.\n- Validar o status HTTP 200 e o formato da resposta JSON.\n- Validar que o filtro VIP funciona corretamente em ambiente com usuários VIP e não VIP.\n- Testar comportamento com base de dados populada com usuários VIP e não VIP.\n- Testar que buscas sem prefixo continuam funcionando como antes.\n- Testar que buscas com prefixo VIP não retornam usuários não VIP.\n- Testar comportamento com termo vazio após `\"vip:\"`.\n- Testar que o endpoint não retorna erros inesperados (500) para queries malformadas.\n\n---\n\n# Sugestões de testes de carga ou desempenho\n\n- Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos.\n- Contudo, dado que o método `user_service.list_users()` retorna todos os usuários sem paginação, se a base crescer muito, pode haver impacto de performance.\n- Recomenda-se monitorar performance do endpoint `/users/search` em ambientes com muitos usuários.\n\n---\n\n# Pontos que precisam de esclarecimento\n\n- **O que deve acontecer se o termo após `\"vip:\"` for vazio?**  \n  Atualmente retorna todos os usuários VIP. Isso é intencional?\n\n- **O campo `is_vip` é garantido para todos os usuários?**  \n  Há possibilidade de usuários sem esse atributo? Como o sistema deve se comportar?\n\n- **Deve haver paginação no endpoint `/users/search`?**  \n  Atualmente não há, o que pode causar problemas em bases grandes.\n\n- **O prefixo `\"vip:\"` deve ser documentado oficialmente?**  \n  Não há documentação visível para clientes sobre esse filtro especial.\n\n- **Deve o filtro VIP ser extensível para outros filtros do tipo prefixo?**  \n  Há planos para outros filtros similares?\n\n- **Como tratar espaços ou caracteres especiais no termo após `\"vip:\"`?**  \n  Atualmente não há sanitização ou validação.\n\n---\n\n# Resumo\n\nA mudança introduz um filtro especial para busca de usuários VIP no endpoint `/users/search` ativado pelo prefixo `\"vip:\"` no parâmetro `q`. Isso altera o comportamento da busca, restringindo resultados a usuários VIP quando usado. A alteração é localizada, sem impacto em outros endpoints, mas traz riscos relacionados à ausência de validação do termo, possível ausência do campo `is_vip` e falta de testes específicos para o novo comportamento. Recomenda-se testes manuais e automatizados focados no filtro VIP, além de esclarecimentos sobre o comportamento esperado para termos vazios e documentação para clientes.\n\n---",
+    "review_result": {
+      "summary": "Melhoria funcional / extensão de funcionalidade no endpoint de busca de usuários (`GET /users/search`).\n\n---\n\n- O endpoint `/users/search` agora suporta um filtro especial para usuários VIP, ativado quando o parâmetro `q` começa com `\"vip:\"`.\n- Isso altera o comportamento da busca, restringindo resultados a usuários VIP quando o prefixo é usado.\n- Para buscas sem o prefixo, o comportamento permanece o mesmo.\n- Clientes que utilizam o endpoint podem obter resultados diferentes se usarem o prefixo `\"vip:\"`.\n- Pode ser uma funcionalidade nova para segmentar usuários VIP sem necessidade de endpoint separado.\n- Não há alteração na estrutura do retorno, mantendo compatibilidade com o modelo `UserResponse`.\n- A mudança não afeta outros endpoints ou funcionalidades, pois é isolada no método de busca.\n\n---",
+      "findings": [
+        {
+          "description": "**Falta de validação do termo após \"vip:\"**: Se o termo for apenas `\"vip:\"` sem texto adicional, a busca será feita com termo vazio (`term = q[4:]`), o que pode retornar todos os usuários VIP, possivelmente não intencional.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Dependência do campo `is_vip`**: Se algum usuário não tiver o atributo `is_vip` definido, pode causar erro de atributo (AttributeError). O código assume que todos os usuários têm esse campo.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Incompatibilidade com clientes antigos**: Clientes que não esperavam o filtro VIP podem enviar queries começando com `\"vip:\"` e obter resultados inesperados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ausência de paginação**: O método `user_service.list_users()` é chamado sem parâmetros, retornando todos os usuários, o que pode causar problemas de performance se a base crescer.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ausência de testes específicos para filtro VIP**: Não há evidência de testes cobrindo o novo comportamento, o que pode levar a regressões ou bugs não detectados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Possível confusão no uso do prefixo**: O prefixo `\"vip:\"` é fixo e case-insensitive, mas não há documentação explícita para o cliente sobre essa funcionalidade.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Não há tratamento para espaços ou caracteres especiais após \"vip:\"**: Pode haver problemas se o termo contiver espaços ou estiver mal formatado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O diff altera a função `search_users(q: str) -> list[UserResponse]` no arquivo `python-api/app/api/routes.py`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Foi adicionada uma lógica para interpretar buscas que começam com o prefixo `\"vip:\"` (case insensitive).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Se o termo de busca começar com `\"vip:\"`, a busca passa a filtrar apenas usuários com o atributo `is_vip` igual a `True`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O termo de busca efetivo é ajustado para o que vem após `\"vip:\"`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Caso contrário, o comportamento anterior é mantido: busca por substring no nome do usuário, ignorando case.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O retorno continua sendo uma lista de objetos `UserResponse`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint está documentado no arquivo `docs/endpoints.md` como `GET /users/search?q={termo}`, que busca usuários cujo nome contenha o termo (case-insensitive).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há menção anterior no código ou documentação sobre filtro VIP na busca.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O serviço `user_service.list_users()` retorna todos os usuários, sem paginação ou filtro.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O modelo `UserResponse` (presumido pelo contexto) inclui o campo `is_vip` (implícito pela checagem `u.is_vip` no código).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Testes existentes em `python-api/tests/test_api.py` incluem `test_search_users_returns_matching_results` que valida busca por nome, mas não indicam cobertura para filtro VIP.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O endpoint `/users/search` agora suporta um filtro especial para usuários VIP, ativado quando o parâmetro `q` começa com `\"vip:\"`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Isso altera o comportamento da busca, restringindo resultados a usuários VIP quando o prefixo é usado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Para buscas sem o prefixo, o comportamento permanece o mesmo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Clientes que utilizam o endpoint podem obter resultados diferentes se usarem o prefixo `\"vip:\"`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Pode ser uma funcionalidade nova para segmentar usuários VIP sem necessidade de endpoint separado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Não há alteração na estrutura do retorno, mantendo compatibilidade com o modelo `UserResponse`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A mudança não afeta outros endpoints ou funcionalidades, pois é isolada no método de busca.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**O que deve acontecer se o termo após `\"vip:\"` for vazio?**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**O campo `is_vip` é garantido para todos os usuários?**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Deve haver paginação no endpoint `/users/search`?**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**O prefixo `\"vip:\"` deve ser documentado oficialmente?**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Deve o filtro VIP ser extensível para outros filtros do tipo prefixo?**",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Como tratar espaços ou caracteres especiais no termo após `\"vip:\"`?**",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Busca simples sem prefixo**",
+        "Requisição: `GET /users/search?q=ana`",
+        "Esperado: Retorna lista de usuários cujo nome contenha \"ana\" (case-insensitive), incluindo VIP e não VIP.",
+        "**Busca com prefixo VIP e termo válido**",
+        "Requisição: `GET /users/search?q=vip:ana`",
+        "Esperado: Retorna somente usuários VIP cujo nome contenha \"ana\" (case-insensitive).",
+        "**Busca com prefixo VIP e termo vazio**",
+        "Requisição: `GET /users/search?q=vip:`",
+        "Esperado: Retorna todos os usuários VIP (pois o termo é vazio e filtro VIP está ativo).",
+        "**Busca com prefixo VIP e termo que não existe**",
+        "Requisição: `GET /users/search?q=vip:xyz`",
+        "Esperado: Retorna lista vazia se nenhum VIP tem \"xyz\" no nome.",
+        "**Busca com prefixo VIP em diferentes cases**",
+        "Requisição: `GET /users/search?q=VIP:ana` e `GET /users/search?q=ViP:ana`",
+        "Esperado: Comportamento idêntico ao prefixo em minúsculas, filtro VIP ativo.",
+        "**Busca com termo que contenha \"vip:\" no meio do nome**",
+        "Requisição: `GET /users/search?q=olivip:ia`",
+        "Esperado: Busca normal por substring \"olivip:ia\" no nome, sem filtro VIP.",
+        "**Busca com usuários sem atributo `is_vip` (se possível)**",
+        "Preparar usuário sem `is_vip` e testar se a busca falha ou ignora.",
+        "Testar a função `search_users` com:",
+        "Query sem prefixo `\"vip:\"` retorna todos os usuários que contenham o termo no nome.",
+        "Query com prefixo `\"vip:\"` retorna apenas usuários VIP que contenham o termo no nome.",
+        "Query `\"vip:\"` (termo vazio) retorna todos os usuários VIP.",
+        "Query com prefixo em diferentes cases (`\"VIP:\"`, `\"ViP:\"`).",
+        "Usuário sem `is_vip` (mock) para verificar se o código trata ausência do atributo.",
+        "Testar que o resultado é uma lista de `UserResponse`.",
+        "Testar que usuários não VIP são filtrados corretamente quando prefixo VIP é usado.",
+        "Testar o endpoint `GET /users/search` com diferentes queries conforme os cenários manuais acima.",
+        "Validar o status HTTP 200 e o formato da resposta JSON.",
+        "Validar que o filtro VIP funciona corretamente em ambiente com usuários VIP e não VIP.",
+        "Testar comportamento com base de dados populada com usuários VIP e não VIP.",
+        "Testar que buscas sem prefixo continuam funcionando como antes.",
+        "Testar que buscas com prefixo VIP não retornam usuários não VIP.",
+        "Testar comportamento com termo vazio após `\"vip:\"`.",
+        "Testar que o endpoint não retorna erros inesperados (500) para queries malformadas.",
+        "Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos.",
+        "Contudo, dado que o método `user_service.list_users()` retorna todos os usuários sem paginação, se a base crescer muito, pode haver impacto de performance.",
+        "Recomenda-se monitorar performance do endpoint `/users/search` em ambientes com muitos usuários."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Busca simples sem prefixo**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=ana`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Retorna lista de usuários cujo nome contenha \"ana\" (case-insensitive), incluindo VIP e não VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com prefixo VIP e termo válido**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=vip:ana`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Retorna somente usuários VIP cujo nome contenha \"ana\" (case-insensitive).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com prefixo VIP e termo vazio**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=vip:`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Retorna todos os usuários VIP (pois o termo é vazio e filtro VIP está ativo).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com prefixo VIP e termo que não existe**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=vip:xyz`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Retorna lista vazia se nenhum VIP tem \"xyz\" no nome.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com prefixo VIP em diferentes cases**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=VIP:ana` e `GET /users/search?q=ViP:ana`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Comportamento idêntico ao prefixo em minúsculas, filtro VIP ativo.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com termo que contenha \"vip:\" no meio do nome**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Requisição: `GET /users/search?q=olivip:ia`",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Esperado: Busca normal por substring \"olivip:ia\" no nome, sem filtro VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "**Busca com usuários sem atributo `is_vip` (se possível)**",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Preparar usuário sem `is_vip` e testar se a busca falha ou ignora.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar a função `search_users` com:",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Query sem prefixo `\"vip:\"` retorna todos os usuários que contenham o termo no nome.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Query com prefixo `\"vip:\"` retorna apenas usuários VIP que contenham o termo no nome.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Query `\"vip:\"` (termo vazio) retorna todos os usuários VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Query com prefixo em diferentes cases (`\"VIP:\"`, `\"ViP:\"`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Usuário sem `is_vip` (mock) para verificar se o código trata ausência do atributo.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o resultado é uma lista de `UserResponse`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que usuários não VIP são filtrados corretamente quando prefixo VIP é usado.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `GET /users/search` com diferentes queries conforme os cenários manuais acima.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar o status HTTP 200 e o formato da resposta JSON.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que o filtro VIP funciona corretamente em ambiente com usuários VIP e não VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com base de dados populada com usuários VIP e não VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que buscas sem prefixo continuam funcionando como antes.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que buscas com prefixo VIP não retornam usuários não VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento com termo vazio após `\"vip:\"`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não retorna erros inesperados (500) para queries malformadas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Contudo, dado que o método `user_service.list_users()` retorna todos os usuários sem paginação, se a base crescer muito, pode haver impacto de performance.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Recomenda-se monitorar performance do endpoint `/users/search` em ambientes com muitos usuários.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Falta de validação do termo após \"vip:\"**: Se o termo for apenas `\"vip:\"` sem texto adicional, a busca será feita com termo vazio (`term = q[4:]`), o que pode retornar todos os usuários VIP, possivelmente não intencional.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dependência do campo `is_vip`**: Se algum usuário não tiver o atributo `is_vip` definido, pode causar erro de atributo (AttributeError). O código assume que todos os usuários têm esse campo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Incompatibilidade com clientes antigos**: Clientes que não esperavam o filtro VIP podem enviar queries começando com `\"vip:\"` e obter resultados inesperados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ausência de paginação**: O método `user_service.list_users()` é chamado sem parâmetros, retornando todos os usuários, o que pode causar problemas de performance se a base crescer.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Ausência de testes específicos para filtro VIP**: Não há evidência de testes cobrindo o novo comportamento, o que pode levar a regressões ou bugs não detectados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Possível confusão no uso do prefixo**: O prefixo `\"vip:\"` é fixo e case-insensitive, mas não há documentação explícita para o cliente sobre essa funcionalidade.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Não há tratamento para espaços ou caracteres especiais após \"vip:\"**: Pode haver problemas se o termo contiver espaços ou estiver mal formatado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O diff altera a função `search_users(q: str) -> list[UserResponse]` no arquivo `python-api/app/api/routes.py`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Foi adicionada uma lógica para interpretar buscas que começam com o prefixo `\"vip:\"` (case insensitive).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se o termo de busca começar com `\"vip:\"`, a busca passa a filtrar apenas usuários com o atributo `is_vip` igual a `True`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O termo de busca efetivo é ajustado para o que vem após `\"vip:\"`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Caso contrário, o comportamento anterior é mantido: busca por substring no nome do usuário, ignorando case.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O retorno continua sendo uma lista de objetos `UserResponse`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint está documentado no arquivo `docs/endpoints.md` como `GET /users/search?q={termo}`, que busca usuários cujo nome contenha o termo (case-insensitive).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há menção anterior no código ou documentação sobre filtro VIP na busca.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O serviço `user_service.list_users()` retorna todos os usuários, sem paginação ou filtro.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O modelo `UserResponse` (presumido pelo contexto) inclui o campo `is_vip` (implícito pela checagem `u.is_vip` no código).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Testes existentes em `python-api/tests/test_api.py` incluem `test_search_users_returns_matching_results` que valida busca por nome, mas não indicam cobertura para filtro VIP.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O endpoint `/users/search` agora suporta um filtro especial para usuários VIP, ativado quando o parâmetro `q` começa com `\"vip:\"`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Isso altera o comportamento da busca, restringindo resultados a usuários VIP quando o prefixo é usado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Para buscas sem o prefixo, o comportamento permanece o mesmo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Clientes que utilizam o endpoint podem obter resultados diferentes se usarem o prefixo `\"vip:\"`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Pode ser uma funcionalidade nova para segmentar usuários VIP sem necessidade de endpoint separado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Não há alteração na estrutura do retorno, mantendo compatibilidade com o modelo `UserResponse`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: A mudança não afeta outros endpoints ou funcionalidades, pois é isolada no método de busca.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **O que deve acontecer se o termo após `\"vip:\"` for vazio?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **O campo `is_vip` é garantido para todos os usuários?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Deve haver paginação no endpoint `/users/search`?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **O prefixo `\"vip:\"` deve ser documentado oficialmente?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Deve o filtro VIP ser extensível para outros filtros do tipo prefixo?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Como tratar espaços ou caracteres especiais no termo após `\"vip:\"`?**",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/app/api/routes.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar busca com prefixo `\"vip:\"` seguido apenas por espaços em branco (ex: `q=\"vip:   \"`), validar se o termo é tratado como vazio e retorna todos usuários VIP.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar busca com prefixo `\"vip:\"` seguido por caracteres especiais e espaços misturados (ex: `q=\"vip: @ana!\"`), validar comportamento esperado e ausência de erros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar busca com prefixo `\"vip:\"` em combinação com parâmetros adicionais na query string (ex: paginação, ordenação) para verificar que filtro VIP não interfere.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento da função `search_users` quando a lista retornada por `user_service.list_users()` contém usuários com valores nulos ou tipos inesperados no campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração do endpoint `/users/search` com base de dados contendo usuários com ausência do campo `is_vip` para garantir que não ocorra erro de atributo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint `/users/search` retorna HTTP 400 ou tratamento adequado para queries malformadas que começam com `\"vip:\"` mas não seguem o padrão esperado (ex: `q=\"vip::ana\"`, `q=\"vip\"` sem dois pontos).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint mantém compatibilidade com clientes antigos que enviam queries começando com `\"vip:\"` sem querer usar o filtro VIP, avaliando impacto e necessidade de documentação.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint `/users/search` em ambiente com grande volume de usuários VIP e não VIP para avaliar impacto da ausência de paginação e possíveis travamentos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão completo do endpoint `/users/search` incluindo todos os cenários de filtro VIP, busca simples, termos vazios, termos inexistentes, e casos de borda com caracteres especiais e espaços.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar documentação e comunicação do novo filtro VIP para clientes, validando se a funcionalidade está clara e se o endpoint responde conforme esperado para queries com e sem prefixo `\"vip:\"`.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o filtro VIP é case-insensitive e que prefixos similares (ex: `\"vipx:\"`, `\"vipp:\"`) não ativam o filtro VIP, garantindo que apenas `\"vip:\"` estrito funcione.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o filtro VIP não é aplicado se o prefixo `\"vip:\"` aparece no meio ou fim do termo (ex: `q=\"ana vip:\"`), garantindo busca normal.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint não retorna dados sensíveis ou diferentes para usuários não autorizados ao usar o filtro VIP, garantindo segurança e privacidade.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o endpoint responde corretamente para queries com prefixo `\"vip:\"` e termo contendo unicode, emojis ou caracteres não ASCII.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o filtro VIP pode ser facilmente estendido para outros prefixos no futuro, validando modularidade e manutenibilidade do código.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/app/api/routes.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Melhoria funcional / extensão de funcionalidade no endpoint de busca de usuários (`GET /users/search`).\n\n---\n\n- O endpoint `/users/search` agora suporta um filtro especial para usuários VIP, ativado q...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os cenários principais e críticos, especialmente os relacionados ao filtro VIP e busca simples.\n- Os testes adicionais focam em bordas e falhas relacionadas a formatação do termo após `\"vip:\"`, tratamento de dados incompletos (usuários sem `is_vip`), e impacto da ausência de paginação.\n- É fundamental incluir testes de integração e E2E para validar comportamento em ambiente real, especialmente para evitar regressões e garantir compatibilidade com clientes antigos.\n- Recomenda-se documentar oficialmente o uso do prefixo `\"vip:\"` para evitar confusão e uso indevido por clientes.\n- Monitoramento de performance e uso do endpoint deve ser reforçado devido à ausência de paginação e potencial crescimento da base de usuários.\n- A modularidade do filtro VIP deve ser avaliada para facilitar futuras extensões de filtros por prefixo, melhorando escalabilidade da funcionalidade."
+    },
+    "generated_test_review_result": null,
+    "generated_tests_raw": "### FILE: python-api/tests/test_api.py\n```python\nimport pytest\nfrom fastapi.testclient import TestClient\nfrom app.api.routes import router, search_users, user_service, UserResponse\nfrom fastapi import FastAPI\n\napp = FastAPI()\napp.include_router(router)\n\nclient = TestClient(app)\n\n\nclass UserWithoutIsVip:\n    def __init__(self, id, name, email):\n        self.id = id\n        self.name = name\n        self.email = email\n        # no is_vip attribute\n\n\n@pytest.fixture\ndef mock_users(monkeypatch):\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=2, name=\"Bruno Lima\", email=\"bruno@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n        UserResponse(id=3, name=\"Mariana Costa\", email=\"mariana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=4, name=\"Olivia\", email=\"olivia@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n        UserResponse(id=5, name=\"Vipiana\", email=\"vipiana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=6, name=\"NoVipUser\", email=\"novip@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n    return users\n\n\ndef test_search_users_without_prefix_returns_all_matching_users(mock_users):\n    # Query without vip: prefix, should return all users whose name contains \"ana\" case-insensitive\n    results = search_users(\"ana\")\n    assert isinstance(results, list)\n    assert all(isinstance(u, UserResponse) for u in results)\n    # Should include VIP and non-VIP users with \"ana\" in name\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n\n\ndef test_search_users_with_vip_prefix_returns_only_vip_users_with_term(mock_users):\n    # Query with vip: prefix and term \"ana\"\n    results = search_users(\"vip:ana\")\n    assert isinstance(results, list)\n    assert all(isinstance(u, UserResponse) for u in results)\n    # Only VIP users with \"ana\" in name\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa (both VIP)\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    # No non-VIP users included\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_prefix_and_empty_term_returns_all_vip_users(mock_users):\n    # Query with vip: prefix and empty term\n    results = search_users(\"vip:\")\n    assert isinstance(results, list)\n    # Should return all VIP users regardless of name\n    expected_ids = {1, 3, 5}  # Ana Silva, Mariana Costa, Vipiana\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    # All users must be VIP\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_prefix_and_nonexistent_term_returns_empty_list(mock_users):\n    # Query with vip: prefix and term that does not exist\n    results = search_users(\"vip:xyz\")\n    assert isinstance(results, list)\n    assert results == []\n\n\n@pytest.mark.parametrize(\"query\", [\"VIP:ana\", \"ViP:ana\"])\ndef test_search_users_vip_prefix_case_insensitive(query, mock_users):\n    results = search_users(query)\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa (VIP)\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_in_middle_of_term_searches_normally(mock_users):\n    # Query with \"vip:\" in the middle of the term, should not activate VIP filter\n    results = search_users(\"olivip:ia\")\n    assert isinstance(results, list)\n    # Should match users whose name contains \"olivip:ia\" case-insensitive\n    # None of the mock users have this substring, so expect empty list\n    assert results == []\n\n\ndef test_search_users_handles_user_without_is_vip(monkeypatch):\n    # Prepare users list with one user missing is_vip attribute\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserWithoutIsVip(id=99, name=\"No VIP Field\", email=\"novipfield@example.com\"),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n\n    # Query with vip: prefix, should not raise AttributeError, user without is_vip is ignored\n    results = search_users(\"vip:ana\")\n    assert isinstance(results, list)\n    # Only user with is_vip True and name containing \"ana\" should be returned\n    assert len(results) == 1\n    assert results[0].id == 1\n\n    # Query without vip: prefix, should include user without is_vip if name matches\n    results_no_prefix = search_users(\"no vip\")\n    # The user without is_vip has name \"No VIP Field\" which contains \"no vip\" case-insensitive\n    # So it should be included\n    assert any(u.id == 99 for u in results_no_prefix)\n\n\ndef test_search_users_returns_list_of_userresponse(mock_users):\n    results = search_users(\"ana\")\n    assert isinstance(results, list)\n    for user in results:\n        assert isinstance(user, UserResponse)\n\n\ndef test_search_users_filters_out_non_vip_when_vip_prefix_used(mock_users):\n    results = search_users(\"vip:ana\")\n    # All returned users must have is_vip True\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n    # No non-VIP users should be present\n    non_vip_users = [u for u in results if not getattr(u, \"is_vip\", False)]\n    assert len(non_vip_users) == 0\n\n\ndef test_get_users_search_endpoint_without_prefix_returns_expected_results(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # Should include both VIP and non-VIP users with \"ana\" in name\n    returned_ids = {u[\"id\"] for u in data}\n    expected_ids = {1, 3}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_returns_only_vip_users(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # All returned users must have is_vip True\n    for user in data:\n        assert user.get(\"is_vip\") is True\n    returned_ids = {u[\"id\"] for u in data}\n    expected_ids = {1, 3}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_and_empty_term_returns_all_vip_users(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # All users must be VIP\n    for user in data:\n        assert user.get(\"is_vip\") is True\n    expected_ids = {1, 3, 5}\n    returned_ids = {u[\"id\"] for u in data}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_and_nonexistent_term_returns_empty_list(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:xyz\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert data == []\n\n\n@pytest.mark.parametrize(\"query\", [\"VIP:ana\", \"ViP:ana\"])\ndef test_get_users_search_endpoint_vip_prefix_case_insensitive(query, mock_users):\n    response = client.get(\"/users/search\", params={\"q\": query})\n    assert response.status_code == 200\n    data = response.json()\n    expected_ids = {1, 3}\n    returned_ids = {u[\"id\"] for u in data}\n    assert expected_ids == returned_ids\n    for user in data:\n        assert user.get(\"is_vip\") is True\n\n\ndef test_get_users_search_endpoint_with_vip_in_middle_of_term_searches_normally(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"olivip:ia\"})\n    assert response.status_code == 200\n    data = response.json()\n    # No user has this substring, so expect empty list\n    assert data == []\n\n\ndef test_get_users_search_endpoint_handles_user_without_is_vip(monkeypatch):\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserWithoutIsVip(id=99, name=\"No VIP Field\", email=\"novipfield@example.com\"),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n\n    response = client.get(\"/users/search\", params={\"q\": \"vip:ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    # Only user with is_vip True and name containing \"ana\" should be returned\n    assert len(data) == 1\n    assert data[0][\"id\"] == 1\n\n    response_no_prefix = client.get(\"/users/search\", params={\"q\": \"no vip\"})\n    assert response_no_prefix.status_code == 200\n    data_no_prefix = response_no_prefix.json()\n    # User without is_vip should be included if name matches\n    assert any(u[\"id\"] == 99 for u in data_no_prefix)\n```\n",
+    "generated_test_files": {
+      "python-api/tests/test_api.py": "import pytest\nfrom fastapi.testclient import TestClient\nfrom app.api.routes import router, search_users, user_service, UserResponse\nfrom fastapi import FastAPI\n\napp = FastAPI()\napp.include_router(router)\n\nclient = TestClient(app)\n\n\nclass UserWithoutIsVip:\n    def __init__(self, id, name, email):\n        self.id = id\n        self.name = name\n        self.email = email\n        # no is_vip attribute\n\n\n@pytest.fixture\ndef mock_users(monkeypatch):\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=2, name=\"Bruno Lima\", email=\"bruno@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n        UserResponse(id=3, name=\"Mariana Costa\", email=\"mariana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=4, name=\"Olivia\", email=\"olivia@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n        UserResponse(id=5, name=\"Vipiana\", email=\"vipiana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserResponse(id=6, name=\"NoVipUser\", email=\"novip@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=False),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n    return users\n\n\ndef test_search_users_without_prefix_returns_all_matching_users(mock_users):\n    # Query without vip: prefix, should return all users whose name contains \"ana\" case-insensitive\n    results = search_users(\"ana\")\n    assert isinstance(results, list)\n    assert all(isinstance(u, UserResponse) for u in results)\n    # Should include VIP and non-VIP users with \"ana\" in name\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n\n\ndef test_search_users_with_vip_prefix_returns_only_vip_users_with_term(mock_users):\n    # Query with vip: prefix and term \"ana\"\n    results = search_users(\"vip:ana\")\n    assert isinstance(results, list)\n    assert all(isinstance(u, UserResponse) for u in results)\n    # Only VIP users with \"ana\" in name\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa (both VIP)\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    # No non-VIP users included\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_prefix_and_empty_term_returns_all_vip_users(mock_users):\n    # Query with vip: prefix and empty term\n    results = search_users(\"vip:\")\n    assert isinstance(results, list)\n    # Should return all VIP users regardless of name\n    expected_ids = {1, 3, 5}  # Ana Silva, Mariana Costa, Vipiana\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    # All users must be VIP\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_prefix_and_nonexistent_term_returns_empty_list(mock_users):\n    # Query with vip: prefix and term that does not exist\n    results = search_users(\"vip:xyz\")\n    assert isinstance(results, list)\n    assert results == []\n\n\n@pytest.mark.parametrize(\"query\", [\"VIP:ana\", \"ViP:ana\"])\ndef test_search_users_vip_prefix_case_insensitive(query, mock_users):\n    results = search_users(query)\n    expected_ids = {1, 3}  # Ana Silva and Mariana Costa (VIP)\n    result_ids = {u.id for u in results}\n    assert expected_ids == result_ids\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n\n\ndef test_search_users_with_vip_in_middle_of_term_searches_normally(mock_users):\n    # Query with \"vip:\" in the middle of the term, should not activate VIP filter\n    results = search_users(\"olivip:ia\")\n    assert isinstance(results, list)\n    # Should match users whose name contains \"olivip:ia\" case-insensitive\n    # None of the mock users have this substring, so expect empty list\n    assert results == []\n\n\ndef test_search_users_handles_user_without_is_vip(monkeypatch):\n    # Prepare users list with one user missing is_vip attribute\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserWithoutIsVip(id=99, name=\"No VIP Field\", email=\"novipfield@example.com\"),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n\n    # Query with vip: prefix, should not raise AttributeError, user without is_vip is ignored\n    results = search_users(\"vip:ana\")\n    assert isinstance(results, list)\n    # Only user with is_vip True and name containing \"ana\" should be returned\n    assert len(results) == 1\n    assert results[0].id == 1\n\n    # Query without vip: prefix, should include user without is_vip if name matches\n    results_no_prefix = search_users(\"no vip\")\n    # The user without is_vip has name \"No VIP Field\" which contains \"no vip\" case-insensitive\n    # So it should be included\n    assert any(u.id == 99 for u in results_no_prefix)\n\n\ndef test_search_users_returns_list_of_userresponse(mock_users):\n    results = search_users(\"ana\")\n    assert isinstance(results, list)\n    for user in results:\n        assert isinstance(user, UserResponse)\n\n\ndef test_search_users_filters_out_non_vip_when_vip_prefix_used(mock_users):\n    results = search_users(\"vip:ana\")\n    # All returned users must have is_vip True\n    assert all(getattr(u, \"is_vip\", False) for u in results)\n    # No non-VIP users should be present\n    non_vip_users = [u for u in results if not getattr(u, \"is_vip\", False)]\n    assert len(non_vip_users) == 0\n\n\ndef test_get_users_search_endpoint_without_prefix_returns_expected_results(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # Should include both VIP and non-VIP users with \"ana\" in name\n    returned_ids = {u[\"id\"] for u in data}\n    expected_ids = {1, 3}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_returns_only_vip_users(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # All returned users must have is_vip True\n    for user in data:\n        assert user.get(\"is_vip\") is True\n    returned_ids = {u[\"id\"] for u in data}\n    expected_ids = {1, 3}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_and_empty_term_returns_all_vip_users(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert isinstance(data, list)\n    # All users must be VIP\n    for user in data:\n        assert user.get(\"is_vip\") is True\n    expected_ids = {1, 3, 5}\n    returned_ids = {u[\"id\"] for u in data}\n    assert expected_ids == returned_ids\n\n\ndef test_get_users_search_endpoint_with_vip_prefix_and_nonexistent_term_returns_empty_list(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"vip:xyz\"})\n    assert response.status_code == 200\n    data = response.json()\n    assert data == []\n\n\n@pytest.mark.parametrize(\"query\", [\"VIP:ana\", \"ViP:ana\"])\ndef test_get_users_search_endpoint_vip_prefix_case_insensitive(query, mock_users):\n    response = client.get(\"/users/search\", params={\"q\": query})\n    assert response.status_code == 200\n    data = response.json()\n    expected_ids = {1, 3}\n    returned_ids = {u[\"id\"] for u in data}\n    assert expected_ids == returned_ids\n    for user in data:\n        assert user.get(\"is_vip\") is True\n\n\ndef test_get_users_search_endpoint_with_vip_in_middle_of_term_searches_normally(mock_users):\n    response = client.get(\"/users/search\", params={\"q\": \"olivip:ia\"})\n    assert response.status_code == 200\n    data = response.json()\n    # No user has this substring, so expect empty list\n    assert data == []\n\n\ndef test_get_users_search_endpoint_handles_user_without_is_vip(monkeypatch):\n    users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", status=\"ACTIVE\", role=\"USER\", is_vip=True),\n        UserWithoutIsVip(id=99, name=\"No VIP Field\", email=\"novipfield@example.com\"),\n    ]\n\n    def mock_list_users(limit=None, offset=None):\n        return users\n\n    monkeypatch.setattr(user_service, \"list_users\", mock_list_users)\n\n    response = client.get(\"/users/search\", params={\"q\": \"vip:ana\"})\n    assert response.status_code == 200\n    data = response.json()\n    # Only user with is_vip True and name containing \"ana\" should be returned\n    assert len(data) == 1\n    assert data[0][\"id\"] == 1\n\n    response_no_prefix = client.get(\"/users/search\", params={\"q\": \"no vip\"})\n    assert response_no_prefix.status_code == 200\n    data_no_prefix = response_no_prefix.json()\n    # User without is_vip should be included if name matches\n    assert any(u[\"id\"] == 99 for u in data_no_prefix)"
+    },
+    "memory_query": "Testes para python-api/app/api/routes.py. Código: from fastapi import APIRouter, HTTPException, status, Query\n\nfrom app.services.external_service import ExternalService\nfrom app.services.user_service import UserService\nfrom app.services.discount_serv",
+    "memories_used_raw": "Nenhuma memória relevante encontrada para esta consulta.",
+    "memories_used": [],
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.03,
+      "build_strategy": 0.16,
+      "high_risk_enrichment": 10201.14,
+      "test_generation": 60083.55
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/app/schemas.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\nAdição de novo campo booleano `is_vip` com valor padrão `False` nos modelos Pydantic `UserCreate` e `UserResponse` no schema da API.\n\n# Evidências observadas\n\n- No diff, foi adicionado o campo `is_vip: bool = False` nas classes `UserCreate` e `UserResponse` dentro do arquivo `python-api/app/schemas.py`.\n- O arquivo atual mostra que outros schemas relacionados a preços e carrinho (`DiscountRequest`, `CartRequest`) também possuem o campo `is_vip: bool = False`, indicando que o conceito de usuário VIP já está presente em outros contextos.\n- O contexto do repositório indica que `schemas.py` define os modelos Pydantic usados para validação e serialização dos dados da API.\n- Os testes existentes em `python-api/tests/test_schemas.py` cobrem validação de schemas, mas não há evidência de testes específicos para o campo `is_vip` em `UserCreate` ou `UserResponse`.\n- O arquivo de rotas (`routes.py`) e serviços (`user_service.py`) não foram alterados, portanto a lógica de negócio e persistência não foram modificadas diretamente nesta mudança.\n\n# Impacto provável\n\n- A API passa a aceitar, na criação de usuários (`UserCreate`), o campo opcional `is_vip` com valor padrão `False`.\n- As respostas que retornam dados de usuário (`UserResponse`) passam a incluir o campo `is_vip`, também com valor padrão `False`.\n- Clientes da API que consumirem endpoints relacionados a usuários poderão enviar e receber essa nova propriedade.\n- Como o campo é booleano e tem valor padrão, a mudança é compatível com versões anteriores (backward compatible) para clientes que não enviarem o campo.\n- A presença do campo pode impactar regras de negócio em camadas superiores (serviços, rotas) que ainda não foram alteradas, mas que podem passar a usar essa informação.\n- A consistência do campo `is_vip` entre criação e resposta sugere que o status VIP do usuário será armazenado e retornado, embora não haja evidência de persistência ou uso no serviço nesta mudança.\n\n# Riscos identificados\n\n- **Inconsistência de dados:** Se a camada de serviço ou persistência não estiver preparada para armazenar ou manipular o campo `is_vip`, pode haver perda ou inconsistência do valor informado.\n- **Falta de validação ou lógica associada:** A simples adição do campo no schema não garante que o valor será tratado corretamente em toda a aplicação, podendo gerar comportamentos inesperados.\n- **Impacto em clientes existentes:** Clientes que não esperam o campo `is_vip` na resposta podem ignorá-lo, mas clientes que validam estritamente o schema podem precisar ser atualizados.\n- **Ausência de testes específicos:** Não há evidência de testes unitários ou de integração cobrindo o novo campo, o que aumenta o risco de regressão ou bugs.\n- **Possível confusão sem documentação:** Se a funcionalidade VIP não estiver documentada ou explicada, pode gerar dúvidas para consumidores da API.\n\n# Cenários de testes manuais\n\n1. **Criação de usuário sem informar `is_vip`:**\n   - Enviar requisição POST `/users` com payload contendo `name` e `email`, sem `is_vip`.\n   - Verificar que o usuário é criado com `is_vip` igual a `False` na resposta.\n\n2. **Criação de usuário com `is_vip` igual a `True`:**\n   - Enviar requisição POST `/users` com payload contendo `name`, `email` e `is_vip: true`.\n   - Verificar que o usuário é criado e a resposta contém `is_vip` igual a `True`.\n\n3. **Listagem de usuários:**\n   - Enviar requisição GET `/users`.\n   - Verificar que cada usuário retornado contém o campo `is_vip` com valor booleano.\n\n4. **Validação de tipos:**\n   - Enviar payload com `is_vip` com valor inválido (ex: string \"yes\").\n   - Verificar que a API retorna erro de validação (HTTP 422).\n\n5. **Verificar comportamento com usuários existentes:**\n   - Criar usuário sem `is_vip` e verificar se o valor padrão é aplicado.\n   - Criar usuário com `is_vip` e verificar persistência do valor.\n\n# Sugestões de testes unitários\n\n- Testar a validação do schema `UserCreate` com e sem o campo `is_vip`.\n- Testar a serialização e desserialização do schema `UserResponse` incluindo o campo `is_vip`.\n- Testar que o valor padrão `False` é aplicado quando `is_vip` não é informado.\n- Testar que valores inválidos para `is_vip` geram erro de validação.\n- Testar integração do campo `is_vip` com a criação de usuário no serviço, se possível (mesmo que não modificado, para garantir compatibilidade).\n\n# Sugestões de testes de integração\n\n- Testar o endpoint POST `/users` para criação de usuário com e sem `is_vip`, verificando resposta e persistência.\n- Testar o endpoint GET `/users` para garantir que o campo `is_vip` está presente e correto em todos os usuários retornados.\n- Testar fluxo completo de criação e recuperação de usuário VIP.\n- Testar que a API rejeita payloads com `is_vip` inválido.\n- Verificar se a documentação da API (OpenAPI/Swagger) reflete a inclusão do campo `is_vip`.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável, pois a mudança é apenas na camada de schema/modelo, sem alteração de lógica ou performance.\n\n# Pontos que precisam de esclarecimento\n\n- O campo `is_vip` é apenas um flag informativo ou deve influenciar regras de negócio (ex: descontos, acesso)?\n- A persistência do campo `is_vip` está implementada no serviço e banco de dados? Se não, qual o plano para isso?\n- Há endpoints que retornam usuários que precisam ser atualizados para incluir `is_vip`?\n- Existe documentação para o campo `is_vip` para consumidores da API?\n- Há planos para testes automatizados cobrindo o novo campo, especialmente em integração e serviço?\n\n---\n\n**Resumo:** A mudança adiciona o campo booleano `is_vip` com valor padrão `False` nos schemas de criação e resposta de usuário, alinhando com outros schemas que já usam esse campo. O impacto é na interface da API, permitindo que clientes informem e recebam o status VIP do usuário. Riscos reais envolvem falta de tratamento na camada de serviço, ausência de testes específicos e possível inconsistência de dados. Recomenda-se testes manuais e automatizados focados na validação do campo, sua presença nas respostas e integração com a criação de usuários. Esclarecimentos sobre o uso e persistência do campo são importantes para garantir cobertura adequada e evitar regressões.\n\n---",
+    "review_result": {
+      "summary": "Adição de novo campo booleano `is_vip` com valor padrão `False` nos modelos Pydantic `UserCreate` e `UserResponse` no schema da API.\n\n- A API passa a aceitar, na criação de usuários (`UserCreate`), o campo opcional `is_vip` com valor padrão `False`.\n- As respostas que retornam dados de usuário (`UserResponse`) passam a incluir o campo `is_vip`, também com valor padrão `False`.\n- Clientes da API que consumirem endpoints relacionados a usuários poderão enviar e receber essa nova propriedade.\n- Como o campo é booleano e tem valor padrão, a mudança é compatível com versões anteriores (backward compatible) para clientes que não enviarem o campo.\n- A presença do campo pode impactar regras de negócio em camadas superiores (serviços, rotas) que ainda não foram alteradas, mas que podem passar a usar essa informação.\n- A consistência do campo `is_vip` entre criação e resposta sugere que o status VIP do usuário será armazenado e retornado, embora não haja evidência de persistência ou uso no serviço nesta mudança.",
+      "findings": [
+        {
+          "description": "**Inconsistência de dados:** Se a camada de serviço ou persistência não estiver preparada para armazenar ou manipular o campo `is_vip`, pode haver perda ou inconsistência do valor informado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Falta de validação ou lógica associada:** A simples adição do campo no schema não garante que o valor será tratado corretamente em toda a aplicação, podendo gerar comportamentos inesperados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Impacto em clientes existentes:** Clientes que não esperam o campo `is_vip` na resposta podem ignorá-lo, mas clientes que validam estritamente o schema podem precisar ser atualizados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Ausência de testes específicos:** Não há evidência de testes unitários ou de integração cobrindo o novo campo, o que aumenta o risco de regressão ou bugs.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Possível confusão sem documentação:** Se a funcionalidade VIP não estiver documentada ou explicada, pode gerar dúvidas para consumidores da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No diff, foi adicionado o campo `is_vip: bool = False` nas classes `UserCreate` e `UserResponse` dentro do arquivo `python-api/app/schemas.py`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo atual mostra que outros schemas relacionados a preços e carrinho (`DiscountRequest`, `CartRequest`) também possuem o campo `is_vip: bool = False`, indicando que o conceito de usuário VIP já está presente em outros contextos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto do repositório indica que `schemas.py` define os modelos Pydantic usados para validação e serialização dos dados da API.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Os testes existentes em `python-api/tests/test_schemas.py` cobrem validação de schemas, mas não há evidência de testes específicos para o campo `is_vip` em `UserCreate` ou `UserResponse`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo de rotas (`routes.py`) e serviços (`user_service.py`) não foram alterados, portanto a lógica de negócio e persistência não foram modificadas diretamente nesta mudança.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A API passa a aceitar, na criação de usuários (`UserCreate`), o campo opcional `is_vip` com valor padrão `False`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "As respostas que retornam dados de usuário (`UserResponse`) passam a incluir o campo `is_vip`, também com valor padrão `False`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Clientes da API que consumirem endpoints relacionados a usuários poderão enviar e receber essa nova propriedade.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Como o campo é booleano e tem valor padrão, a mudança é compatível com versões anteriores (backward compatible) para clientes que não enviarem o campo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A presença do campo pode impactar regras de negócio em camadas superiores (serviços, rotas) que ainda não foram alteradas, mas que podem passar a usar essa informação.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A consistência do campo `is_vip` entre criação e resposta sugere que o status VIP do usuário será armazenado e retornado, embora não haja evidência de persistência ou uso no serviço nesta mudança.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O campo `is_vip` é apenas um flag informativo ou deve influenciar regras de negócio (ex: descontos, acesso)?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "A persistência do campo `is_vip` está implementada no serviço e banco de dados? Se não, qual o plano para isso?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há endpoints que retornam usuários que precisam ser atualizados para incluir `is_vip`?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe documentação para o campo `is_vip` para consumidores da API?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há planos para testes automatizados cobrindo o novo campo, especialmente em integração e serviço?",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "**Criação de usuário sem informar `is_vip`:**",
+        "Enviar requisição POST `/users` com payload contendo `name` e `email`, sem `is_vip`.",
+        "Verificar que o usuário é criado com `is_vip` igual a `False` na resposta.",
+        "**Criação de usuário com `is_vip` igual a `True`:**",
+        "Enviar requisição POST `/users` com payload contendo `name`, `email` e `is_vip: true`.",
+        "Verificar que o usuário é criado e a resposta contém `is_vip` igual a `True`.",
+        "**Listagem de usuários:**",
+        "Enviar requisição GET `/users`.",
+        "Verificar que cada usuário retornado contém o campo `is_vip` com valor booleano.",
+        "**Validação de tipos:**",
+        "Enviar payload com `is_vip` com valor inválido (ex: string \"yes\").",
+        "Verificar que a API retorna erro de validação (HTTP 422).",
+        "**Verificar comportamento com usuários existentes:**",
+        "Criar usuário sem `is_vip` e verificar se o valor padrão é aplicado.",
+        "Criar usuário com `is_vip` e verificar persistência do valor.",
+        "Testar a validação do schema `UserCreate` com e sem o campo `is_vip`.",
+        "Testar a serialização e desserialização do schema `UserResponse` incluindo o campo `is_vip`.",
+        "Testar que o valor padrão `False` é aplicado quando `is_vip` não é informado.",
+        "Testar que valores inválidos para `is_vip` geram erro de validação.",
+        "Testar integração do campo `is_vip` com a criação de usuário no serviço, se possível (mesmo que não modificado, para garantir compatibilidade).",
+        "Testar o endpoint POST `/users` para criação de usuário com e sem `is_vip`, verificando resposta e persistência.",
+        "Testar o endpoint GET `/users` para garantir que o campo `is_vip` está presente e correto em todos os usuários retornados.",
+        "Testar fluxo completo de criação e recuperação de usuário VIP.",
+        "Testar que a API rejeita payloads com `is_vip` inválido.",
+        "Verificar se a documentação da API (OpenAPI/Swagger) reflete a inclusão do campo `is_vip`.",
+        "Não aplicável, pois a mudança é apenas na camada de schema/modelo, sem alteração de lógica ou performance."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "**Criação de usuário sem informar `is_vip`:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisição POST `/users` com payload contendo `name` e `email`, sem `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Verificar que o usuário é criado com `is_vip` igual a `False` na resposta.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Criação de usuário com `is_vip` igual a `True`:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisição POST `/users` com payload contendo `name`, `email` e `is_vip: true`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Verificar que o usuário é criado e a resposta contém `is_vip` igual a `True`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Listagem de usuários:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar requisição GET `/users`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Verificar que cada usuário retornado contém o campo `is_vip` com valor booleano.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Validação de tipos:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Enviar payload com `is_vip` com valor inválido (ex: string \"yes\").",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Verificar que a API retorna erro de validação (HTTP 422).",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "**Verificar comportamento com usuários existentes:**",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Criar usuário sem `is_vip` e verificar se o valor padrão é aplicado.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Criar usuário com `is_vip` e verificar persistência do valor.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar a validação do schema `UserCreate` com e sem o campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar a serialização e desserialização do schema `UserResponse` incluindo o campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar que o valor padrão `False` é aplicado quando `is_vip` não é informado.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar que valores inválidos para `is_vip` geram erro de validação.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar integração do campo `is_vip` com a criação de usuário no serviço, se possível (mesmo que não modificado, para garantir compatibilidade).",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar o endpoint POST `/users` para criação de usuário com e sem `is_vip`, verificando resposta e persistência.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar o endpoint GET `/users` para garantir que o campo `is_vip` está presente e correto em todos os usuários retornados.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar fluxo completo de criação e recuperação de usuário VIP.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Testar que a API rejeita payloads com `is_vip` inválido.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Verificar se a documentação da API (OpenAPI/Swagger) reflete a inclusão do campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        },
+        {
+          "name": "Não aplicável, pois a mudança é apenas na camada de schema/modelo, sem alteração de lógica ou performance.",
+          "test_type": "UNIT",
+          "priority": "LOW"
+        }
+      ],
+      "notes": "Política LOW aplicada para 'python-api/app/schemas.py'.\nApenas necessidades de teste diretas foram incluídas."
+    },
+    "generated_test_review_result": null,
+    "generated_tests_raw": "### FILE: python-api/tests/test_schemas.py\n```python\nimport pytest\nfrom pydantic import ValidationError\nfrom app.schemas import UserCreate, UserResponse\n\n\nclass TestUserCreateSchema:\n\n    def test_create_user_without_is_vip_should_default_to_false(self):\n        user = UserCreate(name=\"Alice\", email=\"alice@example.com\")\n        assert user.name == \"Alice\"\n        assert user.email == \"alice@example.com\"\n        assert user.is_vip is False\n\n    def test_create_user_with_is_vip_true_should_set_true(self):\n        user = UserCreate(name=\"Bob\", email=\"bob@example.com\", is_vip=True)\n        assert user.is_vip is True\n\n    def test_create_user_with_is_vip_false_should_set_false(self):\n        user = UserCreate(name=\"Carol\", email=\"carol@example.com\", is_vip=False)\n        assert user.is_vip is False\n\n    @pytest.mark.parametrize(\"invalid_value\", [\"yes\", \"no\", 1, 0, None, \"true\", \"false\", [], {}])\n    def test_create_user_with_invalid_is_vip_should_raise_validation_error(self, invalid_value):\n        # Only bool is accepted, so strings and other types should fail\n        if isinstance(invalid_value, bool):\n            # bool is valid, skip\n            pytest.skip(\"Boolean values are valid\")\n        with pytest.raises(ValidationError) as exc_info:\n            UserCreate(name=\"Dave\", email=\"dave@example.com\", is_vip=invalid_value)\n        errors = exc_info.value.errors()\n        assert any(e['loc'] == ('is_vip',) and e['type'].startswith('type_error') for e in errors)\n\n\nclass TestUserResponseSchema:\n\n    def test_serialize_and_deserialize_user_response_with_is_vip_false(self):\n        user_dict = {\n            \"id\": 1,\n            \"name\": \"Eve\",\n            \"email\": \"eve@example.com\",\n            \"is_vip\": False\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.id == 1\n        assert user.name == \"Eve\"\n        assert user.email == \"eve@example.com\"\n        assert user.is_vip is False\n\n        serialized = user.model_dump()\n        assert serialized[\"is_vip\"] is False\n\n    def test_serialize_and_deserialize_user_response_with_is_vip_true(self):\n        user_dict = {\n            \"id\": 2,\n            \"name\": \"Frank\",\n            \"email\": \"frank@example.com\",\n            \"is_vip\": True\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.is_vip is True\n\n        serialized = user.model_dump()\n        assert serialized[\"is_vip\"] is True\n\n    def test_user_response_without_is_vip_should_default_to_false(self):\n        user_dict = {\n            \"id\": 3,\n            \"name\": \"Grace\",\n            \"email\": \"grace@example.com\"\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.is_vip is False\n\n    @pytest.mark.parametrize(\"invalid_value\", [\"yes\", \"no\", 1, 0, None, \"true\", \"false\", [], {}])\n    def test_user_response_with_invalid_is_vip_should_raise_validation_error(self, invalid_value):\n        if isinstance(invalid_value, bool):\n            pytest.skip(\"Boolean values are valid\")\n        user_dict = {\n            \"id\": 4,\n            \"name\": \"Hank\",\n            \"email\": \"hank@example.com\",\n            \"is_vip\": invalid_value\n        }\n        with pytest.raises(ValidationError) as exc_info:\n            UserResponse.model_validate(user_dict)\n        errors = exc_info.value.errors()\n        assert any(e['loc'] == ('is_vip',) and e['type'].startswith('type_error') for e in errors)\n```\n",
+    "generated_test_files": {
+      "python-api/tests/test_schemas.py": "import pytest\nfrom pydantic import ValidationError\nfrom app.schemas import UserCreate, UserResponse\n\n\nclass TestUserCreateSchema:\n\n    def test_create_user_without_is_vip_should_default_to_false(self):\n        user = UserCreate(name=\"Alice\", email=\"alice@example.com\")\n        assert user.name == \"Alice\"\n        assert user.email == \"alice@example.com\"\n        assert user.is_vip is False\n\n    def test_create_user_with_is_vip_true_should_set_true(self):\n        user = UserCreate(name=\"Bob\", email=\"bob@example.com\", is_vip=True)\n        assert user.is_vip is True\n\n    def test_create_user_with_is_vip_false_should_set_false(self):\n        user = UserCreate(name=\"Carol\", email=\"carol@example.com\", is_vip=False)\n        assert user.is_vip is False\n\n    @pytest.mark.parametrize(\"invalid_value\", [\"yes\", \"no\", 1, 0, None, \"true\", \"false\", [], {}])\n    def test_create_user_with_invalid_is_vip_should_raise_validation_error(self, invalid_value):\n        # Only bool is accepted, so strings and other types should fail\n        if isinstance(invalid_value, bool):\n            # bool is valid, skip\n            pytest.skip(\"Boolean values are valid\")\n        with pytest.raises(ValidationError) as exc_info:\n            UserCreate(name=\"Dave\", email=\"dave@example.com\", is_vip=invalid_value)\n        errors = exc_info.value.errors()\n        assert any(e['loc'] == ('is_vip',) and e['type'].startswith('type_error') for e in errors)\n\n\nclass TestUserResponseSchema:\n\n    def test_serialize_and_deserialize_user_response_with_is_vip_false(self):\n        user_dict = {\n            \"id\": 1,\n            \"name\": \"Eve\",\n            \"email\": \"eve@example.com\",\n            \"is_vip\": False\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.id == 1\n        assert user.name == \"Eve\"\n        assert user.email == \"eve@example.com\"\n        assert user.is_vip is False\n\n        serialized = user.model_dump()\n        assert serialized[\"is_vip\"] is False\n\n    def test_serialize_and_deserialize_user_response_with_is_vip_true(self):\n        user_dict = {\n            \"id\": 2,\n            \"name\": \"Frank\",\n            \"email\": \"frank@example.com\",\n            \"is_vip\": True\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.is_vip is True\n\n        serialized = user.model_dump()\n        assert serialized[\"is_vip\"] is True\n\n    def test_user_response_without_is_vip_should_default_to_false(self):\n        user_dict = {\n            \"id\": 3,\n            \"name\": \"Grace\",\n            \"email\": \"grace@example.com\"\n        }\n        user = UserResponse.model_validate(user_dict)\n        assert user.is_vip is False\n\n    @pytest.mark.parametrize(\"invalid_value\", [\"yes\", \"no\", 1, 0, None, \"true\", \"false\", [], {}])\n    def test_user_response_with_invalid_is_vip_should_raise_validation_error(self, invalid_value):\n        if isinstance(invalid_value, bool):\n            pytest.skip(\"Boolean values are valid\")\n        user_dict = {\n            \"id\": 4,\n            \"name\": \"Hank\",\n            \"email\": \"hank@example.com\",\n            \"is_vip\": invalid_value\n        }\n        with pytest.raises(ValidationError) as exc_info:\n            UserResponse.model_validate(user_dict)\n        errors = exc_info.value.errors()\n        assert any(e['loc'] == ('is_vip',) and e['type'].startswith('type_error') for e in errors)"
+    },
+    "memory_query": "Testes para python-api/app/schemas.py. Código: from typing import List\nfrom pydantic import BaseModel, EmailStr, Field, ConfigDict\n\n\nclass HealthResponse(BaseModel):\n    status: str\n\n\nclass UserCreate(BaseModel):\n    name: str = Field(..., min_len",
+    "memories_used_raw": "Nenhuma memória relevante encontrada para esta consulta.",
+    "memories_used": [],
+    "risk_level": "LOW",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [
+      "high_risk_enrichment: risk_level=LOW"
+    ],
+    "applied_policies": [
+      "strategy_LOW"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.09,
+      "test_generation": 11021.76
+    },
+    "diagnostic_notes": []
+  },
+  {
+    "file_path": "python-api/app/services/user_service.py",
+    "context_result": null,
+    "raw_review_markdown": "# Tipo da mudança\n\nAdição de novo campo `is_vip` no modelo de dados `UserResponse` e sua propagação no serviço de usuários (`UserService`), incluindo dados seed e criação de usuários.\n\n# Evidências observadas\n\n- No diff, os usuários seed no construtor e no método `reset` passaram a incluir o campo `is_vip`:\n  ```python\n  UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", is_vip=True),\n  UserResponse(id=2, name=\"Bruno Lima\", email=\"bruno@example.com\", is_vip=False),\n  ```\n- No método `create_user`, o campo `is_vip` foi adicionado ao criar um novo `UserResponse` a partir do payload:\n  ```python\n  user = UserResponse(\n      id=self._next_id,\n      name=payload.name,\n      email=payload.email,\n      is_vip=payload.is_vip,\n  )\n  ```\n- O arquivo `user_service.py` agora assume que o schema `UserResponse` e o payload `UserCreate` possuem o campo `is_vip`.\n- Nos testes existentes (`python-api/tests/test_user_service.py`), os usuários seed são validados, mas sem o campo `is_vip`. Isso indica que os testes atuais não contemplam o novo campo.\n- O contexto do repositório mostra que `UserResponse` e `UserCreate` são modelos Pydantic usados para validação e serialização, e que o serviço é usado por rotas REST.\n\n# Impacto provável\n\n- **Modelos de dados**: O campo `is_vip` foi adicionado ao modelo de usuário, o que altera o contrato da API para incluir essa propriedade em respostas e requisições.\n- **Criação de usuários**: Agora é obrigatório ou esperado que o payload contenha `is_vip`, caso contrário pode haver erro ou comportamento inesperado.\n- **Dados seed**: Usuários iniciais possuem valores explícitos para `is_vip`, o que pode impactar testes que validam dados seed.\n- **Testes existentes**: Testes que validam usuários seed e criação de usuários podem falhar ou não validar corretamente o novo campo.\n- **API e clientes**: Se o campo `is_vip` não for tratado nas rotas ou clientes, pode haver erros de validação ou inconsistência de dados.\n\n# Riscos identificados\n\n- **Incompatibilidade de schema**: Se `UserCreate` não tiver o campo `is_vip` definido como opcional ou obrigatório, a criação de usuários pode falhar.\n- **Testes quebrados**: Testes que validam usuários seed sem o campo `is_vip` podem falhar ou não validar corretamente.\n- **Dados inconsistentes**: Se algum código consumir `UserResponse` sem considerar `is_vip`, pode ignorar essa informação importante.\n- **Falta de validação no payload**: Se o campo `is_vip` não for validado corretamente no payload, pode aceitar valores inválidos.\n- **Impacto em rotas e serialização**: O contexto não mostra mudanças nas rotas, mas se elas não forem atualizadas para lidar com `is_vip`, pode haver erros.\n\n# Cenários de testes manuais\n\n- Criar um usuário via API com o campo `is_vip` definido como `True` e `False`, verificar se o usuário é criado corretamente e o campo aparece na resposta.\n- Listar usuários e verificar se os usuários seed possuem o campo `is_vip` com os valores corretos.\n- Resetar o serviço e verificar se os usuários seed reaparecem com o campo `is_vip` correto.\n- Tentar criar usuário sem o campo `is_vip` no payload e observar comportamento (erro ou valor padrão).\n- Verificar se a busca por email e obtenção de usuário por ID retornam o campo `is_vip` corretamente.\n- Validar se a API retorna erros claros caso o campo `is_vip` esteja ausente ou inválido no payload.\n\n# Sugestões de testes unitários\n\n- Testar que o método `create_user` cria um usuário com o campo `is_vip` conforme o payload.\n- Testar que o método `reset` inicializa os usuários seed com os valores corretos de `is_vip`.\n- Testar que a lista de usuários contém o campo `is_vip` para todos os usuários.\n- Testar comportamento ao criar usuário com `is_vip` ausente, se aplicável (depende do schema `UserCreate`).\n- Testar que `get_user` e `find_by_email` retornam usuários com o campo `is_vip` correto.\n- Atualizar testes existentes que validam usuários seed para incluir verificação do campo `is_vip`.\n\n# Sugestões de testes de integração\n\n- Testar o endpoint `POST /users` para criação de usuário com o campo `is_vip` no payload, validando resposta e persistência.\n- Testar o endpoint `GET /users` para garantir que o campo `is_vip` está presente em todos os usuários listados.\n- Testar o endpoint `GET /users/{user_id}` para verificar se o campo `is_vip` é retornado corretamente.\n- Testar o endpoint `GET /users/by-email` para garantir que o campo `is_vip` está presente na resposta.\n- Testar fluxo completo: criar usuário com `is_vip`, buscar por ID e email, listar usuários, resetar serviço e validar dados seed com `is_vip`.\n- Validar que a API retorna erros adequados para payloads inválidos relacionados a `is_vip`.\n\n# Sugestões de testes de carga ou desempenho\n\n- Não aplicável, pois a mudança é apenas na estrutura de dados e não altera lógica de performance ou carga.\n\n# Pontos que precisam de esclarecimento\n\n- O campo `is_vip` é obrigatório ou opcional no payload `UserCreate`? O schema `UserCreate` foi alterado para incluir esse campo? (não fornecido no diff)\n- Qual o tipo exato e valores esperados para `is_vip`? (booleano presumido, mas não confirmado)\n- Há regras de negócio associadas ao campo `is_vip` que impactam outras partes do sistema (ex: permissões, descontos)?\n- As rotas da API foram atualizadas para expor e aceitar o campo `is_vip`? Se não, pode haver inconsistência.\n- Os testes existentes que validam usuários seed precisam ser atualizados para incluir `is_vip`? (sim, conforme evidenciado)\n- Existe tratamento para casos onde `is_vip` não é informado no payload? Qual o comportamento esperado?\n\n---\n\n**Resumo:** A mudança introduz o campo `is_vip` no modelo de usuário, impactando criação, dados seed e retorno de usuários. É necessário validar que o campo está corretamente propagado, que os testes existentes são atualizados para contemplar o novo campo e que a API trata corretamente esse atributo. Riscos principais envolvem incompatibilidade de schema e testes quebrados. Testes manuais e automatizados devem focar na criação, listagem, reset e busca de usuários com o campo `is_vip`. Pontos de dúvida sobre obrigatoriedade e regras de negócio devem ser esclarecidos para garantir cobertura adequada.",
+    "review_result": {
+      "summary": "Adição de novo campo `is_vip` no modelo de dados `UserResponse` e sua propagação no serviço de usuários (`UserService`), incluindo dados seed e criação de usuários.\n\n- **Modelos de dados**: O campo `is_vip` foi adicionado ao modelo de usuário, o que altera o contrato da API para incluir essa propriedade em respostas e requisições.\n- **Criação de usuários**: Agora é obrigatório ou esperado que o payload contenha `is_vip`, caso contrário pode haver erro ou comportamento inesperado.\n- **Dados seed**: Usuários iniciais possuem valores explícitos para `is_vip`, o que pode impactar testes que validam dados seed.\n- **Testes existentes**: Testes que validam usuários seed e criação de usuários podem falhar ou não validar corretamente o novo campo.\n- **API e clientes**: Se o campo `is_vip` não for tratado nas rotas ou clientes, pode haver erros de validação ou inconsistência de dados.",
+      "findings": [
+        {
+          "description": "**Incompatibilidade de schema**: Se `UserCreate` não tiver o campo `is_vip` definido como opcional ou obrigatório, a criação de usuários pode falhar.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Testes quebrados**: Testes que validam usuários seed sem o campo `is_vip` podem falhar ou não validar corretamente.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Dados inconsistentes**: Se algum código consumir `UserResponse` sem considerar `is_vip`, pode ignorar essa informação importante.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Falta de validação no payload**: Se o campo `is_vip` não for validado corretamente no payload, pode aceitar valores inválidos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Impacto em rotas e serialização**: O contexto não mostra mudanças nas rotas, mas se elas não forem atualizadas para lidar com `is_vip`, pode haver erros.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "No diff, os usuários seed no construtor e no método `reset` passaram a incluir o campo `is_vip`:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "No método `create_user`, o campo `is_vip` foi adicionado ao criar um novo `UserResponse` a partir do payload:",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O arquivo `user_service.py` agora assume que o schema `UserResponse` e o payload `UserCreate` possuem o campo `is_vip`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Nos testes existentes (`python-api/tests/test_user_service.py`), os usuários seed são validados, mas sem o campo `is_vip`. Isso indica que os testes atuais não contemplam o novo campo.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "O contexto do repositório mostra que `UserResponse` e `UserCreate` são modelos Pydantic usados para validação e serialização, e que o serviço é usado por rotas REST.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Modelos de dados**: O campo `is_vip` foi adicionado ao modelo de usuário, o que altera o contrato da API para incluir essa propriedade em respostas e requisições.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Criação de usuários**: Agora é obrigatório ou esperado que o payload contenha `is_vip`, caso contrário pode haver erro ou comportamento inesperado.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**Dados seed**: Usuários iniciais possuem valores explícitos para `is_vip`, o que pode impactar testes que validam dados seed.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "**Testes existentes**: Testes que validam usuários seed e criação de usuários podem falhar ou não validar corretamente o novo campo.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "**API e clientes**: Se o campo `is_vip` não for tratado nas rotas ou clientes, pode haver erros de validação ou inconsistência de dados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "O campo `is_vip` é obrigatório ou opcional no payload `UserCreate`? O schema `UserCreate` foi alterado para incluir esse campo? (não fornecido no diff)",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Qual o tipo exato e valores esperados para `is_vip`? (booleano presumido, mas não confirmado)",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Há regras de negócio associadas ao campo `is_vip` que impactam outras partes do sistema (ex: permissões, descontos)?",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "As rotas da API foram atualizadas para expor e aceitar o campo `is_vip`? Se não, pode haver inconsistência.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Os testes existentes que validam usuários seed precisam ser atualizados para incluir `is_vip`? (sim, conforme evidenciado)",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Existe tratamento para casos onde `is_vip` não é informado no payload? Qual o comportamento esperado?",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "Criar um usuário via API com o campo `is_vip` definido como `True` e `False`, verificar se o usuário é criado corretamente e o campo aparece na resposta.",
+        "Listar usuários e verificar se os usuários seed possuem o campo `is_vip` com os valores corretos.",
+        "Resetar o serviço e verificar se os usuários seed reaparecem com o campo `is_vip` correto.",
+        "Tentar criar usuário sem o campo `is_vip` no payload e observar comportamento (erro ou valor padrão).",
+        "Verificar se a busca por email e obtenção de usuário por ID retornam o campo `is_vip` corretamente.",
+        "Validar se a API retorna erros claros caso o campo `is_vip` esteja ausente ou inválido no payload.",
+        "Testar que o método `create_user` cria um usuário com o campo `is_vip` conforme o payload.",
+        "Testar que o método `reset` inicializa os usuários seed com os valores corretos de `is_vip`.",
+        "Testar que a lista de usuários contém o campo `is_vip` para todos os usuários.",
+        "Testar comportamento ao criar usuário com `is_vip` ausente, se aplicável (depende do schema `UserCreate`).",
+        "Testar que `get_user` e `find_by_email` retornam usuários com o campo `is_vip` correto.",
+        "Atualizar testes existentes que validam usuários seed para incluir verificação do campo `is_vip`.",
+        "Testar o endpoint `POST /users` para criação de usuário com o campo `is_vip` no payload, validando resposta e persistência.",
+        "Testar o endpoint `GET /users` para garantir que o campo `is_vip` está presente em todos os usuários listados.",
+        "Testar o endpoint `GET /users/{user_id}` para verificar se o campo `is_vip` é retornado corretamente.",
+        "Testar o endpoint `GET /users/by-email` para garantir que o campo `is_vip` está presente na resposta.",
+        "Testar fluxo completo: criar usuário com `is_vip`, buscar por ID e email, listar usuários, resetar serviço e validar dados seed com `is_vip`.",
+        "Validar que a API retorna erros adequados para payloads inválidos relacionados a `is_vip`.",
+        "Não aplicável, pois a mudança é apenas na estrutura de dados e não altera lógica de performance ou carga."
+      ]
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "Criar um usuário via API com o campo `is_vip` definido como `True` e `False`, verificar se o usuário é criado corretamente e o campo aparece na resposta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Listar usuários e verificar se os usuários seed possuem o campo `is_vip` com os valores corretos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Resetar o serviço e verificar se os usuários seed reaparecem com o campo `is_vip` correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Tentar criar usuário sem o campo `is_vip` no payload e observar comportamento (erro ou valor padrão).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar se a busca por email e obtenção de usuário por ID retornam o campo `is_vip` corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar se a API retorna erros claros caso o campo `is_vip` esteja ausente ou inválido no payload.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o método `create_user` cria um usuário com o campo `is_vip` conforme o payload.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que o método `reset` inicializa os usuários seed com os valores corretos de `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que a lista de usuários contém o campo `is_vip` para todos os usuários.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento ao criar usuário com `is_vip` ausente, se aplicável (depende do schema `UserCreate`).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar que `get_user` e `find_by_email` retornam usuários com o campo `is_vip` correto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Atualizar testes existentes que validam usuários seed para incluir verificação do campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `POST /users` para criação de usuário com o campo `is_vip` no payload, validando resposta e persistência.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `GET /users` para garantir que o campo `is_vip` está presente em todos os usuários listados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `GET /users/{user_id}` para verificar se o campo `is_vip` é retornado corretamente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar o endpoint `GET /users/by-email` para garantir que o campo `is_vip` está presente na resposta.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo: criar usuário com `is_vip`, buscar por ID e email, listar usuários, resetar serviço e validar dados seed com `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que a API retorna erros adequados para payloads inválidos relacionados a `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável, pois a mudança é apenas na estrutura de dados e não altera lógica de performance ou carga.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Incompatibilidade de schema**: Se `UserCreate` não tiver o campo `is_vip` definido como opcional ou obrigatório, a criação de usuários pode falhar.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Testes quebrados**: Testes que validam usuários seed sem o campo `is_vip` podem falhar ou não validar corretamente.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dados inconsistentes**: Se algum código consumir `UserResponse` sem considerar `is_vip`, pode ignorar essa informação importante.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Falta de validação no payload**: Se o campo `is_vip` não for validado corretamente no payload, pode aceitar valores inválidos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Impacto em rotas e serialização**: O contexto não mostra mudanças nas rotas, mas se elas não forem atualizadas para lidar com `is_vip`, pode haver erros.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No diff, os usuários seed no construtor e no método `reset` passaram a incluir o campo `is_vip`:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: No método `create_user`, o campo `is_vip` foi adicionado ao criar um novo `UserResponse` a partir do payload:",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O arquivo `user_service.py` agora assume que o schema `UserResponse` e o payload `UserCreate` possuem o campo `is_vip`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Nos testes existentes (`python-api/tests/test_user_service.py`), os usuários seed são validados, mas sem o campo `is_vip`. Isso indica que os testes atuais não contemplam o novo campo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O contexto do repositório mostra que `UserResponse` e `UserCreate` são modelos Pydantic usados para validação e serialização, e que o serviço é usado por rotas REST.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Modelos de dados**: O campo `is_vip` foi adicionado ao modelo de usuário, o que altera o contrato da API para incluir essa propriedade em respostas e requisições.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Criação de usuários**: Agora é obrigatório ou esperado que o payload contenha `is_vip`, caso contrário pode haver erro ou comportamento inesperado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Dados seed**: Usuários iniciais possuem valores explícitos para `is_vip`, o que pode impactar testes que validam dados seed.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **Testes existentes**: Testes que validam usuários seed e criação de usuários podem falhar ou não validar corretamente o novo campo.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: **API e clientes**: Se o campo `is_vip` não for tratado nas rotas ou clientes, pode haver erros de validação ou inconsistência de dados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: O campo `is_vip` é obrigatório ou opcional no payload `UserCreate`? O schema `UserCreate` foi alterado para incluir esse campo? (não fornecido no diff)",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Qual o tipo exato e valores esperados para `is_vip`? (booleano presumido, mas não confirmado)",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Há regras de negócio associadas ao campo `is_vip` que impactam outras partes do sistema (ex: permissões, descontos)?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: As rotas da API foram atualizadas para expor e aceitar o campo `is_vip`? Se não, pode haver inconsistência.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Os testes existentes que validam usuários seed precisam ser atualizados para incluir `is_vip`? (sim, conforme evidenciado)",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Existe tratamento para casos onde `is_vip` não é informado no payload? Qual o comportamento esperado?",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'python-api/app/services/user_service.py'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar criação de usuário com valores inválidos para `is_vip` (ex: string, número, null) e validar erros de validação específicos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar atualização parcial de usuário (se aplicável) para verificar comportamento do campo `is_vip` (alteração, remoção, ausência).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar serialização e desserialização do modelo `UserResponse` incluindo o campo `is_vip` para garantir integridade dos dados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do serviço ao receber payloads com campos extras além de `is_vip` para garantir que não impactam o campo `is_vip`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração das rotas REST que consomem `UserService` para garantir que o campo `is_vip` é corretamente aceito, validado e retornado em todas as rotas relacionadas a usuários.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do sistema quando o campo `is_vip` está ausente em payloads enviados por clientes antigos (compatibilidade retroativa).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o campo `is_vip` impacta regras de negócio associadas (ex: permissões, descontos) caso existam, mesmo que não explicitadas, para prevenir regressão oculta.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o campo `is_vip` é corretamente propagado em logs, métricas ou eventos gerados pelo serviço de usuários, para garantir rastreabilidade.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de criação, atualização, listagem e busca de usuários via API REST, incluindo o campo `is_vip`, validando persistência e consistência em ambiente integrado.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do sistema ao receber payloads inválidos ou malformados para o campo `is_vip` via API REST, garantindo mensagens de erro claras e consistentes.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar rollback ou tratamento de falhas em transações que envolvam criação ou atualização de usuários com o campo `is_vip`, para garantir integridade do banco de dados.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar impacto do campo `is_vip` em clientes que consomem a API (se houver clientes automatizados ou mocks), garantindo que não causem falhas ou inconsistências.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'python-api/app/services/user_service.py'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Adição de novo campo `is_vip` no modelo de dados `UserResponse` e sua propagação no serviço de usuários (`UserService`), incluindo dados seed e criação de usuários.\n\n- **Modelos de dados**: O campo `i...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os testes unitários e de integração focados na presença e validação do campo `is_vip`.\n- Os testes adicionais reforçam a validação de tipos e valores inválidos, compatibilidade retroativa e integração com rotas e clientes, pontos críticos para evitar regressões em APIs.\n- É importante validar se há regras de negócio associadas ao campo `is_vip` que possam impactar outras funcionalidades, mesmo que não estejam explícitas no diff, para evitar falhas ocultas.\n- Testes E2E são recomendados para garantir que a cadeia completa (API, serviço, banco, clientes) lide corretamente com o novo campo, especialmente em cenários de erro e rollback.\n- A inclusão de testes que verificam logs e métricas ajuda a garantir que o campo `is_vip` seja tratado corretamente em todos os aspectos do sistema, facilitando monitoramento e auditoria.\n- Recomenda-se revisar os schemas Pydantic para confirmar obrigatoriedade, tipo e valores aceitos para `is_vip` e refletir isso nos testes."
+    },
+    "generated_test_review_result": null,
+    "generated_tests_raw": "### FILE: python-api/tests/test_user_service.py\n```python\nimport pytest\nfrom pydantic import ValidationError\nfrom app.services.user_service import UserService\nfrom app.schemas import UserCreate, UserResponse\n\n\n@pytest.fixture\ndef user_service():\n    return UserService()\n\n\ndef test_create_user_sets_is_vip_correctly(user_service):\n    # Criar usuário com is_vip True\n    payload_vip = UserCreate(name=\"VIP User\", email=\"vip@example.com\", is_vip=True)\n    user_vip = user_service.create_user(payload_vip)\n    assert user_vip.is_vip is True\n    assert user_vip.name == \"VIP User\"\n    assert user_vip.email == \"vip@example.com\"\n\n    # Criar usuário com is_vip False\n    payload_non_vip = UserCreate(name=\"Non VIP User\", email=\"nonvip@example.com\", is_vip=False)\n    user_non_vip = user_service.create_user(payload_non_vip)\n    assert user_non_vip.is_vip is False\n    assert user_non_vip.name == \"Non VIP User\"\n    assert user_non_vip.email == \"nonvip@example.com\"\n\n\ndef test_reset_initializes_seed_users_with_correct_is_vip(user_service):\n    user_service.reset()\n    users = user_service.list_users()\n    assert len(users) == 2\n\n    expected_seed_users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", is_vip=True),\n        UserResponse(id=2, name=\"Bruno Lima\", email=\"bruno@example.com\", is_vip=False),\n    ]\n\n    for expected_user in expected_seed_users:\n        matched_users = [\n            u for u in users\n            if u.id == expected_user.id and u.name == expected_user.name and u.email == expected_user.email and u.is_vip == expected_user.is_vip\n        ]\n        assert len(matched_users) == 1, f\"Seed user with id {expected_user.id} and is_vip={expected_user.is_vip} not found\"\n\n\ndef test_list_users_contains_is_vip_for_all_users(user_service):\n    user_service.reset()\n    # Criar usuários adicionais para garantir lista maior\n    user_service.create_user(UserCreate(name=\"User1\", email=\"user1@example.com\", is_vip=True))\n    user_service.create_user(UserCreate(name=\"User2\", email=\"user2@example.com\", is_vip=False))\n\n    users = user_service.list_users()\n    assert len(users) >= 4\n    for user in users:\n        assert hasattr(user, \"is_vip\")\n        assert isinstance(user.is_vip, bool)\n\n\ndef test_create_user_without_is_vip_raises_validation_error():\n    # Tentativa de criar UserCreate sem is_vip deve falhar (campo obrigatório presumido)\n    with pytest.raises(ValidationError):\n        UserCreate(name=\"No VIP\", email=\"novip@example.com\")  # is_vip ausente\n\n\ndef test_get_user_and_find_by_email_return_user_with_correct_is_vip(user_service):\n    user_service.reset()\n    # Buscar usuário seed por id\n    user1 = user_service.get_user(1)\n    assert user1 is not None\n    assert user1.is_vip is True\n\n    user2 = user_service.get_user(2)\n    assert user2 is not None\n    assert user2.is_vip is False\n\n    # Buscar usuário seed por email\n    user_email_1 = user_service.find_by_email(\"ana@example.com\")\n    assert user_email_1 is not None\n    assert user_email_1.is_vip is True\n\n    user_email_2 = user_service.find_by_email(\"bruno@example.com\")\n    assert user_email_2 is not None\n    assert user_email_2.is_vip is False\n\n\n@pytest.mark.parametrize(\n    \"invalid_is_vip\",\n    [\n        \"true\",  # string\n        1,       # int\n        None,    # null\n        0,       # int zero\n        [],      # list\n        {},      # dict\n    ],\n)\ndef test_create_user_with_invalid_is_vip_raises_validation_error(invalid_is_vip):\n    # Testa que valores inválidos para is_vip no payload causam erro de validação\n    with pytest.raises(ValidationError):\n        UserCreate(name=\"Invalid VIP\", email=\"invalidvip@example.com\", is_vip=invalid_is_vip)\n```\n",
+    "generated_test_files": {
+      "python-api/tests/test_user_service.py": "import pytest\nfrom pydantic import ValidationError\nfrom app.services.user_service import UserService\nfrom app.schemas import UserCreate, UserResponse\n\n\n@pytest.fixture\ndef user_service():\n    return UserService()\n\n\ndef test_create_user_sets_is_vip_correctly(user_service):\n    # Criar usuário com is_vip True\n    payload_vip = UserCreate(name=\"VIP User\", email=\"vip@example.com\", is_vip=True)\n    user_vip = user_service.create_user(payload_vip)\n    assert user_vip.is_vip is True\n    assert user_vip.name == \"VIP User\"\n    assert user_vip.email == \"vip@example.com\"\n\n    # Criar usuário com is_vip False\n    payload_non_vip = UserCreate(name=\"Non VIP User\", email=\"nonvip@example.com\", is_vip=False)\n    user_non_vip = user_service.create_user(payload_non_vip)\n    assert user_non_vip.is_vip is False\n    assert user_non_vip.name == \"Non VIP User\"\n    assert user_non_vip.email == \"nonvip@example.com\"\n\n\ndef test_reset_initializes_seed_users_with_correct_is_vip(user_service):\n    user_service.reset()\n    users = user_service.list_users()\n    assert len(users) == 2\n\n    expected_seed_users = [\n        UserResponse(id=1, name=\"Ana Silva\", email=\"ana@example.com\", is_vip=True),\n        UserResponse(id=2, name=\"Bruno Lima\", email=\"bruno@example.com\", is_vip=False),\n    ]\n\n    for expected_user in expected_seed_users:\n        matched_users = [\n            u for u in users\n            if u.id == expected_user.id and u.name == expected_user.name and u.email == expected_user.email and u.is_vip == expected_user.is_vip\n        ]\n        assert len(matched_users) == 1, f\"Seed user with id {expected_user.id} and is_vip={expected_user.is_vip} not found\"\n\n\ndef test_list_users_contains_is_vip_for_all_users(user_service):\n    user_service.reset()\n    # Criar usuários adicionais para garantir lista maior\n    user_service.create_user(UserCreate(name=\"User1\", email=\"user1@example.com\", is_vip=True))\n    user_service.create_user(UserCreate(name=\"User2\", email=\"user2@example.com\", is_vip=False))\n\n    users = user_service.list_users()\n    assert len(users) >= 4\n    for user in users:\n        assert hasattr(user, \"is_vip\")\n        assert isinstance(user.is_vip, bool)\n\n\ndef test_create_user_without_is_vip_raises_validation_error():\n    # Tentativa de criar UserCreate sem is_vip deve falhar (campo obrigatório presumido)\n    with pytest.raises(ValidationError):\n        UserCreate(name=\"No VIP\", email=\"novip@example.com\")  # is_vip ausente\n\n\ndef test_get_user_and_find_by_email_return_user_with_correct_is_vip(user_service):\n    user_service.reset()\n    # Buscar usuário seed por id\n    user1 = user_service.get_user(1)\n    assert user1 is not None\n    assert user1.is_vip is True\n\n    user2 = user_service.get_user(2)\n    assert user2 is not None\n    assert user2.is_vip is False\n\n    # Buscar usuário seed por email\n    user_email_1 = user_service.find_by_email(\"ana@example.com\")\n    assert user_email_1 is not None\n    assert user_email_1.is_vip is True\n\n    user_email_2 = user_service.find_by_email(\"bruno@example.com\")\n    assert user_email_2 is not None\n    assert user_email_2.is_vip is False\n\n\n@pytest.mark.parametrize(\n    \"invalid_is_vip\",\n    [\n        \"true\",  # string\n        1,       # int\n        None,    # null\n        0,       # int zero\n        [],      # list\n        {},      # dict\n    ],\n)\ndef test_create_user_with_invalid_is_vip_raises_validation_error(invalid_is_vip):\n    # Testa que valores inválidos para is_vip no payload causam erro de validação\n    with pytest.raises(ValidationError):\n        UserCreate(name=\"Invalid VIP\", email=\"invalidvip@example.com\", is_vip=invalid_is_vip)"
+    },
+    "memory_query": "Testes para python-api/app/services/user_service.py. Código: from app.schemas import UserCreate, UserResponse\n\n\nclass UserService:\n    def __init__(self) -> None:\n        self._users: list[UserResponse] = [\n            UserResponse(id=1, name=\"Ana Silva\", email",
+    "memories_used_raw": "Nenhuma memória relevante encontrada para esta consulta.",
+    "memories_used": [],
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.08,
+      "high_risk_enrichment": 8347.87,
+      "test_generation": 18674.19
+    },
+    "diagnostic_notes": []
+  }
+]
