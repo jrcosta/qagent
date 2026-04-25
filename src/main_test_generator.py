@@ -237,7 +237,11 @@ def main() -> None:
         return
 
     # --- Geração de PRs Inteligente (Batching) ---
-    BATCH_SIZE = 3 # Reduzido para garantir que o primeiro PR seja leve
+    # REGRA DE NEGÓCIO: O GitHub limita o corpo do PR a 65.536 caracteres (Erro 422).
+    # Para garantir que o relatório de QA (que pode ser gigante) seja entregue sem cortes,
+    # dividimos a execução em lotes. O primeiro lote cria o PR e os demais adicionam
+    # commits e postam suas seções do relatório como COMENTÁRIOS, que possuem seu próprio limite de 65k.
+    BATCH_SIZE = 3 
     batches = [artifacts[i:i + BATCH_SIZE] for i in range(0, len(artifacts), BATCH_SIZE)]
     
     print(f"\n📦 Total de arquivos com testes: {len(artifacts)} | Dividindo em {len(batches)} lote(s) de commits")

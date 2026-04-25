@@ -84,7 +84,13 @@ def build_pr_body(
     test_files: list[str],
     analyzed_files: list[str],
 ) -> str:
-    """Monta o corpo do PR descrevendo os testes criados."""
+    """
+    Monta o corpo do PR descrevendo os testes criados.
+    
+    IMPORTANTE: O GitHub possui um limite rígido de 65.536 caracteres para o corpo (body) de um PR/Issue.
+    Se o relatório de QA for muito extenso, esta função deve ser usada com cautela ou o conteúdo
+    deve ser distribuído em comentários adicionais (ver lógica de batching no main_test_generator.py).
+    """
     files_list = "\n".join(f"- `{f}`" for f in test_files)
     analyzed_list = "\n".join(f"- `{f}`" for f in analyzed_files)
 
