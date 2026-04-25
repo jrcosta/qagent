@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 25 Apr 2026 – 01:39:46 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-25_01-39-46_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>25 Apr 2026 – 01:39:46 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-python-apiappapiroutespy">Arquivo analisado: python-api/app/api/routes.py</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<ul>
+<li><strong>Nova funcionalidade</strong>: inclusão de um novo endpoint POST <code>/cart/calculate</code> para cálculo do fechamento do carrinho de compras.</li>
+<li><strong>Integração de serviço</strong>: introdução do <code>CartService</code> no roteamento da API, com dependência do <code>DiscountService</code>.</li>
+</ul>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>No diff, foi adicionado o import do <code>CartService</code> e dos schemas <code>CartRequest</code> e <code>CartResponse</code>.</li>
+<li>Instanciação de <code>cart_service = CartService(discount_service=discount_service)</code> no escopo do router.</li>
+<li>Novo endpoint definido com decorator <code>@router.post("/cart/calculate", response_model=CartResponse, tags=["cart"])</code>.</li>
+<li>O endpoint recebe um payload do tipo <code>CartRequest</code>, converte os itens para dicionários via <code>model_dump()</code>, chama <code>cart_service.calculate_cart_total()</code> passando itens, código de cupom e flag VIP, e retorna um <code>CartResponse</code> construído a partir do resultado.</li>
+<li>Tratamento de exceção para <code>ValueError</code> que retorna HTTP 400 com a mensagem da exceção.</li>
+<li>Contexto do repositório indica que a arquitetura separa rotas, serviços e schemas, e que os serviços encapsulam a lógica de negócio.</li>
+<li>Não há evidência no diff ou no arquivo atual sobre a implementação interna do <code>CartService</code> ou dos schemas <code>CartRequest</code> e <code>CartResponse</code>.</li>
+<li>Não há testes existentes explícitos para o carrinho no contexto dos testes listados.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Introdução de um novo endpoint REST para cálculo do total do carrinho, que provavelmente agrega lógica de cálculo de preços, descontos e aplicação de cupons.</li>
+<li>Possível impacto na experiência do cliente que utiliza o endpoint <code>/cart/calculate</code> para obter o valor final do carrinho.</li>
+<li>Dependência do <code>DiscountService</code> dentro do <code>CartService</code> sugere que o cálculo do carrinho pode envolver regras de desconto já existentes, podendo impactar a consistência dos valores calculados.</li>
+<li>Como o endpoint converte os itens do payload para dicionários e delega a lógica ao serviço, o comportamento do endpoint depende fortemente da implementação do serviço e dos schemas.</li>
+<li>A adição do endpoint não altera rotas existentes, minimizando impacto regressivo direto em outras funcionalidades.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li><strong>Validação e consistência dos dados de entrada</strong>: não há validação explícita no endpoint além do Pydantic via <code>CartRequest</code>. Se o schema não for rigoroso, pode haver dados inválidos que causem erros no serviço.</li>
+<li><strong>Tratamento de exceções limitado</strong>: apenas <code>ValueError</code> é capturado e convertido em HTTP 400. Outros erros (ex: erros inesperados, falhas internas) podem resultar em 500 sem tratamento específico.</li>
+<li><strong>Dependência do <code>DiscountService</code></strong>: se o <code>DiscountService</code> tiver bugs ou mudanças, pode impactar o cálculo do carrinho.</li>
+<li><strong>Ausência de testes automatizados para o novo endpoint</strong>: não há evidência de testes unitários ou de integração para <code>/cart/calculate</code>, o que aumenta o risco de regressão ou comportamento inesperado.</li>
+<li><strong>Possível impacto na performance</strong>: se o cálculo do carrinho for complexo, pode afetar a latência do endpoint, embora não haja indicação clara disso.</li>
+<li><strong>Incerteza sobre o formato esperado dos itens no <code>CartRequest</code></strong>: sem detalhes do schema, pode haver ambiguidades no que é aceito, o que pode gerar erros ou resultados incorretos.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Cálculo básico do carrinho sem cupom e sem VIP</strong><br />
+   - Enviar payload com lista de itens válidos, sem cupom e <code>is_vip=False</code>.<br />
+   - Verificar se o retorno contém o total correto e estrutura conforme <code>CartResponse</code>.</p>
+</li>
+<li>
+<p><strong>Cálculo com cupom válido</strong><br />
+   - Enviar payload com cupom válido.<br />
+   - Confirmar que o desconto é aplicado corretamente no total.</p>
+</li>
+<li>
+<p><strong>Cálculo com cupom inválido</strong><br />
+   - Enviar payload com cupom inválido.<br />
+   - Verificar se retorna HTTP 400 com mensagem adequada.</p>
+</li>
+<li>
+<p><strong>Cálculo para usuário VIP</strong><br />
+   - Enviar payload com <code>is_vip=True</code>.<br />
+   - Confirmar se o desconto VIP é aplicado conforme esperado.</p>
+</li>
+<li>
+<p><strong>Payload com itens vazios</strong><br />
+   - Enviar payload com lista vazia de itens.<br />
+   - Verificar se o sistema retorna total zero ou erro apropriado.</p>
+</li>
+<li>
+<p><strong>Payload com dados inválidos nos itens (ex: quantidade negativa, preço negativo)</strong><br />
+   - Enviar payload com dados inválidos.<br />
+   - Confirmar que retorna erro HTTP 400 com mensagem clara.</p>
+</li>
+<li>
+<p><strong>Testar comportamento com campos obrigatórios faltando no payload</strong><br />
+   - Enviar payload incompleto.<br />
+   - Verificar se Pydantic rejeita a requisição com erro 422.</p>
+</li>
+<li>
+<p><strong>Testar resposta para exceções não previstas</strong><br />
+   - Simular erro interno no serviço (se possível).<br />
+   - Verificar se o endpoint responde com erro 500 ou mensagem adequada.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar o método <code>calculate_cart</code> do router isoladamente, mockando <code>cart_service.calculate_cart_total</code> para:</li>
+<li>Retornar resultado esperado e validar que o endpoint retorna <code>CartResponse</code> corretamente.</li>
+<li>Levantar <code>ValueError</code> e validar que o endpoint retorna HTTP 400 com a mensagem da exceção.</li>
+<li>Testar a conversão dos itens do <code>CartRequest</code> para dicionários via <code>model_dump()</code>.</li>
+<li>Validar que o endpoint chama <code>cart_service.calculate_cart_total</code> com os parâmetros corretos.</li>
+<li>Testar o comportamento do endpoint com payloads inválidos para garantir que Pydantic rejeita antes de chegar ao serviço.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o fluxo completo do endpoint <code>/cart/calculate</code> com payloads reais, validando:</li>
+<li>Cálculo correto do total do carrinho com diferentes combinações de itens, cupons e flags VIP.</li>
+<li>Resposta correta para cupons inválidos ou dados inválidos.</li>
+<li>Integração correta entre o endpoint, <code>CartService</code> e <code>DiscountService</code>.</li>
+<li>Testar o endpoint com payloads extremos (muitos itens, valores altos) para validar estabilidade.</li>
+<li>Testar o endpoint em conjunto com outros endpoints relacionados a descontos para garantir consistência.</li>
+<li>Validar o schema de request e response via chamadas reais para garantir conformidade.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos para este endpoint.</li>
+<li>Caso o cálculo do carrinho envolva lógica complexa ou chamadas externas, considerar testes de carga em momento posterior.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Detalhes do schema <code>CartRequest</code> e <code>CartResponse</code></strong>: quais campos são obrigatórios, tipos e regras de validação.</li>
+<li><strong>Implementação e regras de negócio do <code>CartService.calculate_cart_total</code></strong>: como são calculados descontos, tratamento de cupons, regras para VIP.</li>
+<li><strong>Comportamento esperado para casos de erro além de <code>ValueError</code></strong>: há outros tipos de exceções que devem ser tratados?</li>
+<li><strong>Limites e restrições do carrinho (ex: número máximo de itens, valores máximos)</strong>.</li>
+<li><strong>Se há necessidade de autenticação/autorização para este endpoint</strong> (não indicado no diff).</li>
+<li><strong>Se o endpoint deve registrar logs ou métricas específicas para monitoramento</strong>.</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança introduz um novo endpoint para cálculo do carrinho, integrando o serviço de carrinho com o serviço de desconto. A principal preocupação é garantir a validação correta dos dados, tratamento adequado de erros e cobertura de testes para evitar regressões. A ausência de testes automatizados para essa funcionalidade é um risco que deve ser mitigado com testes unitários e de integração específicos.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappschemaspy">Arquivo analisado: python-api/app/schemas.py</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Adição de novos modelos Pydantic (schemas) para representar dados relacionados a carrinho de compras (<code>CartItemSchema</code>, <code>CartRequest</code>, <code>CartResponse</code>).</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff adiciona três novas classes no arquivo <code>python-api/app/schemas.py</code>:</li>
+<li><code>CartItemSchema</code> com campos: <code>id</code> (str), <code>name</code> (str), <code>price</code> (float, &gt;=0), <code>quantity</code> (int, default 1, &gt;=1).</li>
+<li><code>CartRequest</code> com campos: <code>items</code> (lista de <code>CartItemSchema</code>), <code>coupon_code</code> (str ou None), <code>is_vip</code> (bool, default False).</li>
+<li><code>CartResponse</code> com campos: <code>subtotal</code> (float), <code>tax_amount</code> (float), <code>final_price</code> (float), <code>items_count</code> (int).</li>
+<li>O arquivo <code>schemas.py</code> é o local central para definição dos modelos Pydantic usados para validação e serialização dos dados da API, conforme o contexto da arquitetura.</li>
+<li>Não há alterações em rotas, serviços ou testes diretamente relacionadas a esses novos schemas no diff.</li>
+<li>O contexto do repositório mostra que o projeto é uma API REST com FastAPI, usando Pydantic para contratos de dados.</li>
+<li>Testes existentes para schemas (<code>test_schemas.py</code>) focam em validação de campos e serialização, mas não há testes para os novos modelos adicionados.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Introdução de novos contratos de dados para endpoints relacionados a carrinho de compras, provavelmente para suportar funcionalidades de manipulação de carrinho, cálculo de preços, aplicação de cupons e status VIP.</li>
+<li>Esses modelos definem a estrutura esperada para requisições e respostas envolvendo carrinho, o que impacta diretamente a validação de entrada e saída da API.</li>
+<li>Como são novos modelos, não há impacto direto em funcionalidades existentes, mas a introdução pode afetar endpoints futuros ou já existentes que passem a usar esses schemas.</li>
+<li>A validação dos campos <code>price</code> e <code>quantity</code> em <code>CartItemSchema</code> garante que valores negativos ou inválidos sejam rejeitados, prevenindo dados incorretos.</li>
+<li>Campos como <code>coupon_code</code> e <code>is_vip</code> indicam que a lógica de desconto ou tratamento especial pode ser aplicada no serviço de carrinho, embora isso não esteja no escopo do diff.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li><strong>Ausência de validação explícita para campos monetários além da restrição <code>ge=0</code></strong>: não há validação para casas decimais, formatos ou limites máximos, o que pode permitir valores monetários inválidos ou extremos.</li>
+<li><strong>Possível falta de testes para os novos schemas</strong>: sem testes unitários ou de integração que validem esses modelos, há risco de erros de validação não detectados em produção.</li>
+<li><strong>Inconsistência entre <code>items_count</code> e soma das quantidades em <code>CartResponse</code></strong>: o campo <code>items_count</code> é um inteiro, mas não está claro se representa a quantidade total de itens (somatório das quantidades) ou o número de tipos distintos de itens. Isso pode gerar confusão e erros na interpretação do cliente.</li>
+<li><strong>Campos opcionais e defaults podem gerar comportamento inesperado</strong>: por exemplo, <code>coupon_code</code> pode ser <code>None</code> ou string vazia, e <code>is_vip</code> defaulta para <code>False</code>. Se a lógica de negócio não tratar corretamente esses casos, pode haver falhas.</li>
+<li><strong>Sem validação de integridade entre os campos</strong>: por exemplo, não há restrição para que <code>items</code> não seja vazio, o que pode levar a requisições com carrinho vazio, dependendo da regra de negócio.</li>
+<li><strong>Sem documentação ou comentários explicativos</strong>: dificulta o entendimento do uso esperado dos novos modelos, aumentando o risco de uso incorreto.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Validação de criação de <code>CartItemSchema</code> com dados válidos e inválidos</strong><br />
+   - Criar item com <code>price</code> negativo → deve falhar validação.<br />
+   - Criar item com <code>quantity</code> zero ou negativo → deve falhar validação.<br />
+   - Criar item com <code>quantity</code> omitido → deve assumir valor padrão 1.<br />
+   - Criar item com campos <code>id</code> e <code>name</code> vazios ou nulos → deve falhar (pois são obrigatórios).</p>
+</li>
+<li>
+<p><strong>Envio de <code>CartRequest</code> com diferentes combinações</strong><br />
+   - Enviar carrinho com lista vazia de itens → verificar se é aceito ou rejeitado.<br />
+   - Enviar carrinho com múltiplos itens válidos → deve passar validação.<br />
+   - Enviar carrinho com <code>coupon_code</code> nulo, vazio e string válida → validar aceitação.<br />
+   - Enviar carrinho com <code>is_vip</code> omitido e explicitamente <code>True</code> → validar valor padrão e override.</p>
+</li>
+<li>
+<p><strong>Recebimento de <code>CartResponse</code></strong><br />
+   - Validar se os campos <code>subtotal</code>, <code>tax_amount</code>, <code>final_price</code> e <code>items_count</code> são retornados corretamente e coerentes com os dados enviados.<br />
+   - Verificar se <code>items_count</code> corresponde ao esperado (total de itens ou tipos de itens).</p>
+</li>
+<li>
+<p><strong>Testar integração com endpoints que utilizem esses schemas (se existirem)</strong><br />
+   - Enviar requisições reais para endpoints que aceitem <code>CartRequest</code> e validar respostas com <code>CartResponse</code>.<br />
+   - Testar comportamento com cupons inválidos, VIP true/false, e diferentes quantidades.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li><strong>Testar validação de <code>CartItemSchema</code></strong></li>
+<li>Criar instâncias com valores válidos e inválidos para <code>price</code> e <code>quantity</code>.</li>
+<li>Testar que <code>quantity</code> padrão é 1 quando omitido.</li>
+<li>
+<p>Testar que campos obrigatórios <code>id</code> e <code>name</code> não aceitam valores nulos ou vazios.</p>
+</li>
+<li>
+<p><strong>Testar validação de <code>CartRequest</code></strong></p>
+</li>
+<li>Criar instância com lista vazia de itens e verificar se aceita (ou lançar erro se regra exigir).</li>
+<li>Testar aceitação de <code>coupon_code</code> como <code>None</code>, string vazia e string válida.</li>
+<li>
+<p>Testar valor padrão de <code>is_vip</code> como <code>False</code>.</p>
+</li>
+<li>
+<p><strong>Testar serialização e desserialização de <code>CartResponse</code></strong></p>
+</li>
+<li>Criar instância com valores típicos e verificar se serializa para JSON corretamente.</li>
+<li>
+<p>Desserializar JSON para objeto e validar campos.</p>
+</li>
+<li>
+<p><strong>Testar coerência de <code>items_count</code></strong></p>
+</li>
+<li>Criar <code>CartResponse</code> com diferentes valores de <code>items_count</code> e validar comportamento esperado (se houver lógica associada).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar testes que enviem requisições HTTP para endpoints que utilizem os novos schemas (ex: POST <code>/cart</code> ou similar, se existir).</li>
+<li>Validar que a API rejeita requisições com itens inválidos (preço negativo, quantidade inválida).</li>
+<li>Validar que a resposta da API contém <code>CartResponse</code> com campos corretos e coerentes.</li>
+<li>Testar fluxo completo de criação de carrinho, aplicação de cupom e cálculo de preço final.</li>
+<li>Testar comportamento com usuários VIP e não VIP para verificar se o campo <code>is_vip</code> influencia corretamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é apenas na definição de schemas e não há evidência de alteração em lógica de negócio ou performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual é o significado exato do campo <code>items_count</code> em <code>CartResponse</code>? É a soma das quantidades dos itens ou o número de tipos distintos de itens?</li>
+<li>Existe alguma regra de negócio que impeça o envio de <code>CartRequest</code> com lista vazia de itens? O modelo atual não impede isso.</li>
+<li>Há limites máximos para <code>price</code> e <code>quantity</code> que deveriam ser validados?</li>
+<li>Como o campo <code>coupon_code</code> deve ser tratado quando vazio ou nulo? Há diferenças no comportamento?</li>
+<li>O campo <code>is_vip</code> influencia diretamente o cálculo do preço final? Se sim, onde está implementada essa lógica?</li>
+<li>Existem endpoints já implementados que usam esses novos schemas? Se sim, quais são para que possamos focar testes de integração?</li>
+<li>Há necessidade de validação adicional, como formatos específicos para <code>id</code> e <code>name</code> em <code>CartItemSchema</code>?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong> A mudança introduz novos modelos Pydantic para carrinho de compras, definindo estrutura e validação básica dos dados. O impacto é a criação de contratos para manipulação de carrinho, sem alterar funcionalidades existentes. Riscos principais são ausência de testes para esses modelos e possíveis ambiguidades no significado de campos como <code>items_count</code>. Recomenda-se criação de testes unitários para validação dos modelos e testes de integração para endpoints que os utilizem, além de esclarecimentos sobre regras de negócio associadas.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappservicescart_servicepy">Arquivo analisado: python-api/app/services/cart_service.py</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<p>Implementação de nova funcionalidade (adição de serviço de carrinho de compras com cálculo de total, impostos e descontos).</p>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O arquivo <code>cart_service.py</code> foi criado do zero, contendo as classes <code>CartItem</code> e <code>CartService</code>.</li>
+<li><code>CartService</code> possui método <code>calculate_cart_total</code> que recebe lista de itens, código de cupom e flag VIP, e retorna subtotal, imposto, preço final e contagem de itens.</li>
+<li>O cálculo do imposto é aplicado <strong>antes</strong> do desconto, conforme comentário no código:<br />
+<code>python
+  # Aplica taxa ANTES do desconto (regra de negócio duvidosa para testar o QA)</code></li>
+<li>O desconto é calculado via <code>DiscountService.calculate_final_price</code>, porém o valor base passado inclui o imposto, o que é destacado como um bug proposital no comentário:<br />
+<code>python
+  # BUG PROPOSITAL: Estamos passando o total COM imposto para o calculador de desconto
+  # mas o DiscountService pode ter limites baseados no preço base.</code></li>
+<li>Existe um desconto adicional "hardcoded" de 5% para compras acima de 1000 no subtotal, mas somente para não VIPs, o que é considerado estranho e um risco de regra de negócio:<br />
+<code>python
+  # Desconto de fidelidade "hardcoded" (risco de segurança/regra de negócio)
+  if subtotal &gt; 1000 and not is_vip:
+      final_price *= 0.95</code></li>
+<li>O contexto do repositório mostra que o serviço é utilizado em <code>python-api/app/api/routes.py</code> via injeção de dependência, indicando que a funcionalidade será exposta via API.</li>
+<li>Não há evidência de testes unitários ou de integração específicos para <code>CartService</code> no contexto fornecido.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Introdução de cálculo de total de carrinho com impostos e descontos, impactando funcionalidades relacionadas a checkout, cálculo de preços e aplicação de cupons.</li>
+<li>Possível impacto em regras de negócio de descontos, especialmente pela ordem de aplicação do imposto antes do desconto e pelo bug proposital de passar o valor com imposto para o serviço de desconto.</li>
+<li>Potencial impacto em clientes que esperam desconto aplicado sobre o subtotal sem imposto, podendo gerar valores finais incorretos.</li>
+<li>A regra de desconto adicional para compras grandes e não VIP pode causar confusão e resultados inesperados para usuários VIP e não VIP.</li>
+<li>Como o serviço é novo, pode impactar endpoints que venham a utilizá-lo, exigindo validação cuidadosa.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Cálculo incorreto de desconto:</strong> Passar o valor com imposto para o <code>DiscountService</code> pode levar a descontos errados, especialmente se o serviço espera base_price sem imposto para aplicar limites ou regras.</li>
+<li><strong>Regra de negócio inconsistente:</strong> Aplicar imposto antes do desconto é incomum e pode gerar valores finais inesperados para o usuário.</li>
+<li><strong>Desconto adicional para não VIPs:</strong> Pode ser um risco de segurança ou negócio, pois usuários VIP não recebem esse desconto extra, o que pode ser contra-intuitivo.</li>
+<li><strong>Validação insuficiente dos dados de entrada:</strong> Apenas o preço negativo é validado na criação de <code>CartItem</code>. Não há validação explícita para quantidade negativa ou zero, nem para campos obrigatórios no dicionário de itens.</li>
+<li><strong>Ausência de tratamento de erros:</strong> Se o <code>DiscountService</code> lançar exceção ou retornar valores inesperados, o método <code>calculate_cart_total</code> não trata isso.</li>
+<li><strong>Possível impacto na performance:</strong> Embora não haja indicação clara, o cálculo pode ser chamado frequentemente em cenários de checkout, mas não há otimizações visíveis.</li>
+<li><strong>Falta de testes automatizados:</strong> Não há evidência de testes para essa nova funcionalidade, aumentando risco de regressão e bugs.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Cálculo básico do carrinho sem cupom e sem VIP:</strong><br />
+   - Itens com preços e quantidades variadas.<br />
+   - Verificar subtotal, imposto (8%), e preço final sem desconto.</p>
+</li>
+<li>
+<p><strong>Aplicação de cupom válido e inválido:</strong><br />
+   - Testar com cupom que gera desconto e cupom inválido.<br />
+   - Verificar se o desconto é aplicado corretamente considerando o bug proposital.</p>
+</li>
+<li>
+<p><strong>Usuário VIP com e sem cupom:</strong><br />
+   - Confirmar que o desconto VIP é aplicado via <code>DiscountService</code>.<br />
+   - Confirmar que o desconto adicional de 5% para compras &gt; 1000 não é aplicado para VIP.</p>
+</li>
+<li>
+<p><strong>Usuário não VIP com subtotal &gt; 1000:</strong><br />
+   - Confirmar que o desconto adicional de 5% é aplicado sobre o preço final após desconto do cupom.</p>
+</li>
+<li>
+<p><strong>Itens com preço negativo:</strong><br />
+   - Tentar adicionar item com preço negativo e verificar se <code>ValueError</code> é lançado.</p>
+</li>
+<li>
+<p><strong>Itens com quantidade zero ou negativa:</strong><br />
+   - Testar comportamento para quantidade zero ou negativa (não validado no código).<br />
+   - Verificar se o cálculo considera ou rejeita esses casos.</p>
+</li>
+<li>
+<p><strong>Carrinho vazio:</strong><br />
+   - Passar lista vazia e verificar se subtotal, imposto e preço final são zero.</p>
+</li>
+<li>
+<p><strong>Valores com casas decimais:</strong><br />
+   - Testar valores com várias casas decimais para verificar arredondamento correto.</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar criação de <code>CartItem</code> com preço negativo para garantir exceção.</li>
+<li>Testar <code>calculate_cart_total</code> com:  </li>
+<li>Lista vazia de itens.  </li>
+<li>Itens com quantidade padrão e explicitada.  </li>
+<li>Aplicação correta do imposto (8%) sobre subtotal.  </li>
+<li>Verificar que o desconto é calculado com base no total com imposto (bug proposital).  </li>
+<li>Verificar aplicação do desconto adicional de 5% para subtotal &gt; 1000 e não VIP.  </li>
+<li>Verificar que para VIP não há desconto adicional.  </li>
+<li>Testar comportamento com cupom válido e inválido (mockar <code>DiscountService</code>).  </li>
+<li>Testar arredondamento dos valores retornados.  </li>
+<li>Testar que <code>items_count</code> corresponde ao número de itens processados.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoint da API que utiliza <code>CartService</code> (se existir) para calcular total do carrinho, validando resposta JSON com subtotal, imposto, preço final e contagem.</li>
+<li>Testar fluxo completo de compra simulando diferentes perfis de usuário (VIP e não VIP) e cupons.</li>
+<li>Testar integração com <code>DiscountService</code> para garantir que o bug proposital não cause falhas inesperadas.</li>
+<li>Testar comportamento com dados inválidos (ex: itens com campos faltantes ou tipos errados) para verificar tratamento de erros.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos para este serviço.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Regra de negócio do imposto antes do desconto:</strong> Confirmar se a aplicação do imposto antes do desconto é intencional ou um erro.</li>
+<li><strong>Bug proposital no uso do valor com imposto para desconto:</strong> Confirmar se o <code>DiscountService</code> deve receber o valor com ou sem imposto para cálculo correto.</li>
+<li><strong>Desconto adicional para não VIPs:</strong> Entender a lógica de negócio por trás de dar desconto extra para não VIPs em compras grandes, e se isso está correto.</li>
+<li><strong>Validação de quantidade:</strong> Deve ser permitida quantidade zero ou negativa? Se não, implementar validação.</li>
+<li><strong>Comportamento esperado para itens com dados incompletos ou inválidos:</strong> O método deve validar e rejeitar ou ignorar itens malformados?</li>
+<li><strong>Tratamento de erros do <code>DiscountService</code>:</strong> Como deve ser tratado se o serviço lançar exceção ou retornar valores inválidos?</li>
+</ul>
+<hr />
+<p>Essa análise detalha os aspectos técnicos e riscos da nova implementação do serviço de carrinho, com foco em garantir cobertura adequada de testes e identificar pontos críticos para revisão.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
