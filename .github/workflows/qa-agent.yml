@@ -127,7 +127,9 @@ jobs:
               --arg target_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
               '{state: $state, context: $context, description: $description, target_url: $target_url}')"
 
-          exit "$reviewer_exit"
+          if [ "$reviewer_exit" -ne 0 ]; then
+            echo "QAgent Test Review publicou failure no PR alvo; mantendo o workflow do qagent verde."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
 
