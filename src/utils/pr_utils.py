@@ -4,7 +4,9 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from github import Github
+
+DEFAULT_PR_BODY_MAX_CHARS = 60_000
+COMPACT_PR_BODY_MAX_LIST_ITEMS = 80
 
 
 def parse_test_files_from_output(agent_output: str) -> dict[str, str]:
@@ -81,10 +83,11 @@ def build_pr_body(
     analyzed_files: list[str],
 ) -> str:
     """Monta o corpo do PR descrevendo os testes criados."""
+    max_body_chars = int(os.getenv("QAGENT_PR_BODY_MAX_CHARS", DEFAULT_PR_BODY_MAX_CHARS))
     files_list = "\n".join(f"- `{f}`" for f in test_files)
     analyzed_list = "\n".join(f"- `{f}`" for f in analyzed_files)
 
-    return f"""## 🧪 Testes Unitários Gerados Automaticamente
+    full_body = f"""## 🧪 Testes Unitários Gerados Automaticamente
 
 ### Arquivos analisados
 {analyzed_list}
@@ -106,6 +109,43 @@ a cobertura de testes e prevenir regressões.
 </details>
 """
 
+    if len(full_body) <= max_body_chars:
+        return full_body
+
+    compact_files_list = _format_compact_file_list(test_files)
+    compact_analyzed_list = _format_compact_file_list(analyzed_files)
+
+    return f"""## 🧪 Testes Unitários Gerados Automaticamente
+
+### Arquivos analisados
+{compact_analyzed_list}
+
+### Arquivos de teste criados
+{compact_files_list}
+
+### Motivação
+Estes testes foram gerados automaticamente com base no relatório de QA produzido pelo agente de análise.
+As sugestões de testes unitários do relatório foram transformadas em código executável para aumentar
+a cobertura de testes e prevenir regressões.
+
+### Relatório de QA
+O corpo completo do PR ficou com {len(full_body)} caracteres e excedeu o limite seguro de {max_body_chars} caracteres para a API do GitHub.
+
+Agente: resuma o relatório de QA antes de publicar os detalhes completos no PR. Preserve os principais riscos, arquivos impactados,
+cenários de teste cobertos e qualquer ponto que precise de atenção na revisão.
+"""
+
+
+def _format_compact_file_list(files: list[str]) -> str:
+    displayed_files = files[:COMPACT_PR_BODY_MAX_LIST_ITEMS]
+    files_list = "\n".join(f"- `{f}`" for f in displayed_files)
+
+    hidden_count = len(files) - len(displayed_files)
+    if hidden_count > 0:
+        files_list += f"\n- ... e mais {hidden_count} arquivo(s)"
+
+    return files_list or "- Nenhum arquivo informado"
+
 
 def open_pull_request(
     github_token: str,
@@ -116,6 +156,8 @@ def open_pull_request(
     body: str,
 ) -> str:
     """Abre um Pull Request no GitHub e retorna a URL."""
+    from github import Github
+
     gh = Github(github_token)
     repo = gh.get_repo(repo_full_name)
 
@@ -160,6 +202,8 @@ def add_pr_comment(
     comment_body: str,
 ) -> None:
     """Post a comment on the open PR whose head matches branch_name."""
+    from github import Github
+
     gh = Github(github_token)
     repo = gh.get_repo(repo_full_name)
 
