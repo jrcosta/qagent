@@ -14,6 +14,11 @@ para o repositório `qagent` via `repository_dispatch`. No `qagent`, um
 as lições aprendidas e as persiste utilizando um banco vetorial com **LanceDB** na
 pasta `data/lancedb`, com auxílio de sentence-transformers.
 
+Quando a revisão crítica encontra problemas nos testes gerados, o workflow do
+`qagent` também publica um commit status chamado `QAgent Test Review` no commit
+do PR criado no repo alvo. Para bloquear merge automaticamente, configure a
+proteção da branch do repo alvo exigindo esse status como obrigatório.
+
 Na próxima execução do gerador de testes, essas lições são consultadas via buscas
 de similaridade nos embeddings vetoriais e repassadas ao prompt,
 injetadas no prompt, evitando que os mesmos erros se repitam.
@@ -53,6 +58,7 @@ forward-pr-comment.yml                ingest-pr-comment.yml
 | Arquivo | Descrição |
 |---------|-----------|
 | `.github/workflows/ingest-pr-comment.yml` | Workflow que recebe `repository_dispatch` tipo `pr_comment_created` e executa o script de ingestão |
+| `.github/workflows/qa-agent.yml` | Publica o status `QAgent Test Review` no commit do PR gerado no repo alvo |
 | `.github/scripts/ingest_comment.py` | Script que chama o agente sumarizador e persiste lições no SQLite |
 | `src/agent/memory_agent.py` | Factory do agente sumarizador (CrewAI) |
 | `src/tasks/memory_task.py` | Task que instrui o agente a extrair lições do comentário |
