@@ -284,19 +284,12 @@ def main() -> None:
 
     print(f"\n✅ PR criado com sucesso: {pr_url}")
 
-    # Post review-request comment on the PR
+    # Salva o nome da branch para jobs subsequentes
     try:
-        add_pr_comment(
-            github_token=github_token,
-            repo_full_name=repo_full_name,
-            branch_name=branch_name,
-            comment_body=(
-                "@copilot valide os testes deste pr, sua estrutura e aderência ao projeto."
-            ),
-        )
-        print("💬 Comentário de validação postado no PR.")
+        output_dir = Path(args.report_file).parent
+        (output_dir / ".branch_name").write_text(branch_name, encoding="utf-8")
     except Exception as exc:
-        print(f"⚠️ Não foi possível postar comentário no PR: {exc}")
+        print(f"⚠️ Não foi possível salvar o nome da branch: {exc}")
 
 
 if __name__ == "__main__":
