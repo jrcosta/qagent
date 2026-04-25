@@ -120,14 +120,12 @@ def main() -> None:
         print("Nenhuma seção de arquivo encontrada no relatório de QA.")
         return
 
-    changed_files = list(report_sections.keys())
-
-    file_to_tests: dict[str, dict[str, str]] = {}
+    all_test_files: dict[str, str] = {}
     analyzed_files: list[str] = []
     artifacts: list[FileAnalysisArtifact] = []
     pipeline_start = time.perf_counter()
 
-    for file_path in changed_files:
+    for file_path in report_sections.keys():
         print(f"\n🧪 Gerando testes para: {file_path}")
 
         try:
@@ -208,8 +206,7 @@ def main() -> None:
             artifact.add_fallback(f"test_review_failed: {str(exc)}")
             print(f"  ❌ Erro durante a revisão dos testes: {exc}")
 
-        # Guardamos os testes vinculados ao arquivo original para o batching
-        file_to_tests[file_path] = test_files
+        all_test_files.update(test_files)
         analyzed_files.append(file_path)
 
         for tf in test_files:
@@ -224,7 +221,7 @@ def main() -> None:
         export_artifacts_to_json(artifacts, output_dir)
         export_run_summary(artifacts, output_dir, total_duration_ms)
 
-    if not file_to_tests:
+    if not all_test_files:
         print("\n❌ Nenhum teste foi gerado.")
         return
 
@@ -236,99 +233,53 @@ def main() -> None:
         print("\n✅ Testes gerados com sucesso (modo --no-pr, PR não criado)")
         return
 
-    # --- Geração de PRs Inteligente (Batching) ---
-    # REGRA DE NEGÓCIO: O GitHub limita o corpo do PR a 65.536 caracteres (Erro 422).
-    # Para garantir que o relatório de QA (que pode ser gigante) seja entregue sem cortes,
-    # dividimos a execução em lotes. O primeiro lote cria o PR e os demais adicionam
-    # commits e postam suas seções do relatório como COMENTÁRIOS, que possuem seu próprio limite de 65k.
-    BATCH_SIZE = 3 
-    batches = [artifacts[i:i + BATCH_SIZE] for i in range(0, len(artifacts), BATCH_SIZE)]
-    
-    print(f"\n📦 Total de arquivos com testes: {len(artifacts)} | Dividindo em {len(batches)} lote(s) de commits")
-
+    # Cria branch, commit, push e abre PR
     base_branch = args.base_branch or get_current_branch(repo_path)
-    github_token = os.getenv("GITHUB_TOKEN", "")
-    repo_full_name = get_repo_full_name(repo_path)
-    
     timestamp = int(time.time())
     branch_name = f"{args.branch_prefix}-{timestamp}"
-    pr_url = None
 
-    for idx, batch in enumerate(batches):
-        print(f"\n🚀 Processando Lote {idx + 1}/{len(batches)}...")
-        
-        batch_analyzed_files = [art.file_path for art in batch]
-        batch_test_files_dict = {}
-        batch_report_content = []
-        
-        for art in batch:
-            tests = file_to_tests.get(art.file_path, {})
-            batch_test_files_dict.update(tests)
-            batch_report_content.append(f"# Arquivo analisado: {art.file_path}\n\n{art.raw_review_markdown}")
-            
-        # 1. Escreve os arquivos deste lote no disco
-        created_test_paths = write_test_files(repo_path, batch_test_files_dict)
-        
-        # 2. Commit (na mesma branch para todos os lotes)
-        if idx == 0:
-            print(f"  🌿 Criando branch: {branch_name}")
-            create_branch_and_commit(
-                repo_path=repo_path,
-                branch_name=branch_name,
-                test_files=created_test_paths,
-                commit_message=f"test: add unit tests batch {idx + 1} [skip-qagent]\n\nTests for: {', '.join(batch_analyzed_files)}",
-            )
-        else:
-            # Apenas adiciona e comita na branch atual
-            print(f"  📝 Adicionando commits ao lote {idx + 1}...")
-            for f in created_test_paths:
-                run_git(["add", f], repo_path)
-            run_git(["commit", "-m", f"test: add unit tests batch {idx + 1} [skip-qagent]"], repo_path)
-        
-        # 3. Push
-        print(f"  📤 Fazendo push para origin/{branch_name}...")
-        push_branch(repo_path, branch_name)
-        
-        # 4. PR ou Comentário
-        if github_token:
-            relevant_report = "\n\n---\n\n".join(batch_report_content)
-            
-            if idx == 0:
-                # Primeiro lote: Cria o PR
-                pr_body = build_pr_body(relevant_report, created_test_paths, batch_analyzed_files)
-                print(f"  📝 Abrindo PR em {repo_full_name}...")
-                try:
-                    pr_url = open_pull_request(
-                        github_token=github_token,
-                        repo_full_name=repo_full_name,
-                        branch_name=branch_name,
-                        base_branch=base_branch,
-                        title=f"🧪 QAgent: Testes unitários para {len(artifacts)} arquivo(s)",
-                        body=pr_body,
-                    )
-                    print(f"  ✅ PR criado: {pr_url}")
-                except Exception as e:
-                    print(f"  ❌ Erro ao criar PR: {e}")
-            else:
-                # Lotes subsequentes: Adiciona comentário ao PR
-                print(f"  💬 Adicionando relatório do lote {idx + 1} como comentário no PR...")
-                comment_body = f"### 🧪 Relatório de QA - Lote {idx + 1}\n\n{relevant_report}"
-                try:
-                    add_pr_comment(
-                        github_token=github_token,
-                        repo_full_name=repo_full_name,
-                        branch_name=branch_name,
-                        comment_body=comment_body,
-                    )
-                    print(f"  ✅ Comentário adicionado.")
-                except Exception as e:
-                    print(f"  ⚠️ Erro ao adicionar comentário: {e}")
-        else:
-            print(f"  ⚠️ GITHUB_TOKEN não definido.")
-            
-    print(f"\n✅ Todos os lotes foram processados e enviados para o PR.")
-        
-    print(f"\n✅ Processamento de todos os lotes finalizado.")
+    print(f"\n🌿 Criando branch: {branch_name}")
+    create_branch_and_commit(
+        repo_path=repo_path,
+        branch_name=branch_name,
+        test_files=created_files,
+        commit_message=f"test: add unit tests generated by QAgent [skip-qagent]\n\nTests for: {', '.join(analyzed_files)}",
+    )
+
+    print(f"🚀 Fazendo push para origin/{branch_name}")
+    push_branch(repo_path, branch_name)
+
+    github_token = os.getenv("GITHUB_TOKEN", "")
+    if not github_token:
+        print("\n⚠️ GITHUB_TOKEN não definido. PR não foi criado.")
+        return
+
+    repo_full_name = get_repo_full_name(repo_path)
+    
+    # Prepara o corpo do PR com segurança (limite do GitHub é 65k)
+    pr_body = build_pr_body(qa_report, created_files, analyzed_files)
+    
+    # REGRA: O corpo não pode ultrapassar o limite do GitHub para evitar erro 422.
+    MAX_BODY_SIZE = 60000
+    if len(pr_body) > MAX_BODY_SIZE:
+        trunc_msg = f"\n\n---\n⚠️ **Relatório truncado:** O relatório completo excedeu o limite do GitHub e está disponível no arquivo `analysis.md` nos artefatos do workflow."
+        pr_body = pr_body[:MAX_BODY_SIZE - len(trunc_msg)] + trunc_msg
+
+    pr_title = f"🧪 QAgent: Testes unitários para {len(analyzed_files)} arquivo(s)"
+
+    print(f"\n📝 Abrindo/Atualizando PR em {repo_full_name}...")
+    try:
+        pr_url = open_pull_request(
+            github_token=github_token,
+            repo_full_name=repo_full_name,
+            branch_name=branch_name,
+            base_branch=base_branch,
+            title=pr_title,
+            body=pr_body,
+        )
+        print(f"\n✅ PR processado com sucesso: {pr_url}")
+    except Exception as e:
+        print(f"\n❌ Erro ao processar PR: {e}")
 
     # Salva o nome da branch para jobs subsequentes
     try:
