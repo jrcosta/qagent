@@ -1,6 +1,6 @@
 import unittest
 
-from src.schemas.generated_test_review_result import GeneratedTestsReviewResult
+from src.schemas.generated_test_review_result import GeneratedTestIssue, GeneratedTestsReviewResult
 from src.utils.review_comment_utils import (
     QAGENT_TEST_REVIEW_MEMORY_TAG,
     build_test_review_comment,
@@ -47,6 +47,41 @@ class ReviewCommentUtilsTests(unittest.TestCase):
         )
 
         self.assertIsNone(review_result_to_finding("src/user.py", result))
+
+    def test_approved_review_with_issues_becomes_needs_changes_finding(self):
+        result = GeneratedTestsReviewResult(
+            status="APPROVED",
+            summary="Testes bons, mas há ajustes.",
+            issues=[
+                GeneratedTestIssue(
+                    severity="WARN",
+                    description="Assert poderia validar o novo campo do contrato.",
+                )
+            ],
+        )
+
+        finding = review_result_to_finding("src/user.py", result)
+
+        self.assertIsNotNone(finding)
+        self.assertEqual("NEEDS_CHANGES", finding["status"])
+        self.assertEqual(1, len(finding["issues"]))
+
+    def test_approved_review_with_error_issue_becomes_invalid_finding(self):
+        result = GeneratedTestsReviewResult(
+            status="APPROVED",
+            summary="Há erro bloqueante.",
+            issues=[
+                GeneratedTestIssue(
+                    severity="ERROR",
+                    description="Teste chama método inexistente.",
+                )
+            ],
+        )
+
+        finding = review_result_to_finding("src/user.py", result)
+
+        self.assertIsNotNone(finding)
+        self.assertEqual("INVALID", finding["status"])
 
 
 if __name__ == "__main__":

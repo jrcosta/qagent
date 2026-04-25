@@ -56,9 +56,14 @@ SUA TAREFA:
 6. Identifique cenários críticos ausentes.
 
 CRITÉRIOS DE STATUS:
-- APPROVED: Testes estão corretos, coerentes e cobrem os riscos.
-- NEEDS_CHANGES: Testes têm valor mas precisam de ajustes técnicos ou melhor cobertura de cenários.
-- INVALID: Testes estão completamente errados, incoerentes ou usam código inexistente.
+- APPROVED: Testes estão corretos, coerentes e cobrem os riscos. Use este status somente quando `issues`, `missing_scenarios` e `suggested_fixes` estiverem vazios.
+- NEEDS_CHANGES: Testes têm valor mas precisam de ajustes técnicos, melhor cobertura de cenários ou possuem qualquer problema WARN/INFO acionável.
+- INVALID: Testes estão completamente errados, incoerentes, usam código inexistente ou possuem qualquer problema ERROR.
+
+REGRA DE CONSISTÊNCIA:
+- Nunca retorne APPROVED se você apontou problemas, cenários ausentes ou correções recomendadas.
+- Se houver qualquer issue com severity ERROR, o status deve ser INVALID.
+- Se houver qualquer issue WARN/INFO, cenário ausente ou correção recomendada, o status deve ser NEEDS_CHANGES.
 
 Sua resposta deve ser estruturada conforme o schema GeneratedTestsReviewResult.
 """
