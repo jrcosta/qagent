@@ -1,4 +1,4 @@
-"""Agent that summarises a Copilot review comment extracting lessons learned."""
+"""Agent that summarises QAgent reviewer comments into lessons learned."""
 
 from pathlib import Path
 
@@ -21,7 +21,7 @@ class MemoryAgentFactory:
         return Agent(
             role="Analista de Lições Aprendidas",
             goal=(
-                "Extrair de um comentário de revisão (feito pelo Copilot ou revisor) "
+                "Extrair de um comentário de revisão crítica do QAgent "
                 "as lições concretas sobre o que o agente gerador de testes unitários errou, "
                 "para que esses erros não se repitam em execuções futuras."
             ),

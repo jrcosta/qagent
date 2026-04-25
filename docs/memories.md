@@ -2,15 +2,16 @@
 
 ## Visão geral
 
-Quando o agente gerador de testes unitários cria um PR no **repo alvo**, ele
-posta automaticamente o comentário:
+Quando o agente gerador de testes unitários cria um PR no **repo alvo**, o
+agente revisor de testes roda como uma etapa separada, avalia o PR criado e
+publica uma crítica estruturada com a hashtag:
 
-> @copilot valide os testes deste pr, sua estrutura e aderência ao projeto.
+> #qagent-test-review
 
-Quando o Copilot (ou um revisor) responde com observações, um workflow no
-repo alvo encaminha esse comentário para o repositório `qagent` via
-`repository_dispatch`. No `qagent`, um **agente sumarizador** (CrewAI) extrai
-as lições aprendidas e as persiste utilizando um banco vetorial com **LanceDB** na 
+Um workflow no repo alvo encaminha apenas comentários contendo essa hashtag
+para o repositório `qagent` via `repository_dispatch`. No `qagent`, um
+**agente sumarizador** (CrewAI) extrai
+as lições aprendidas e as persiste utilizando um banco vetorial com **LanceDB** na
 pasta `data/lancedb`, com auxílio de sentence-transformers.
 
 Na próxima execução do gerador de testes, essas lições são consultadas via buscas
@@ -23,16 +24,12 @@ injetadas no prompt, evitando que os mesmos erros se repitam.
 Repo Alvo                              Repo qagent
 ─────────                              ───────────
 PR criado pelo agente
-  └─ comentário automático:
-     "@copilot valide os testes..."
-         │
-         ▼
-Copilot/revisor responde
-  com observações
+  └─ agente revisor publica:
+     "#qagent-test-review ..."
          │
          ▼
 forward-pr-comment.yml                ingest-pr-comment.yml
-  (issue_comment trigger)       ──►      (repository_dispatch)
+  (filtra #qagent-test-review)  ──►      (repository_dispatch)
   envia payload via dispatch              │
                                           ▼
                                    ingest_comment.py
@@ -63,7 +60,8 @@ forward-pr-comment.yml                ingest-pr-comment.yml
 | `src/tools/memory_tools.py` | Tools CrewAI: `QueryMemoriesTool` e `ListAllMemoriesTool` para leitura do banco |
 | `src/crew/test_generator_crew.py` | Atualizado para consultar memórias antes de gerar testes |
 | `src/tasks/test_generator_task.py` | Atualizado para injetar memórias no prompt |
-| `src/main_test_generator.py` | Atualizado para postar comentário `@copilot` após criar PR |
+| `src/main_test_generator.py` | Cria branch, commit, push e PR com os testes unitários gerados |
+| `src/main_test_reviewer.py` | Revisa criticamente os testes do PR e publica comentário com `#qagent-test-review` |
 | `src/utils/pr_utils.py` | Nova função `add_pr_comment` |
 | `data/memories.db` | Banco SQLite com as lições (commitado no repo) |
 
@@ -71,7 +69,7 @@ forward-pr-comment.yml                ingest-pr-comment.yml
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `.github/workflows/forward-pr-comment.yml` | Workflow que escuta `issue_comment` em PRs contendo "Copilot" e encaminha para `qagent` via `repository_dispatch` |
+| `.github/workflows/forward-qagent-test-review-comment.yml` | Workflow que escuta `issue_comment` em PRs contendo `#qagent-test-review` e encaminha para `qagent` via `repository_dispatch` |
 
 ## Configuração de Secrets
 
@@ -129,8 +127,8 @@ pip install -r requirements.txt
 cat > /tmp/event.json << 'EOF'
 {
   "client_payload": {
-    "comment_body": "Copilot: os testes usam nomes genéricos como test1, deveriam descrever o cenário. Também faltou mockar o serviço externo.",
-    "author": "reviewer1",
+    "comment_body": "#qagent-test-review\n\n### 🔍 QAgent: Revisão Crítica de Testes\n\n- Os testes usam nomes genéricos como test1, deveriam descrever o cenário. Também faltou mockar o serviço externo.",
+    "author": "qagent[bot]",
     "repo": "jrcosta/repo_alvo_api_simples",
     "pr_number": "42"
   }

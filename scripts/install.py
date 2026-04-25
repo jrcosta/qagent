@@ -9,28 +9,32 @@ def main() -> None:
     repo_root = qagent_root.parent
 
     templates_dir = qagent_root / "templates"
-    workflow_template = templates_dir / "qagent-review.yml"
+    workflow_templates = [
+        templates_dir / "qagent-review.yml",
+        templates_dir / "forward-qagent-test-review-comment.yml",
+    ]
 
     target_workflows_dir = repo_root / ".github" / "workflows"
     target_workflows_dir.mkdir(parents=True, exist_ok=True)
 
-    target_workflow = target_workflows_dir / "qagent-review.yml"
+    for workflow_template in workflow_templates:
+        if not workflow_template.exists():
+            raise FileNotFoundError(
+                f"Template não encontrado: {workflow_template}"
+            )
 
-    if not workflow_template.exists():
-        raise FileNotFoundError(
-            f"Template não encontrado: {workflow_template}"
-        )
-
-    shutil.copyfile(workflow_template, target_workflow)
+        target_workflow = target_workflows_dir / workflow_template.name
+        shutil.copyfile(workflow_template, target_workflow)
+        print(f"Arquivo criado: {target_workflow}")
 
     print("✅ Workflow instalado com sucesso.")
-    print(f"Arquivo criado: {target_workflow}")
     print()
     print("Próximos passos:")
     print("1. Adicione o secret GROQ_API_KEY no repositório principal.")
-    print("2. Faça git add .")
-    print('3. Faça commit com algo como: "chore: install qagent workflow"')
-    print("4. Faça push para disparar o workflow.")
+    print("2. Adicione o secret QAGENT_DISPATCH_PAT para encaminhar críticas ao QAgent.")
+    print("3. Faça git add .")
+    print('4. Faça commit com algo como: "chore: install qagent workflow"')
+    print("5. Faça push para disparar o workflow.")
 
 
 if __name__ == "__main__":

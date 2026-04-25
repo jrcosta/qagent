@@ -85,10 +85,12 @@ jobs:
           cd agent
           python -m src.main_test_reviewer \
             --repo-path ../target \
-            --artifacts-file ../target/outputs/artifacts.json
+            --artifacts-file ../target/outputs/artifacts.json \
+            --base-sha "${{ github.event.client_payload.base_sha }}" \
+            --head-sha "${{ github.event.client_payload.head_sha }}" \
+            --fail-on-findings
         env:
           GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
-        continue-on-error: true
 
       - name: Publicar relatório como artifact
         uses: actions/upload-artifact@v4

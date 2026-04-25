@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from argparse import ArgumentParser
 from pathlib import Path
@@ -7,7 +8,10 @@ from pathlib import Path
 from src.config.settings import get_settings
 from src.crew.test_reviewer_crew import TestReviewerCrewRunner
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
+from src.schemas.test_strategy_result import render_test_strategy_result_for_prompt
+from src.utils.git_utils import get_file_diff
 from src.utils.pr_utils import add_pr_comment, get_repo_full_name, get_current_branch
+from src.utils.review_comment_utils import build_test_review_comment, review_result_to_finding
 
 
 def parse_args():
@@ -35,6 +39,24 @@ def parse_args():
         "--branch-name",
         required=False,
         help="Nome da branch do PR (usado para localizar o PR)",
+    )
+
+    parser.add_argument(
+        "--base-sha",
+        default=None,
+        help="Commit base para contextualizar o diff revisado",
+    )
+
+    parser.add_argument(
+        "--head-sha",
+        default=None,
+        help="Commit final para contextualizar o diff revisado",
+    )
+
+    parser.add_argument(
+        "--fail-on-findings",
+        action="store_true",
+        help="Encerra com erro quando a revisão encontrar NEEDS_CHANGES ou INVALID",
     )
 
     return parser.parse_args()
@@ -79,49 +101,52 @@ def main() -> None:
         
         # Recupera o report de QA original do artefato
         qa_report = artifact.raw_review_markdown or ""
-        
-        # Simula a extração de testes gerados (no mundo real, o artefato deveria guardar isso)
-        # Como o artefato atual não guarda o código do teste gerado, 
-        # vamos assumir que ele já foi escrito no repo e tentar ler.
-        # TODO: No futuro, o artefato deveria conter o generated_test_code.
-        
-        # Por enquanto, como o reviewer já rodou dentro do main_test_generator,
-        # vamos usar o resultado que já está lá ou re-rodar se necessário.
-        
-        if artifact.generated_test_review_result:
-            review_result = artifact.generated_test_review_result
-            print(f"  ✅ Revisão já existente carregada. Status: {review_result.status}")
-        else:
-            print("  ⚠️ Revisão não encontrada no artefato. Pulando (necessita código do teste).")
+
+        generated_tests = artifact.generated_tests_raw or _render_generated_test_files(
+            artifact.generated_test_files
+        )
+        if not generated_tests:
+            print("  ⚠️ Testes gerados não encontrados no artefato. Pulando.")
             continue
 
-        if review_result.status != "APPROVED":
-            finding = {
-                "file": artifact.file_path,
-                "status": review_result.status,
-                "summary": review_result.summary,
-                "issues": [i.model_dump() if hasattr(i, "model_dump") else i for i in review_result.issues]
-            }
+        file_diff = get_file_diff(
+            file_path=artifact.file_path,
+            repo_path=repo_path,
+            base_sha=args.base_sha,
+            head_sha=args.head_sha,
+        )
+        if artifact.test_strategy_result:
+            test_strategy = render_test_strategy_result_for_prompt(artifact.test_strategy_result)
+        else:
+            test_strategy = "Nenhuma recomendação de teste disponível na estratégia."
+
+        t0 = time.perf_counter()
+        review_result = reviewer_runner.run(
+            file_path=artifact.file_path,
+            code_content=code_content,
+            qa_report=qa_report,
+            test_strategy=test_strategy,
+            generated_tests=generated_tests,
+            file_diff=file_diff,
+        )
+        artifact.generated_test_review_result = review_result
+        artifact.record_duration("test_review", (time.perf_counter() - t0) * 1000)
+        artifact.mark_step_executed("test_review")
+
+        print(f"  📝 Status da Revisão: {review_result.status}")
+        if review_result.issues:
+            print(f"  ⚠️ {len(review_result.issues)} problema(s) identificado(s).")
+
+        finding = review_result_to_finding(artifact.file_path, review_result)
+        if finding:
             all_findings.append(finding)
 
     if not all_findings:
         print("\n✅ Todos os testes foram aprovados na revisão crítica.")
-        summary_comment = "### ✅ QAgent: Revisão Crítica de Testes\n\nTodos os testes gerados foram analisados e aprovados nos critérios de qualidade e padrões do projeto."
     else:
         print(f"\n⚠️ {len(all_findings)} arquivo(s) com ressalvas na revisão.")
-        summary_comment = "### 🔍 QAgent: Revisão Crítica de Testes\n\nForam identificados pontos de atenção nos testes gerados:\n\n"
-        
-        for f in all_findings:
-            summary_comment += f"#### 📄 `{f['file']}`\n"
-            summary_comment += f"**Status:** {f['status']}\n"
-            summary_comment += f"**Resumo:** {f['summary']}\n"
-            if f['issues']:
-                summary_comment += "**Problemas:**\n"
-                for issue in f['issues']:
-                    severity = issue.get('severity', 'INFO')
-                    desc = issue.get('description', '')
-                    summary_comment += f"- [{severity}] {desc}\n"
-            summary_comment += "\n"
+
+    summary_comment = build_test_review_comment(all_findings)
 
     # Postar comentário no PR
     github_token = os.getenv("GITHUB_TOKEN", "")
@@ -152,6 +177,23 @@ def main() -> None:
         print(f"\n💬 Resultado da revisão postado como comentário no PR (branch: {branch_name}).")
     except Exception as exc:
         print(f"\n⚠️ Erro ao postar comentário no PR: {exc}")
+
+    if args.fail_on_findings and all_findings:
+        print(
+            "\n❌ Revisão crítica encontrou problemas nos testes gerados. "
+            "Bloqueando o merge via status check."
+        )
+        sys.exit(1)
+
+
+def _render_generated_test_files(test_files: dict[str, str]) -> str:
+    if not test_files:
+        return ""
+
+    sections = []
+    for file_path, content in test_files.items():
+        sections.append(f"### FILE: {file_path}\n```\n{content}\n```")
+    return "\n\n".join(sections)
 
 
 if __name__ == "__main__":

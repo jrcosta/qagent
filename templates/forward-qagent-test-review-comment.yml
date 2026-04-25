@@ -1,0 +1,41 @@
+name: Forward QAgent test review comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  forward:
+    if: >
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '#qagent-test-review')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Forward review comment to qagent
+        env:
+          QAGENT_DISPATCH_PAT: ${{ secrets.QAGENT_DISPATCH_PAT }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          curl -sS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${QAGENT_DISPATCH_PAT}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/jrcosta/qagent/dispatches \
+            -d "$(jq -n \
+              --arg comment_body "$COMMENT_BODY" \
+              --arg author "$COMMENT_AUTHOR" \
+              --arg repo "$REPO" \
+              --arg pr_number "$PR_NUMBER" \
+              '{
+                event_type: "pr_comment_created",
+                client_payload: {
+                  comment_body: $comment_body,
+                  author: $author,
+                  repo: $repo,
+                  pr_number: $pr_number
+                }
+              }')"
