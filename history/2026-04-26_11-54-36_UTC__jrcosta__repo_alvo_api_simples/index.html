@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 26 Apr 2026 – 11:54:36 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-26_11-54-36_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>26 Apr 2026 – 11:54:36 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-docsendpointsmd">Arquivo analisado: docs/endpoints.md</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Extensão do contrato da API (adiciona novo campo no schema de resposta).</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff no arquivo <code>docs/endpoints.md</code> altera o schema <code>UserResponse</code>, adicionando o campo <code>vip: bool</code>.</li>
+<li>O schema <code>UserResponse</code> é usado em múltiplos endpoints relacionados a usuários, como listagem, busca, criação e retorno por ID.</li>
+<li>A documentação atualizada reflete a presença do campo <code>vip</code> no schema.</li>
+<li>O repositório contém implementações em Python e Java, com testes unitários e de integração para a API.</li>
+<li>Não há evidência no diff de alteração no backend para suportar o campo <code>vip</code>, nem indicação clara se o campo é opcional ou obrigatório.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Alteração do contrato da API, com inclusão de um novo campo booleano <code>vip</code> no objeto <code>UserResponse</code>.</li>
+<li>Possível impacto na compatibilidade com clientes existentes que consomem o schema <code>UserResponse</code>.</li>
+<li>Necessidade de atualização dos modelos e testes nas implementações Python e Java para contemplar o novo campo.</li>
+<li>Potencial confusão se a documentação indicar o campo <code>vip</code> mas o backend não o fornecer ou não o manipular corretamente.</li>
+<li>Possível necessidade de adaptação dos fluxos de criação, listagem, busca e atualização de usuários para suportar o campo <code>vip</code>.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Quebra de compatibilidade com clientes que não esperam o campo <code>vip</code>, especialmente em linguagens fortemente tipadas como Java.</li>
+<li>Falhas de desserialização ou erros em clientes que não foram atualizados para lidar com o novo campo.</li>
+<li>Inconsistência entre documentação e implementação se o backend não estiver populando o campo <code>vip</code>.</li>
+<li>Ausência de testes que validem o campo <code>vip</code> pode levar a regressões ou falhas não detectadas.</li>
+<li>Possível impacto em regras de negócio se o campo <code>vip</code> influenciar permissões ou fluxos, sem que isso esteja claro.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuários com o campo <code>vip</code> definido como <code>true</code> e <code>false</code> e verificar a resposta da API.</li>
+<li>Listar usuários e verificar se o campo <code>vip</code> aparece corretamente em todos os objetos retornados.</li>
+<li>Buscar usuário por ID e validar a presença e valor do campo <code>vip</code>.</li>
+<li>Atualizar o campo <code>vip</code> de um usuário e verificar se a alteração é refletida corretamente.</li>
+<li>Testar clientes antigos consumindo a API atualizada para garantir que não ocorrem erros ou falhas.</li>
+<li>Validar a documentação interativa (Swagger UI) para confirmar que o campo <code>vip</code> está descrito e exemplificado corretamente.</li>
+<li>Enviar valores inválidos para o campo <code>vip</code> e verificar se a API rejeita adequadamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar a definição do schema <code>UserResponse</code> para garantir que o campo <code>vip</code> é do tipo booleano e opcional (se aplicável).</li>
+<li>Validar a serialização e desserialização do objeto <code>UserResponse</code> com e sem o campo <code>vip</code>.</li>
+<li>Testar funções que criam ou atualizam usuários para garantir que o campo <code>vip</code> é manipulado corretamente.</li>
+<li>Testar validação de entrada para o campo <code>vip</code>, rejeitando valores inválidos.</li>
+<li>Cobrir cenários em ambas as implementações (Python e Java) para manter consistência.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o fluxo completo de criação de usuário com o campo <code>vip</code> definido e verificar a resposta.</li>
+<li>Testar listagem de usuários e verificar a presença correta do campo <code>vip</code> em todos os usuários.</li>
+<li>Testar busca por ID e validação do campo <code>vip</code>.</li>
+<li>Testar atualização do campo <code>vip</code> e verificar persistência da alteração.</li>
+<li>Validar que clientes que não enviam o campo <code>vip</code> continuam funcionando sem erros.</li>
+<li>Executar testes de contrato da API para garantir alinhamento entre consumidores e provedores.</li>
+<li>Realizar testes em ambas as implementações (Python e Java) para garantir comportamento idêntico.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é de extensão do schema e não altera lógica de negócio ou performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O campo <code>vip</code> é opcional ou obrigatório no schema <code>UserResponse</code>?</li>
+<li>O backend foi alterado para suportar e popular o campo <code>vip</code> nas respostas?</li>
+<li>O campo <code>vip</code> influencia alguma regra de negócio, autorização ou fluxo específico?</li>
+<li>Há necessidade de versionamento da API para essa alteração?</li>
+<li>Os clientes existentes foram atualizados para lidar com o novo campo?</li>
+<li>Existem testes automatizados atuais que já contemplam o campo <code>vip</code>?</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<p>As conclusões foram revisadas pelo QA Sênior Investigador, que detalhou os riscos de compatibilidade e integração; pelo Especialista em Estratégia de Testes, que elaborou uma estratégia abrangente de testes unitários, integração e manuais; e pelo Crítico de Análise de QA, que avaliou criticamente os riscos e a estratégia, apontando omissões e reforçando a necessidade de evidências claras sobre obrigatoriedade e impacto do campo. Essa revisão conjunta garantiu que a análise final seja objetiva, fundamentada e útil para orientar a validação da mudança.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrcmainjavacomrepoalvojavaapimodeluserresponsejava">Arquivo analisado: java-api/src/main/java/com/repoalvo/javaapi/model/UserResponse.java</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Adição de campo em modelo de dados (record) com alteração de construtores para lógica condicional.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>Inclusão do campo boolean <code>vip</code> no record <code>UserResponse</code>.</li>
+<li>Construtor com <code>phoneNumber</code> define <code>vip</code> como <code>true</code> se <code>role</code> for <code>"ADMIN"</code>, caso contrário <code>false</code>.</li>
+<li>Construtor antigo delega para o novo com <code>phoneNumber</code> nulo.</li>
+<li>Uso do <code>UserResponse</code> em serviços (<code>UserService</code>), controladores (<code>UserController</code>) e testes unitários e de integração.</li>
+<li>Testes existentes para <code>UserResponse</code> que cobrem construtores e serialização, mas sem foco explícito no campo <code>vip</code>.</li>
+<li>Contexto mostra que <code>UserResponse</code> é serializado para JSON em APIs REST, impactando contrato da API.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Alteração do contrato da API REST ao incluir o campo <code>vip</code> nas respostas JSON.</li>
+<li>Mudança no comportamento da criação de objetos <code>UserResponse</code>, com <code>vip</code> definido automaticamente conforme <code>role</code>.</li>
+<li>Possível impacto em clientes que consomem a API, dependendo da tolerância a campos adicionais.</li>
+<li>Necessidade de atualização e ampliação dos testes para cobrir o novo campo e sua lógica.</li>
+<li>Potencial impacto em lógica de negócio que possa passar a considerar o campo <code>vip</code>.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li>Quebra de compatibilidade na serialização JSON para clientes que esperam esquema fixo.</li>
+<li>Comportamento incorreto ou falha silenciosa se <code>role</code> for nulo ou valor inesperado, afetando o valor de <code>vip</code>.</li>
+<li>Falha em testes existentes que não consideram o novo campo <code>vip</code>.</li>
+<li>Ausência de testes que validem explicitamente a consistência entre <code>role</code> e <code>vip</code>.</li>
+<li>Possível impacto em métodos auxiliares como <code>equals</code>, <code>hashCode</code> e <code>toString</code> se não atualizados.</li>
+<li>Falta de testes de integração que validem o uso do campo <code>vip</code> em fluxos reais da aplicação.</li>
+<li>Necessidade de documentação clara da mudança para consumidores da API.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuário com <code>role</code> igual a <code>"ADMIN"</code> e verificar que o campo <code>vip</code> é <code>true</code> na resposta da API.</li>
+<li>Criar usuário com <code>role</code> diferente de <code>"ADMIN"</code> e verificar que <code>vip</code> é <code>false</code>.</li>
+<li>Criar usuário usando construtor antigo (sem <code>phoneNumber</code>) e verificar que <code>vip</code> é <code>false</code>.</li>
+<li>Consultar usuários via API e validar que o campo <code>vip</code> está presente e correto no JSON.</li>
+<li>Testar comportamento com <code>role</code> nulo ou valores inesperados para garantir robustez.</li>
+<li>Verificar que clientes antigos ignoram o campo <code>vip</code> sem falhas.</li>
+<li>Validar que a serialização JSON inclui o campo <code>vip</code> mesmo quando <code>phoneNumber</code> é nulo.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar criação de <code>UserResponse</code> com <code>role = "ADMIN"</code> e verificar <code>vip == true</code>.</li>
+<li>Testar criação com <code>role</code> diferente de <code>"ADMIN"</code> e verificar <code>vip == false</code>.</li>
+<li>Testar criação usando construtor antigo e verificar <code>vip == false</code>.</li>
+<li>Testar serialização JSON de <code>UserResponse</code> com <code>vip</code> true e false, validando o JSON gerado.</li>
+<li>Testar desserialização JSON com e sem campo <code>vip</code>, garantindo valores padrão corretos.</li>
+<li>Testar comportamento com <code>role</code> nulo ou inválido para garantir que <code>vip</code> seja false ou lance exceção conforme regra.</li>
+<li>Verificar se <code>equals</code>, <code>hashCode</code> e <code>toString</code> contemplam o campo <code>vip</code> e criar testes para esses métodos.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoints REST que retornam <code>UserResponse</code>, validando que o JSON inclui o campo <code>vip</code> com valor correto.</li>
+<li>Testar criação e atualização de usuários via API, verificando o campo <code>vip</code> na resposta.</li>
+<li>Validar que fluxos que dependem do campo <code>vip</code> (se existirem) funcionam corretamente.</li>
+<li>Executar testes de regressão para garantir que a inclusão do campo <code>vip</code> não quebrou contratos existentes.</li>
+<li>Atualizar e validar documentação da API (Swagger/OpenAPI) para refletir o novo campo.</li>
+<li>Se houver contratos de consumidor (ex: Pact), atualizar e validar contratos para incluir <code>vip</code>.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é de modelo de dados e não impacta diretamente performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o comportamento esperado se <code>role</code> for nulo ou valor não previsto? Deve <code>vip</code> ser false ou lançar erro?</li>
+<li>Existe lógica de negócio que depende do campo <code>vip</code> além da simples definição no construtor?</li>
+<li>O campo <code>vip</code> deve ser considerado em métodos auxiliares (<code>equals</code>, <code>hashCode</code>, <code>toString</code>)?</li>
+<li>Há necessidade de versionamento da API para suportar a inclusão do campo <code>vip</code>?</li>
+<li>Como será comunicada a mudança para consumidores da API para evitar surpresas?</li>
+</ul>
+<h1 id="validacao-cooperativa_1">Validação cooperativa</h1>
+<ul>
+<li>A análise de riscos foi detalhada pelo QA Sênior Investigador, que identificou impactos em serialização, compatibilidade e testes.</li>
+<li>A estratégia de testes foi elaborada pelo Especialista em Estratégia de Testes para Código de Alto Risco, cobrindo testes unitários, integração, serialização e contratos.</li>
+<li>O Crítico de Análise de QA revisou as análises anteriores, apontando omissões e fragilidades, como a necessidade de cobertura para todos os valores possíveis de <code>role</code>, validação da consistência entre <code>role</code> e <code>vip</code>, impacto em métodos auxiliares e testes de integração.</li>
+<li>A consolidação final integra as contribuições, evitando achados genéricos e focando em evidências concretas do código e contexto do repositório.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapicontrollerusercontrollerintegrationtestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/controller/UserControllerIntegrationTest.java</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<p>Adição de teste de integração para endpoint existente (POST /users) focado no campo phoneNumber.</p>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>Inclusão do método <code>createUserWithValidPhoneNumberShouldReturn201AndPhoneNumber</code> no arquivo <code>UserControllerIntegrationTest.java</code>.</li>
+<li>O teste cria um usuário com telefone válido e verifica status 201 e presença do telefone na resposta JSON.</li>
+<li>Testes existentes já cobrem criação com telefone ausente, vazio e inválido.</li>
+<li>O arquivo de teste está localizado em <code>java-api/src/test/java/com/repoalvo/javaapi/controller/</code>.</li>
+<li>Contexto do repositório indica que o endpoint POST /users é parte da API Java/Spring Boot com testes de integração e unitários já estabelecidos.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Melhora da cobertura de testes para o endpoint POST /users, especialmente para o cenário positivo do campo phoneNumber.</li>
+<li>Aumento da robustez na validação do campo phoneNumber, garantindo que números válidos sejam aceitos e retornados corretamente.</li>
+<li>Baixo risco de regressão, pois a mudança é aditiva e não altera código de produção.</li>
+<li>Possível detecção de falhas no tratamento de números de telefone válidos que antes não eram testadas.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li>Risco baixo de falha do teste caso a validação do telefone no backend seja inconsistente.</li>
+<li>Ausência de testes para variações mais amplas de formatos válidos de telefone (ex: diferentes padrões internacionais, extensões).</li>
+<li>Falta de testes para casos de borda como números muito curtos, muito longos, ou com caracteres especiais.</li>
+<li>Não há menção explícita a testes para duplicidade de telefone ou impactos de segurança relacionados ao campo.</li>
+<li>Possível falta de validação do ambiente e dependências para execução dos testes, o que pode afetar reprodutibilidade.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuário via POST /users com telefone válido em diferentes formatos (internacional, nacional, com espaços, hífens, parênteses).</li>
+<li>Criar usuário com telefone ausente, vazio, inválido, nulo e verificar respostas e persistência.</li>
+<li>Listar usuários via GET /users e verificar se o telefone do usuário criado está presente e correto.</li>
+<li>Tentar criar usuário com telefone duplicado e observar comportamento (se aplicável).</li>
+<li>Testar limites de tamanho do campo phoneNumber (muito curto e muito longo).</li>
+<li>Testar envio de telefone com caracteres inválidos e verificar tratamento da API.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar a validação do campo phoneNumber no serviço de criação de usuário para diferentes formatos válidos e inválidos.</li>
+<li>Testar comportamento do serviço ao receber telefone nulo, vazio ou ausente.</li>
+<li>Testar persistência correta do telefone no modelo de dados.</li>
+<li>Testar tratamento de duplicidade de telefone, se regra existir.</li>
+<li>Testar serialização e desserialização do objeto UserCreateRequest com diferentes valores de phoneNumber.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Testes parametrizados para criação de usuário com múltiplos formatos válidos e inválidos de phoneNumber.</li>
+<li>Testar fluxo completo: criação via POST /users e validação via GET /users.</li>
+<li>Testar criação com telefone ausente, vazio, inválido e verificar respostas HTTP e conteúdo.</li>
+<li>Testar comportamento da API em caso de dados mal formatados ou tipos incorretos no campo phoneNumber.</li>
+<li>Testar integração com banco de dados para garantir persistência correta do telefone.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança é focada em testes funcionais e de integração para campo específico.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existe alguma regra de negócio específica para validação do campo phoneNumber (ex: formatos aceitos, obrigatoriedade, duplicidade)?</li>
+<li>O sistema deve rejeitar números de telefone inválidos ou apenas armazená-los como estão?</li>
+<li>Há necessidade de testes para atualização do telefone (PUT/PATCH) ou apenas criação?</li>
+<li>Qual o comportamento esperado para telefones duplicados ou conflitantes?</li>
+<li>O ambiente de testes está configurado para garantir isolamento e reprodutibilidade dos testes de integração?</li>
+</ul>
+<h1 id="validacao-cooperativa_2">Validação cooperativa</h1>
+<ul>
+<li>A análise de riscos foi realizada pelo QA Sênior Investigador, que confirmou que a mudança é aditiva e melhora a cobertura do campo phoneNumber, sem riscos de regressão significativos.</li>
+<li>A estratégia de testes foi elaborada pelo Especialista em Estratégia de Testes para Código de Alto Risco, que detalhou cenários positivos, negativos, de integração e de regressão, recomendando testes parametrizados e validação da persistência.</li>
+<li>O Crítico de Análise de QA revisou as análises e apontou lacunas importantes, como a necessidade de ampliar a cobertura para casos de borda, validar conteúdo da resposta, documentar ambiente de testes e justificar a seleção dos casos.</li>
+<li>A consolidação final reflete a síntese dessas contribuições, equilibrando cobertura, riscos e sugestões práticas para garantir qualidade e robustez.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapicontrollerusercontrollerunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/controller/UserControllerUnitTest.java</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Correção e alinhamento de testes unitários para refletir mudanças no contrato da API e na mensagem de exceção.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>Alteração consistente do campo JSON de resposta de <code>type</code> para <code>resource</code> em múltiplos testes, indicando alinhamento com a implementação atual do controller.</li>
+<li>Ajuste na verificação da mensagem de exceção de conflito de email, de <code>CONFLICT.getReasonPhrase()</code> para <code>CONFLICT.name()</code>, refletindo mudança na forma como a mensagem é gerada ou esperada.</li>
+<li>Presença de testes que validam serialização e desserialização do objeto <code>CountResponse</code> com o campo <code>resource</code>.</li>
+<li>Contexto do repositório mostra testes unitários e de integração relacionados, mas sem evidência de testes que validem explicitamente o campo <code>resource</code> em todos os fluxos.</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>Melhora na precisão dos testes unitários, alinhando-os com o contrato atual da API.</li>
+<li>Redução de falsos negativos em testes causados por divergência no nome do campo JSON.</li>
+<li>Maior consistência na validação de mensagens de exceção, evitando falhas por diferenças na string esperada.</li>
+<li>Potencial necessidade de atualização de outros testes que ainda esperem o campo <code>type</code> ou a mensagem antiga.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li>Possível existência de testes ou integrações que ainda esperam o campo <code>type</code>, causando falhas silenciosas ou inconsistentes.</li>
+<li>Falha em capturar regressões se outros testes não forem atualizados para refletir o uso do campo <code>resource</code>.</li>
+<li>Inconsistência na padronização da mensagem de exceção pode levar a testes frágeis ou confusos.</li>
+<li>Ausência de testes que validem o campo <code>resource</code> em cenários além dos unitários pode deixar lacunas na cobertura.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ul>
+<li>Verificar via API que o endpoint que retorna contagem de usuários inclui o campo <code>resource</code> com valor <code>"users"</code> na resposta JSON.</li>
+<li>Tentar criar um usuário com email já existente e confirmar que a resposta de erro contém a mensagem com o nome do status HTTP <code>CONFLICT</code>.</li>
+<li>Testar serialização e desserialização do objeto <code>CountResponse</code> para garantir que o campo <code>resource</code> é corretamente manipulado.</li>
+<li>Validar que a resposta JSON não expõe campos sensíveis ou inesperados.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar explicitamente a presença e valor do campo <code>resource</code> em respostas JSON do controller.</li>
+<li>Validar serialização e desserialização do objeto <code>CountResponse</code> com o campo <code>resource</code>.</li>
+<li>Testar a exceção lançada em caso de conflito de email, verificando a mensagem com <code>CONFLICT.name()</code>.</li>
+<li>Revisar e atualizar testes que ainda usem o campo <code>type</code> para evitar inconsistências.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar o endpoint <code>/users/count</code> para garantir que o campo <code>resource</code> está presente e correto na resposta JSON.</li>
+<li>Validar o fluxo completo de criação de usuário, incluindo o tratamento de conflito de email e a mensagem de erro retornada.</li>
+<li>Confirmar que o campo <code>resource</code> é mantido corretamente em toda a cadeia da API, do controller ao cliente.</li>
+<li>Testar a resposta de erro para conflito de email em ambiente integrado, verificando status HTTP e mensagem.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é pontual e não impacta diretamente performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Confirmar se há outros testes ou integrações que ainda esperam o campo <code>type</code> e precisam ser atualizados.</li>
+<li>Verificar se a mudança na mensagem de exceção para <code>CONFLICT.name()</code> está padronizada em todo o projeto.</li>
+<li>Confirmar se o campo <code>resource</code> é parte do contrato público da API e se há documentação atualizada refletindo essa nomenclatura.</li>
+</ul>
+<h1 id="validacao-cooperativa_3">Validação cooperativa</h1>
+<p>As conclusões foram revisadas pelo QA Sênior Investigador, que detalhou os riscos e impactos da mudança no campo JSON e na mensagem de exceção; pelo Especialista em Estratégia de Testes, que elaborou uma estratégia robusta para validação unitária e de integração; e pelo Crítico de Análise de QA, que orientou sobre os pontos críticos para evitar conclusões genéricas ou incorretas, garantindo uma análise fundamentada e precisa.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapimodeluserresponsetestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/model/UserResponseTest.java</h1>
+<h1 id="tipo-da-mudanca_4">Tipo da mudança</h1>
+<p>Adição e extensão de testes unitários para cobertura do novo campo booleano <code>vip</code> na classe <code>UserResponse</code>.</p>
+<h1 id="evidencias-observadas_4">Evidências observadas</h1>
+<ul>
+<li>Inclusão de assertivas para o campo <code>vip</code> nos testes existentes, verificando valores <code>true</code> e <code>false</code>.</li>
+<li>Novo teste <code>shouldAllowExplicitVipValue</code> que valida o construtor com o parâmetro <code>vip</code>.</li>
+<li>Testes de serialização e desserialização contemplam o campo <code>vip</code>.</li>
+<li>Contexto do repositório mostra que <code>UserResponseTest</code> é um teste unitário para a classe <code>UserResponse</code>, usada em serviços e controladores.</li>
+</ul>
+<h1 id="impacto-provavel_4">Impacto provável</h1>
+<ul>
+<li>A mudança afeta a modelagem do objeto <code>UserResponse</code>, incluindo a manipulação do campo <code>vip</code>.</li>
+<li>Pode impactar serialização/deserialização JSON, construtores e lógica que dependa do campo <code>vip</code>.</li>
+<li>Potencial impacto em APIs que consomem ou produzem objetos <code>UserResponse</code>.</li>
+<li>Possível necessidade de atualização em testes de integração e fluxos que envolvam usuários VIP.</li>
+</ul>
+<h1 id="riscos-identificados_4">Riscos identificados</h1>
+<ul>
+<li>Serialização ou desserialização incorreta do campo <code>vip</code>, causando perda ou corrupção de dados.</li>
+<li>Construtores antigos podem não inicializar corretamente o campo <code>vip</code>, levando a valores padrão inesperados.</li>
+<li>Ausência de testes para valores inválidos ou limites do campo <code>vip</code>.</li>
+<li>Falta de testes que validem a consistência entre serialização e desserialização.</li>
+<li>Possível impacto não detectado em testes existentes que dependam do estado completo do objeto.</li>
+<li>Falta de cobertura em testes de integração para fluxos que envolvam o campo <code>vip</code>.</li>
+<li>Ausência de documentação clara sobre o comportamento esperado do campo <code>vip</code>.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_4">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuário via interface ou API com campo <code>vip</code> setado como <code>true</code> e <code>false</code>, verificar persistência e retorno correto.</li>
+<li>Enviar requisição JSON com campo <code>vip</code> ausente, nulo, verdadeiro, falso e valores inválidos, observar comportamento do sistema.</li>
+<li>Validar que usuários VIP têm acesso ou comportamento diferenciado esperado (se aplicável).</li>
+<li>Testar atualização do campo <code>vip</code> em usuários existentes e verificar efeitos colaterais.</li>
+<li>Verificar logs e respostas para garantir que o campo <code>vip</code> não cause erros ou inconsistências.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_4">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar valor padrão do campo <code>vip</code> quando não inicializado explicitamente.</li>
+<li>Testar getter e setter do campo <code>vip</code> (se aplicável).</li>
+<li>Testar igualdade (<code>equals</code>) e <code>hashCode</code> considerando o campo <code>vip</code>.</li>
+<li>Testar <code>toString()</code> para garantir representação correta do campo <code>vip</code>.</li>
+<li>Testar serialização com <code>vip</code> true e false, validando JSON gerado.</li>
+<li>Testar desserialização de JSON com <code>vip</code> true, false, ausente e valores inválidos, validando objeto resultante.</li>
+<li>Testar construtores antigos e novos para garantir inicialização correta do campo <code>vip</code>.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_4">Sugestões de testes de integração</h1>
+<ul>
+<li>Validar endpoints que retornam <code>UserResponse</code> para garantir que o campo <code>vip</code> está presente e correto.</li>
+<li>Testar criação e atualização de usuários via API com o campo <code>vip</code>.</li>
+<li>Testar fluxos que dependam do campo <code>vip</code> para regras de negócio ou permissões.</li>
+<li>Reexecutar testes de integração existentes para garantir que a inclusão do campo <code>vip</code> não quebrou funcionalidades.</li>
+<li>Testar tratamento de erros e validação para valores inválidos do campo <code>vip</code> em APIs.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_4">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é restrita à modelagem e testes unitários/integração do campo <code>vip</code>.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_4">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Qual o comportamento esperado do campo <code>vip</code> em regras de negócio e permissões?</li>
+<li>O campo <code>vip</code> pode assumir valores além de booleano (ex: nulo) ou valores inválidos devem ser rejeitados?</li>
+<li>Há impacto esperado em outras camadas do sistema (persistência, serviços externos)?</li>
+<li>O campo <code>vip</code> deve ser considerado em comparações de igualdade e hashCode?</li>
+<li>Existe documentação ou especificação formal para o campo <code>vip</code>?</li>
+</ul>
+<h1 id="validacao-cooperativa_4">Validação cooperativa</h1>
+<ul>
+<li>A análise de riscos foi detalhada pelo QA Sênior Investigador, destacando impactos em serialização, construtores e regressões potenciais.</li>
+<li>A estratégia de testes foi enriquecida pelo Especialista em Estratégia de Testes para Código de Alto Risco, com sugestões específicas para testes unitários, serialização, desserialização e integração.</li>
+<li>O Crítico de Análise de QA apontou fragilidades na análise, como ausência de testes para valores inválidos, interações do campo <code>vip</code> com outras funcionalidades, e necessidade de validação da consistência e impactos em testes existentes.</li>
+<li>A consolidação final reflete essas contribuições, equilibrando cobertura, riscos e sugestões práticas para garantir qualidade e confiabilidade.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-python-apiappschemaspy">Arquivo analisado: python-api/app/schemas.py</h1>
+<h1 id="tipo-da-mudanca_5">Tipo da mudança</h1>
+<p>Mudança de validação e reforço de integridade dos dados nos modelos Pydantic.</p>
+<h1 id="evidencias-observadas_5">Evidências observadas</h1>
+<ul>
+<li>Alteração do tipo <code>is_vip</code> de <code>bool</code> para <code>StrictBool</code> em <code>UserCreate</code> e <code>UserResponse</code>, tornando a validação mais rígida quanto ao tipo booleano.</li>
+<li>Inclusão de validadores para rejeitar strings vazias ou em branco nos campos <code>name</code> (em <code>UserCreate</code> e <code>UserResponse</code>) e <code>id</code> e <code>name</code> (em <code>CartItemSchema</code>).</li>
+<li>Contexto do repositório indica uso desses schemas para validação de entrada e saída da API, com testes existentes que cobrem validação de campos e tipos.</li>
+<li>Testes unitários e de integração já existentes, mas necessidade de ampliação para cobrir as novas validações.</li>
+</ul>
+<h1 id="impacto-provavel_5">Impacto provável</h1>
+<ul>
+<li>A API passa a rejeitar valores que antes eram aceitos por coerção implícita, como strings <code>"true"</code>, <code>"false"</code>, números <code>0</code> e <code>1</code> para o campo <code>is_vip</code>.</li>
+<li>Rejeição de nomes e identificadores vazios ou compostos apenas por espaços, melhorando a qualidade dos dados.</li>
+<li>Possível aumento de erros de validação (422) para clientes que não estejam alinhados com as novas regras.</li>
+<li>Melhora na integridade dos dados e consistência dos modelos usados na API.</li>
+</ul>
+<h1 id="riscos-identificados_5">Riscos identificados</h1>
+<ul>
+<li>Quebra de compatibilidade com clientes que enviam valores booleanos não estritos para <code>is_vip</code>.</li>
+<li>Rejeição inesperada de requisições com campos <code>name</code>, <code>id</code> vazios ou em branco que antes eram aceitas.</li>
+<li>Possível confusão ou frustração do usuário final se mensagens de erro não forem claras.</li>
+<li>Necessidade de atualização da documentação da API para refletir as novas restrições.</li>
+<li>Risco de inconsistência se outros schemas que manipulam esses campos não forem atualizados com validações similares.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_5">Cenários de testes manuais</h1>
+<ul>
+<li>Enviar requisições de criação e atualização de usuários com <code>is_vip</code> como <code>true</code>, <code>false</code>, <code>"true"</code>, <code>"false"</code>, <code>1</code>, <code>0</code> e verificar aceitação ou rejeição.</li>
+<li>Enviar usuários com <code>name</code> vazio (<code>""</code>) e com espaços em branco (<code>"   "</code>) e verificar rejeição.</li>
+<li>Criar itens de carrinho com <code>id</code> e <code>name</code> vazios ou com espaços em branco e verificar rejeição.</li>
+<li>Testar fluxos normais com dados válidos para garantir sucesso.</li>
+<li>Verificar mensagens de erro retornadas para validações falhas, avaliando clareza e utilidade.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_5">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar que <code>UserCreate</code> e <code>UserResponse</code> aceitam <code>is_vip</code> apenas como booleano estrito (<code>True</code>/<code>False</code>).</li>
+<li>Testar que valores não booleanos para <code>is_vip</code> geram erro de validação.</li>
+<li>Testar que <code>name</code> em <code>UserCreate</code> e <code>UserResponse</code> rejeita strings vazias e strings com apenas espaços.</li>
+<li>Testar que <code>CartItemSchema</code> rejeita <code>id</code> e <code>name</code> vazios ou com espaços em branco.</li>
+<li>Testar casos de borda, como strings com caracteres especiais, espaços internos e strings muito longas.</li>
+<li>Testar ausência dos campos opcionais para garantir comportamento esperado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_5">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoints de criação e atualização de usuários com payloads contendo <code>is_vip</code> válido e inválido, verificando respostas HTTP e mensagens de erro.</li>
+<li>Testar endpoints que manipulam itens de carrinho com <code>id</code> e <code>name</code> inválidos.</li>
+<li>Validar que respostas da API nunca retornam <code>name</code> vazio em <code>UserResponse</code>.</li>
+<li>Testar fluxos completos de criação, listagem e atualização para garantir que as validações estão aplicadas corretamente.</li>
+<li>Executar testes de regressão para garantir que outras funcionalidades não foram impactadas.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_5">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é de validação e não impacta diretamente performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_5">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Confirmar se o uso de <code>StrictBool</code> é intencional para endurecer a validação, considerando o impacto em clientes existentes.</li>
+<li>Verificar se há outros schemas ou pontos na aplicação que manipulam os campos <code>is_vip</code>, <code>name</code> e <code>id</code> e que precisam de validação consistente.</li>
+<li>Avaliar se as mensagens de erro atuais são suficientes ou se precisam ser aprimoradas para melhor experiência do usuário.</li>
+<li>Confirmar se a documentação da API será atualizada para refletir essas mudanças de validação.</li>
+</ul>
+<h1 id="validacao-cooperativa_5">Validação cooperativa</h1>
+<p>As análises de risco, estratégia de testes e crítica final foram coordenadas entre o QA Sênior Investigador, o Especialista em Estratégia de Testes para Código de Alto Risco e o Crítico de Análise de QA. O QA Sênior detalhou os riscos técnicos e de negócio, o Especialista elaborou uma estratégia robusta de testes unitários e de integração, e o Crítico apontou fragilidades e recomendações para evitar falsos positivos e negativos, garantindo que a análise final seja objetiva, rastreável e útil para revisão humana.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiteststest_apipy">Arquivo analisado: python-api/tests/test_api.py</h1>
+<h1 id="tipo-da-mudanca_6">Tipo da mudança</h1>
+<p>Refatoração e substituição de testes unitários focados em usuários por testes unitários para endpoints de cálculo de carrinho e descontos na API.</p>
+<h1 id="evidencias-observadas_6">Evidências observadas</h1>
+<ul>
+<li>O diff mostra remoção completa dos testes relacionados a busca e filtragem de usuários VIP e não VIP.</li>
+<li>Inclusão de novos testes para os endpoints <code>/cart/calculate</code> e <code>/discounts/calculate</code> com uso de mocks para <code>cart_service</code> e <code>discount_service</code>.</li>
+<li>Testes cobrem cenários de sucesso, erros de validação (422), exceções específicas (ValueError) e genéricas (RuntimeError), além de verificação da documentação do endpoint de desconto.</li>
+<li>O cliente de testes é <code>TestClient</code> do FastAPI com <code>raise_server_exceptions=False</code>.</li>
+<li>Contexto do repositório indica arquitetura FastAPI com serviços desacoplados e testes unitários e de integração separados.</li>
+</ul>
+<h1 id="impacto-provavel_6">Impacto provável</h1>
+<ul>
+<li>Mudança no foco da cobertura de testes, migrando de funcionalidades relacionadas a usuários para funcionalidades de carrinho e descontos.</li>
+<li>Aumento da cobertura para fluxos críticos de negócio relacionados a cálculo de preços e aplicação de descontos.</li>
+<li>Potencial risco de regressão na funcionalidade de usuários caso os testes removidos não tenham sido migrados para outro local.</li>
+<li>Melhoria na robustez dos endpoints de carrinho e desconto, com validação de payload e tratamento de exceções.</li>
+</ul>
+<h1 id="riscos-identificados_6">Riscos identificados</h1>
+<ul>
+<li>Ausência de testes para funcionalidades de usuários no arquivo pode indicar lacuna de cobertura se não houver testes equivalentes em outro lugar.</li>
+<li>Dependência de mocks para serviços pode gerar falsos positivos se a implementação real mudar sem atualização dos mocks.</li>
+<li>Falta de testes para casos complexos ou de borda, como múltiplos descontos, carrinho vazio ou combinações específicas de itens.</li>
+<li>Configuração do <code>TestClient</code> com <code>raise_server_exceptions=False</code> pode mascarar erros internos não tratados.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_6">Cenários de testes manuais</h1>
+<ul>
+<li>Enviar requisições POST para <code>/cart/calculate</code> com diferentes combinações de itens, incluindo quantidades negativas, para validar rejeição.</li>
+<li>Testar aplicação de cupons válidos e inválidos no cálculo do carrinho e verificar respostas e mensagens de erro.</li>
+<li>Enviar payloads incompletos ou com tipos incorretos para <code>/discounts/calculate</code> e verificar retorno de erro 422.</li>
+<li>Simular falhas no serviço de desconto para validar tratamento de exceções e retorno de erro 400 ou 500.</li>
+<li>Verificar manualmente a documentação da API para o endpoint <code>/discounts/calculate</code> via <code>/openapi.json</code>.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_6">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar cálculo correto do total do carrinho com múltiplos itens e diferentes preços.</li>
+<li>Testar tratamento de exceções específicas (ValueError) e genéricas (RuntimeError) nos serviços mockados.</li>
+<li>Validar rejeição de payloads com dados inválidos, como quantidades negativas ou campos ausentes.</li>
+<li>Testar chamadas dos serviços mockados com os parâmetros corretos usando <code>assert_called_once_with</code>.</li>
+<li>Testar resposta da API para cupons inválidos e ausência de cupons.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_6">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo dos endpoints <code>/cart/calculate</code> e <code>/discounts/calculate</code> com serviços reais (não mockados) para validar integração.</li>
+<li>Validar comportamento da API com diferentes combinações de itens e cupons em ambiente de integração.</li>
+<li>Testar resposta da API para payloads inválidos e verificar mensagens de erro detalhadas.</li>
+<li>Verificar se a documentação gerada está consistente com a implementação atual.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_6">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança foca em testes unitários e de integração para lógica de negócio e validação de payload.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_6">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Os testes antigos de usuários foram migrados para outro arquivo ou removidos definitivamente? Isso impacta a cobertura da funcionalidade de usuários.</li>
+<li>Existem casos de uso complexos para cálculo de carrinho e descontos que não estão contemplados nos testes atuais?</li>
+<li>A configuração do <code>TestClient</code> com <code>raise_server_exceptions=False</code> é intencional para produção ou apenas para facilitar testes? Há planos para testar com exceções levantadas?</li>
+</ul>
+<h1 id="validacao-cooperativa_6">Validação cooperativa</h1>
+<ul>
+<li>A análise de riscos foi detalhada pelo QA Sênior Investigador, que identificou os impactos funcionais e riscos específicos da mudança.</li>
+<li>A estratégia de testes foi elaborada pelo Especialista em Estratégia de Testes para Código de Alto Risco, contemplando tipos de testes, cobertura, uso de mocks e validação de erros.</li>
+<li>O Crítico de Análise de QA revisou as análises para garantir foco nas evidências do diff, evitar achados genéricos e garantir rastreabilidade e objetividade.</li>
+<li>A consolidação final reflete um consenso entre os especialistas, equilibrando cobertura, riscos e sugestões práticas para testes futuros.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-python-apiteststest_schemaspy">Arquivo analisado: python-api/tests/test_schemas.py</h1>
+<h1 id="tipo-da-mudanca_7">Tipo da mudança</h1>
+<p>Melhoria e ampliação da cobertura de testes unitários para validação de schemas Pydantic no arquivo de testes <code>test_schemas.py</code>.</p>
+<h1 id="evidencias-observadas_7">Evidências observadas</h1>
+<ul>
+<li>Inclusão de testes parametrizados para validar preços negativos e quantidades negativas ou zero em <code>CartItemSchema</code>.</li>
+<li>Testes para valores inválidos em campos booleanos no schema <code>UserCreate</code>.</li>
+<li>Validação de campos obrigatórios como <code>name</code> em <code>UserResponse</code>.</li>
+<li>Testes de serialização e deserialização para <code>CartResponse</code> e <code>DiscountRequest</code>.</li>
+<li>Uso consistente de <code>pytest.mark.parametrize</code> para múltiplos valores inválidos.</li>
+<li>Testes que verificam valores padrão para campos opcionais como <code>is_vip</code> e <code>coupon_code</code>.</li>
+<li>Contexto do repositório indica uso de Pydantic para validação e pytest para testes, sem outros testes específicos para esses schemas.</li>
+</ul>
+<h1 id="impacto-provavel_7">Impacto provável</h1>
+<ul>
+<li>Aumento da robustez na validação dos dados de entrada para os schemas relacionados a usuários, carrinho e descontos.</li>
+<li>Redução de erros em produção causados por dados inválidos, especialmente em campos numéricos e booleanos.</li>
+<li>Garantia de integridade na serialização e deserialização dos objetos usados na API.</li>
+<li>Melhoria na detecção precoce de regressões relacionadas à validação dos modelos.</li>
+</ul>
+<h1 id="riscos-identificados_7">Riscos identificados</h1>
+<ul>
+<li>Possível lacuna na validação de outros campos obrigatórios além do <code>name</code> em <code>UserResponse</code> e <code>UserCreate</code>.</li>
+<li>Ausência de testes para limites superiores ou valores extremos (ex.: strings muito longas, valores numéricos muito altos).</li>
+<li>Falta de testes para interações entre múltiplos schemas em fluxos integrados.</li>
+<li>Potencial redundância em alguns valores parametrizados que podem não representar cenários distintos.</li>
+<li>Mensagens de erro não são assertivamente validadas, o que pode permitir falsos positivos.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_7">Cenários de testes manuais</h1>
+<ul>
+<li>Tentar criar usuários com campos obrigatórios ausentes ou inválidos (ex.: nome vazio, email mal formatado).</li>
+<li>Inserir itens no carrinho com preço negativo ou quantidade zero/negativa e verificar rejeição.</li>
+<li>Enviar requisições com campos booleanos inválidos para verificar resposta de erro.</li>
+<li>Testar serialização e deserialização manualmente de objetos <code>CartResponse</code> e <code>DiscountRequest</code>.</li>
+<li>Validar comportamento com campos opcionais omitidos e com valores padrão assumidos.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_7">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar ausência e valores inválidos para todos os campos obrigatórios em <code>UserCreate</code> e <code>UserResponse</code>.</li>
+<li>Testar limites superiores e formatos inválidos para campos numéricos e strings em <code>CartItemSchema</code> e <code>CartRequest</code>.</li>
+<li>Testar campos booleanos adicionais com valores não booleanos.</li>
+<li>Testar serialização/deserialização com dados corrompidos ou incompletos.</li>
+<li>Validar explicitamente mensagens de erro geradas pelas validações.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_7">Sugestões de testes de integração</h1>
+<ul>
+<li>Criar fluxo completo simulando criação de usuário, criação de carrinho com múltiplos itens, aplicação de desconto e geração de resposta.</li>
+<li>Validar integridade dos dados ao longo do fluxo, incluindo serialização e deserialização entre etapas.</li>
+<li>Testar integração entre schemas compostos para garantir consistência.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_7">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança foca em validação e testes unitários de schemas, sem impacto direto em performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_7">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existem outros campos obrigatórios nos schemas <code>UserCreate</code> e <code>UserResponse</code> que não foram testados?</li>
+<li>Há limites máximos definidos para campos numéricos ou strings que deveriam ser validados?</li>
+<li>Quais são os campos booleanos adicionais, se houver, que precisam de validação?</li>
+<li>Qual o comportamento esperado para campos opcionais quando omitidos ou nulos?</li>
+</ul>
+<h1 id="validacao-cooperativa_7">Validação cooperativa</h1>
+<ul>
+<li>O QA Sênior Investigador confirmou que a cobertura atual melhora a validação, mas indicou lacunas em campos obrigatórios e limites extremos.</li>
+<li>O Especialista em Estratégia de Testes recomendou uma estratégia detalhada para ampliar a cobertura, incluindo testes unitários e de integração, com foco em casos típicos e atípicos.</li>
+<li>O Crítico de Análise de QA destacou pontos fortes como o uso adequado de parametrização e testes de serialização, e sugeriu melhorias na cobertura de casos limites, assertividade das mensagens de erro e documentação dos testes.</li>
+<li>A análise final consolidou as recomendações para mitigar riscos e garantir robustez, sem ocultar incertezas sobre possíveis lacunas.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-python-apiteststest_user_servicepy">Arquivo analisado: python-api/tests/test_user_service.py</h1>
+<h1 id="tipo-da-mudanca_8">Tipo da mudança</h1>
+<p>Mudança de comportamento na validação do modelo de dados, especificamente no campo <code>is_vip</code> do schema <code>UserCreate</code>, que passou de obrigatório para opcional com valor padrão <code>False</code>. Trata-se de uma alteração de teste e modelo que impacta a forma como a ausência do campo é tratada.</p>
+<h1 id="evidencias-observadas_8">Evidências observadas</h1>
+<ul>
+<li>No diff, o teste <code>test_create_user_without_is_vip_raises_validation_error</code> foi modificado para não esperar mais uma exceção <code>ValidationError</code> quando o campo <code>is_vip</code> está ausente, mas sim verificar que o valor padrão é <code>False</code>.</li>
+<li>O arquivo <code>test_user_service.py</code> contém outros testes que validam criação de usuários com <code>is_vip</code> True e False, e testes que garantem erro para valores inválidos.</li>
+<li>O contexto do repositório indica uso de Pydantic para validação, pytest para testes, e que o campo <code>is_vip</code> é booleano.</li>
+<li>A mudança sugere que o modelo <code>UserCreate</code> foi alterado para tornar <code>is_vip</code> opcional com default <code>False</code>.</li>
+</ul>
+<h1 id="impacto-provavel_8">Impacto provável</h1>
+<ul>
+<li>O modelo agora aceita a criação de usuários sem o campo <code>is_vip</code> explicitamente informado, atribuindo <code>False</code> como valor padrão.</li>
+<li>Fluxos que dependem da presença explícita do campo podem ser impactados, especialmente se houver lógica que diferencie ausência de valor de valor falso.</li>
+<li>Redução de erros de validação desnecessários ao criar usuários sem informar <code>is_vip</code>.</li>
+<li>Possível necessidade de atualização da documentação e dos testes para refletir o novo comportamento.</li>
+</ul>
+<h1 id="riscos-identificados_8">Riscos identificados</h1>
+<ul>
+<li>Risco de que alguma lógica de negócio dependa da distinção entre campo ausente e campo explicitamente falso, o que pode ser perdido.</li>
+<li>O nome do teste modificado está desatualizado e pode causar confusão, pois sugere que a ausência do campo gera erro, o que não é mais verdade.</li>
+<li>Possibilidade de falsos positivos se o teste não cobrir adequadamente cenários onde a ausência do campo deveria ser tratada de forma diferenciada.</li>
+<li>Potencial impacto em integrações que esperam o campo sempre presente.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_8">Cenários de testes manuais</h1>
+<ul>
+<li>Criar usuário via API ou interface sem informar o campo <code>is_vip</code> e verificar que o usuário é criado com <code>is_vip</code> igual a <code>False</code>.</li>
+<li>Testar fluxos que dependem do status VIP para garantir que usuários sem <code>is_vip</code> informado são tratados como não VIP.</li>
+<li>Verificar comportamento em filtros, permissões e regras de negócio que usam o campo <code>is_vip</code>.</li>
+<li>Testar atualização de usuário removendo ou omitindo o campo <code>is_vip</code> e observar o comportamento.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_8">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar criação de <code>UserCreate</code> sem o campo <code>is_vip</code> e confirmar que o valor padrão é <code>False</code>.</li>
+<li>Testar criação com <code>is_vip=True</code> e <code>is_vip=False</code> explicitamente.</li>
+<li>Testar que valores inválidos para <code>is_vip</code> (strings, números, None, listas, dicionários) geram <code>ValidationError</code>.</li>
+<li>Testar serialização e deserialização do modelo para garantir que o valor padrão é mantido.</li>
+<li>Renomear o teste <code>test_create_user_without_is_vip_raises_validation_error</code> para <code>test_create_user_without_is_vip_defaults_to_false</code> para refletir o comportamento atual.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_8">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoints de criação de usuário para garantir que a ausência do campo <code>is_vip</code> não causa erro e que o valor padrão é aplicado.</li>
+<li>Testar fluxos que envolvem listagem, busca e filtros por <code>is_vip</code> para garantir consistência.</li>
+<li>Testar integração com serviços que consomem o modelo <code>UserCreate</code> para validar tratamento correto do campo opcional.</li>
+<li>Testar atualização de usuário para verificar comportamento ao omitir ou alterar o campo <code>is_vip</code>.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_8">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é de validação e lógica de modelo, sem impacto direto em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_8">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Confirmar se o modelo <code>UserCreate</code> foi realmente alterado para tornar <code>is_vip</code> opcional com default <code>False</code>.</li>
+<li>Verificar se há regras de negócio que diferenciam ausência do campo <code>is_vip</code> de valor <code>False</code>.</li>
+<li>Confirmar se integrações externas esperam o campo sempre presente.</li>
+<li>Avaliar necessidade de atualizar documentação e nomenclatura dos testes para evitar confusão.</li>
+</ul>
+<h1 id="validacao-cooperativa_8">Validação cooperativa</h1>
+<p>As conclusões foram revisadas pelo QA Sênior Investigador, que detalhou os riscos e impactos da mudança no modelo e teste; pelo Especialista em Estratégia de Testes, que elaborou uma estratégia abrangente para garantir cobertura e evitar regressões; e pelo Crítico de Análise de QA, que avaliou a robustez da alteração, recomendou renomeação do teste e reforço na clareza e documentação. A análise final consolida esses pontos para fornecer uma visão objetiva, rastreável e útil para revisão humana.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
