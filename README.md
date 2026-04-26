@@ -126,7 +126,7 @@ flowchart TD
 ```text
 qagent/
 ├─ docs/                      # Documentações técnicas
-├─ data/lancedb/              # Banco vetorial local de memórias (ignorado pelo Git)
+├─ data/lancedb/              # Banco vetorial versionado com memórias iniciais do MVP
 ├─ src/
 │  ├─ agent/                  # Perfis dos Agentes (Role, Goal, Backstory)
 │  ├─ crew/                   # Runners CrewAI (QA, TestGen, HighRisk, Memory)
