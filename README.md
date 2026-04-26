@@ -17,6 +17,7 @@ O QAgent é um pipeline multi-stage que coordena agentes de IA especializados pa
 | Agente / Componente | Descrição |
 |----------------------|-----------|
 | **QA Agent** | Analisa mudanças de código a partir do *diff*, identificando riscos, tipo de mudança e sugerindo cenários de testes. |
+| **TokenBudgetPlanner** | Etapa determinística que escolhe `skip`, `standard` ou `cooperative`, define nível de contexto e registra a política aplicada. |
 | **High Risk Strategy Agent** | Agente especializado acionado **seletivamente** quando o risco é classificado como HIGH. Enriquece a estratégia de testes via LLM. |
 | **Test Generator Agent** | Gera código real de testes automatizados com base na análise e estratégia, submetendo PRs automáticos no repositório alvo. |
 | **Memory Agent** | Extrai lições aprendidas de comentários de Code Review e as persiste em banco vetorial (**LanceDB**) para futuras gerações. |
@@ -34,6 +35,7 @@ O QAgent utiliza uma arquitetura multi-stage com contratos estruturados entre et
 - **Contratos tipados** — cada etapa produz e consome schemas Pydantic (`ContextResult`, `ReviewResult`, `TestStrategyResult`, `FileAnalysisArtifact`)
 - **Handoffs explícitos** — os dados fluem por artefatos estruturados, sem estado implícito
 - **Roteamento condicional** — o nível de risco determina qual política de estratégia é aplicada e se o agente HIGH risk é acionado
+- **Orçamento de tokens** — antes das chamadas LLM, o `TokenBudgetPlanner` define fluxo, contexto e uso de memória por arquivo
 - **Fallback determinístico** — regras de decisão são determinísticas; o LLM é acionado apenas onde agrega valor (enriquecimento HIGH risk)
 - **Observabilidade** — cada etapa registra duração, execução/skip e políticas aplicadas no próprio artefato
 
@@ -47,8 +49,10 @@ flowchart TD
 
     subgraph ANALYSIS ["🔍 Pipeline de Análise (por arquivo)"]
         DIFF["Extrai diff dos<br/>arquivos alterados"]
-        CTX["ContextResult<br/><i>RepoContextBuilder</i>"]
+        BUDGET["TokenBudgetPlan<br/><i>skip · standard · cooperative</i>"]
+        CTX["ContextResult<br/><i>adaptativo por orçamento</i>"]
         QA["🤖 QA Agent<br/><i>CrewAI · Groq LLM</i>"]
+        SKIP["Review determinístico<br/><i>sem LLM</i>"]
         RR["ReviewResult<br/><i>findings · summary · test_needs</i>"]
 
         EVAL["artifact_evaluator<br/><i>classifica risco</i>"]
@@ -79,7 +83,9 @@ flowchart TD
         LANCEDB[("🗄️ LanceDB")]
     end
 
-    PUSH --> DIFF --> CTX --> QA --> RR
+    PUSH --> DIFF --> BUDGET
+    BUDGET -->|skip| SKIP --> RR
+    BUDGET -->|standard/cooperative| CTX --> QA --> RR
     RR --> EVAL --> RISK
     RISK -->|LOW| STRAT_LOW --> TSR
     RISK -->|MEDIUM| STRAT_MED --> TSR
@@ -100,6 +106,7 @@ flowchart TD
 |------------|-------------|------------------|
 | **AnalysisOrchestrator** | `src/services/analysis_orchestrator.py` | Coordena o pipeline pós-QA review para um arquivo: avaliação de risco → estratégia → enriquecimento HIGH risk → avaliação final. |
 | **FileAnalysisArtifact** | `src/schemas/file_analysis_artifact.py` | Artefato consolidado que carrega todos os dados de uma análise (review, estratégia, risco, observabilidade). |
+| **TokenBudgetPlanner** | `src/services/token_budget_planner.py` | Calcula `TokenBudgetPlan`, reduz análise cooperativa em mudanças pequenas, compacta arquivos grandes e limita contexto/memória. |
 | **artifact_evaluator** | `src/services/artifact_evaluator.py` | Avalia o artefato e preenche campos de orquestração (risk_level, review_quality, test_generation_recommendation) com regras determinísticas. |
 | **test_strategy_builder** | `src/services/test_strategy_builder.py` | Constrói a estratégia de testes com políticas adaptativas por nível de risco (LOW/MEDIUM/HIGH). |
 | **HighRiskTestStrategyRunner** | `src/crew/high_risk_strategy_crew.py` | Agente LLM especializado que refina a estratégia de testes para arquivos HIGH risk. Inclui fallback seguro para a estratégia base. |
@@ -134,6 +141,7 @@ qagent/
 │  ├─ prompts/                # Prompts de sistema
 │  ├─ schemas/                # Contratos estruturados (Pydantic)
 │  │  ├─ file_analysis_artifact.py
+│  │  ├─ token_budget.py
 │  │  ├─ context_result.py
 │  │  ├─ review_result.py
 │  │  └─ test_strategy_result.py
@@ -142,6 +150,7 @@ qagent/
 │  │  ├─ artifact_evaluator.py
 │  │  ├─ artifact_exporter.py
 │  │  ├─ context_builder.py
+│  │  ├─ token_budget_planner.py
 │  │  └─ test_strategy_builder.py
 │  ├─ tools/                  # Ferramentas customizadas (Memory, Repo)
 │  ├─ utils/                  # Git, formatação, PR utils
@@ -201,7 +210,11 @@ python -m src.main \
     --cooperative-analysis
 ```
 
-Nesse modo, um gerente coordena agentes de QA, estratégia de testes e crítica. Se a execução cooperativa falhar, o QAgent volta automaticamente para o QA Agent padrão e registra o fallback no artefato.
+Nesse modo, um gerente coordena agentes de QA, estratégia de testes e crítica. O `TokenBudgetPlanner` pode reduzir automaticamente mudanças pequenas para o fluxo padrão, ou pular análise LLM para arquivos triviais. Se a execução cooperativa falhar, o QAgent volta automaticamente para o QA Agent padrão e registra o fallback no artefato.
+
+### Observabilidade do fluxo escolhido
+
+Cada arquivo analisado recebe um `token_budget_plan` em `artifacts.json`, com `analysis_mode`, `context_level`, `include_full_file`, `include_memory`, `max_context_chars` e `reason`. O `run_summary.json` também inclui `analysis_flow_distribution` e `context_level_distribution`, permitindo ver rapidamente quantos arquivos usaram `skip`, `standard` ou `cooperative`.
 
 ### Agente Gerador de Testes
 
@@ -218,6 +231,7 @@ Em desenvolvimento ativo. A arquitetura evolui de forma incremental, priorizando
 - Orquestração explícita por arquivo via `AnalysisOrchestrator`
 - Contratos estruturados entre todas as etapas
 - Roteamento condicional com políticas adaptativas por risco
+- Token Saver Flow determinístico antes das chamadas LLM
 - Agente especializado para cenários de alto risco
 - Observabilidade integrada (duração, steps, políticas)
 - Exportação de artefatos para JSON
