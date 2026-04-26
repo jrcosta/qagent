@@ -2,10 +2,10 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 from src.schemas.context_result import ContextResult
-from src.schemas.token_budget import TokenBudgetPlan
 from src.schemas.review_result import ReviewResult
 from src.schemas.test_strategy_result import TestStrategyResult
 from src.schemas.generated_test_review_result import GeneratedTestsReviewResult
+from src.schemas.test_execution_result import TestExecutionResult
 
 
 # ---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class FileAnalysisArtifact(BaseModel):
     de um único arquivo dentro do pipeline.
 
     Centraliza todos os dados estruturados produzidos pelas etapas:
-    Context -> QA Review -> Test Strategy
+    Context -> QA Review -> Test Strategy -> Test Generation -> Test Execution -> Test Review
 
     Permite que etapas futuras consumam um único objeto em vez de
     variáveis dispersas.
@@ -36,9 +36,6 @@ class FileAnalysisArtifact(BaseModel):
     context_result: Optional[ContextResult] = Field(
         None, description="Resultado da etapa de extração de contexto"
     )
-    token_budget_plan: Optional[TokenBudgetPlan] = Field(
-        None, description="Plano de orçamento de contexto aplicado ao arquivo"
-    )
     raw_review_markdown: Optional[str] = Field(
         None, description="Markdown bruto retornado pelo QA Agent"
     )
@@ -50,6 +47,9 @@ class FileAnalysisArtifact(BaseModel):
     )
     generated_test_review_result: Optional[GeneratedTestsReviewResult] = Field(
         None, description="Resultado da revisão crítica dos testes gerados"
+    )
+    test_execution_result: Optional[TestExecutionResult] = Field(
+        None, description="Resultado da execução real dos testes gerados"
     )
     generated_tests_raw: Optional[str] = Field(
         None, description="Saída bruta do agente gerador de testes"
