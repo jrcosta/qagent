@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 26 Apr 2026 – 14:19:58 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-26_14-19-58_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>26 Apr 2026 – 14:19:58 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-githubworkflowsjava-testsyml">Arquivo analisado: .github/workflows/java-tests.yml</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Mudança trivial analisada por fallback determinístico.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>Arquivo: .github/workflows/java-tests.yml</li>
+<li>Motivo do TokenBudgetPlanner: Mudança pequena em arquivo sem lógica executável; review LLM não é necessária.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<p>Baixo impacto provável; arquivo classificado para não consumir análise LLM.</p>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<p>Nenhum risco relevante identificado pelas regras determinísticas.</p>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<p>Nenhum cenário manual específico recomendado.</p>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<p>Nenhum teste unitário novo recomendado.</p>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<p>Nenhum teste de integração novo recomendado.</p>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<p>Nenhum ponto adicional identificado.</p>
+<hr />
+<h1 id="arquivo-analisado-githubworkflowsjavascript-testsyml">Arquivo analisado: .github/workflows/javascript-tests.yml</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Mudança trivial analisada por fallback determinístico.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>Arquivo: .github/workflows/javascript-tests.yml</li>
+<li>Motivo do TokenBudgetPlanner: Mudança pequena em arquivo sem lógica executável; review LLM não é necessária.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<p>Baixo impacto provável; arquivo classificado para não consumir análise LLM.</p>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<p>Nenhum risco relevante identificado pelas regras determinísticas.</p>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<p>Nenhum cenário manual específico recomendado.</p>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<p>Nenhum teste unitário novo recomendado.</p>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<p>Nenhum teste de integração novo recomendado.</p>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<p>Nenhum ponto adicional identificado.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiuserserviceunittestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserServiceUnitTest.java</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<p>Alteração em testes unitários que reflete mudança de comportamento na regra de negócio e na deserialização de dados.</p>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O teste <code>createUserShouldRejectDuplicatePhoneNumberIfRuleExists</code> foi modificado para <code>createUserShouldAllowDuplicatePhoneNumber</code>, removendo a expectativa de exceção ao criar usuários com números de telefone duplicados.</li>
+<li>O teste de deserialização <code>userCreateRequestDeserializationFailsWithInvalidPhoneNumberType</code> foi alterado para aceitar números no campo <code>phoneNumber</code>, convertendo-os para string ao invés de lançar exceção.</li>
+<li>O contexto do repositório indica ausência de regra explícita de unicidade para <code>phoneNumber</code>.</li>
+<li>O código de teste cobre criação, listagem e deserialização de usuários com diferentes formatos e valores de <code>phoneNumber</code>.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>O sistema agora permite múltiplos usuários com o mesmo número de telefone, o que pode afetar funcionalidades que assumem unicidade, como buscas, notificações ou autenticação.</li>
+<li>A deserialização mais flexível do campo <code>phoneNumber</code> aumenta a robustez contra variações no formato JSON recebido, evitando falhas por tipos numéricos.</li>
+<li>Possível impacto em integrações e fluxos que dependam da unicidade ou de formatos estritos do campo <code>phoneNumber</code>.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li>Inconsistências ou falhas silenciosas em funcionalidades que assumem unicidade do <code>phoneNumber</code>.</li>
+<li>Dados duplicados dificultando manutenção, relatórios ou operações de negócio.</li>
+<li>Falta de validação robusta para formatos inválidos ou inesperados no campo <code>phoneNumber</code> após a deserialização.</li>
+<li>Possível incompatibilidade com outras partes do sistema que esperam unicidade ou formatos específicos.</li>
+<li>Ausência de testes de integração e end-to-end que capturem regressões decorrentes dessas mudanças.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ul>
+<li>Criar múltiplos usuários com o mesmo número de telefone via interface ou API e verificar comportamento e mensagens.</li>
+<li>Enviar payloads JSON com <code>phoneNumber</code> como string, número, nulo, vazio e formatos incomuns para validar aceitação e tratamento.</li>
+<li>Testar buscas e operações que utilizem <code>phoneNumber</code> para verificar retorno correto e tratamento de duplicatas.</li>
+<li>Validar exclusão e atualização de usuários com números duplicados para observar efeitos colaterais.</li>
+<li>Monitorar logs e comportamento do sistema em ambiente de staging para identificar erros ou inconsistências.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar criação de usuários com <code>phoneNumber</code> como string e como número, garantindo conversão correta.</li>
+<li>Testar criação de múltiplos usuários com o mesmo <code>phoneNumber</code> e validação da persistência e listagem.</li>
+<li>Testar criação com <code>phoneNumber</code> nulo, vazio e com caracteres especiais.</li>
+<li>Testar validações posteriores ao <code>phoneNumber</code> deserializado para garantir integridade dos dados.</li>
+<li>Testar comportamento do sistema ao atualizar e excluir usuários com números duplicados.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Validar persistência e consulta de usuários com números de telefone duplicados no banco de dados.</li>
+<li>Testar integração da deserialização JSON com APIs que recebem <code>phoneNumber</code> em formatos variados.</li>
+<li>Simular concorrência na criação de usuários com o mesmo <code>phoneNumber</code> para verificar consistência.</li>
+<li>Testar fluxos completos que envolvam criação, busca, atualização e exclusão de usuários com números duplicados.</li>
+<li>Verificar compatibilidade com sistemas externos que consomem ou produzem dados de usuários.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança não indica impacto direto em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existe alguma regra de negócio ou restrição futura planejada para unicidade do <code>phoneNumber</code>?</li>
+<li>Como outras partes do sistema (banco, serviços, integrações) tratam o campo <code>phoneNumber</code> em relação à unicidade?</li>
+<li>Há validações adicionais esperadas para o formato do <code>phoneNumber</code> após a deserialização?</li>
+<li>Qual o impacto esperado em funcionalidades que dependem do <code>phoneNumber</code> para identificação ou comunicação?</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<p>As análises de riscos e estratégia de testes foram elaboradas e revisadas por especialistas de QA e estratégia de testes, que destacaram os principais impactos e riscos reais da mudança. O crítico de análise de QA apontou fragilidades importantes para evitar conclusões genéricas, reforçando a necessidade de validações robustas e testes integrados. A consolidação final reflete um consenso técnico fundamentado nas evidências do diff, código e contexto do repositório.</p>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapimodeluserresponsetestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/model/UserResponseTest.java</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Correção de teste unitário (ajuste de asserção) para refletir mudança no comportamento esperado do construtor antigo da classe <code>UserResponse</code>.</p>
+<hr />
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>No diff, a única modificação foi na anotação do comentário e na asserção do teste <code>shouldInitializeVipCorrectlyInAllConstructors()</code>:</li>
+</ul>
+<pre><code class="language-java">- // Old constructor sets vip true
++ // Old constructor without phoneNumber derives vip from role.
+...
+- assertThat(oldUser.vip()).isTrue();
++ assertThat(oldUser.vip()).isFalse();
+</code></pre>
+<ul>
+<li>
+<p>O teste cria um objeto <code>UserResponse</code> usando o construtor antigo (sem parâmetro <code>phoneNumber</code>), com <code>role</code> igual a <code>"USER"</code>, e antes esperava que <code>vip()</code> fosse <code>true</code>, agora espera <code>false</code>.</p>
+</li>
+<li>
+<p>No conteúdo atual do arquivo, há outro teste chamado <code>shouldCreateUserResponseWithOldConstructorAndPhoneNumberIsNull()</code> que cria um <code>UserResponse</code> com o construtor antigo, mas com <code>role</code> <code>"ADMIN"</code>, e espera <code>vip()</code> como <code>true</code>.</p>
+</li>
+<li>
+<p>Isso sugere que o comportamento esperado é que o construtor antigo defina <code>vip</code> como <code>true</code> apenas para alguns papéis (ex: <code>"ADMIN"</code>), e para <code>"USER"</code> deve ser <code>false</code>.</p>
+</li>
+<li>
+<p>O comentário foi ajustado para indicar que o valor de <code>vip</code> no construtor antigo é derivado do <code>role</code>, não fixo como <code>true</code>.</p>
+</li>
+<li>
+<p>Não há evidência no diff ou no contexto de que o código de produção foi alterado, apenas o teste foi corrigido para refletir o comportamento correto.</p>
+</li>
+</ul>
+<hr />
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>
+<p>A mudança corrige a expectativa do teste para alinhar com a regra de negócio implícita: o campo <code>vip</code> no construtor antigo depende do valor do <code>role</code>.</p>
+</li>
+<li>
+<p>Isso evita falsos positivos no teste, garantindo que o teste reflita a lógica real da classe <code>UserResponse</code>.</p>
+</li>
+<li>
+<p>Não há impacto funcional direto no código de produção, apenas no teste.</p>
+</li>
+<li>
+<p>A correção melhora a confiabilidade da suíte de testes, evitando que testes falhem indevidamente ou passem com expectativas incorretas.</p>
+</li>
+</ul>
+<hr />
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li>
+<p>Risco baixo, pois a mudança é restrita ao teste.</p>
+</li>
+<li>
+<p>Se a regra de derivação do <code>vip</code> pelo <code>role</code> não estiver documentada ou implementada corretamente no código de produção, pode haver inconsistência entre teste e implementação.</p>
+</li>
+<li>
+<p>Caso o construtor antigo tenha comportamento diferente do esperado para outros papéis, pode haver lacunas de teste.</p>
+</li>
+<li>
+<p>Se houver código legado que dependa do construtor antigo assumindo <code>vip</code> como <code>true</code> para todos os casos, pode haver regressão não detectada.</p>
+</li>
+</ul>
+<hr />
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p>Criar um usuário com o construtor antigo com <code>role = "USER"</code> e verificar que <code>vip()</code> retorna <code>false</code>.</p>
+</li>
+<li>
+<p>Criar um usuário com o construtor antigo com <code>role = "ADMIN"</code> e verificar que <code>vip()</code> retorna <code>true</code>.</p>
+</li>
+<li>
+<p>Criar usuários com outros papéis (ex: <code>"MODERATOR"</code>, <code>"GUEST"</code>) usando o construtor antigo e verificar o valor de <code>vip()</code> para validar a regra de derivação.</p>
+</li>
+<li>
+<p>Validar serialização e desserialização JSON para usuários criados com o construtor antigo, garantindo que o campo <code>vip</code> seja consistente.</p>
+</li>
+</ol>
+<hr />
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li>
+<p>Adicionar testes unitários que criem <code>UserResponse</code> com o construtor antigo para diferentes valores de <code>role</code> e verifiquem o valor esperado de <code>vip()</code>.</p>
+</li>
+<li>
+<p>Testar explicitamente a lógica de derivação do <code>vip</code> a partir do <code>role</code> no construtor antigo, se possível isolando essa lógica.</p>
+</li>
+<li>
+<p>Testar serialização e desserialização para usuários criados com o construtor antigo, garantindo que o campo <code>vip</code> seja mantido corretamente.</p>
+</li>
+<li>
+<p>Testar comportamento do método <code>vip()</code> para valores de <code>role</code> não previstos para garantir comportamento consistente.</p>
+</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>
+<p>Testar endpoints que retornam <code>UserResponse</code> criados via construtor antigo, verificando se o campo <code>vip</code> está correto conforme o <code>role</code>.</p>
+</li>
+<li>
+<p>Validar que a API não retorna <code>vip</code> incorreto para usuários com papéis diferentes, especialmente para papéis legados.</p>
+</li>
+<li>
+<p>Testar fluxos de criação e atualização de usuários que possam usar o construtor antigo (se aplicável) para garantir consistência do campo <code>vip</code>.</p>
+</li>
+</ul>
+<hr />
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é restrita a ajuste de teste unitário e não altera lógica de negócio ou performance.</li>
+</ul>
+<hr />
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>
+<p>Qual é a regra exata de derivação do campo <code>vip</code> a partir do <code>role</code> no construtor antigo? Apenas <code>"ADMIN"</code> gera <code>vip = true</code>? Existem outros papéis?</p>
+</li>
+<li>
+<p>O construtor antigo ainda é usado em produção ou é legado? Há planos para descontinuá-lo?</p>
+</li>
+<li>
+<p>Existe documentação ou código que explicite essa regra de derivação para garantir alinhamento entre testes e implementação?</p>
+</li>
+<li>
+<p>O campo <code>vip</code> é mutável após a criação do objeto? O teste <code>shouldGetAndSetVipCorrectly()</code> sugere que pode haver setter, mas isso não está claro.</p>
+</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança corrige a expectativa do teste <code>shouldInitializeVipCorrectlyInAllConstructors()</code> para refletir que o construtor antigo da classe <code>UserResponse</code> define o campo <code>vip</code> com base no valor do <code>role</code>, e não fixa <code>vip</code> como <code>true</code>. Isso alinha o teste com o comportamento real e evita falsos positivos. Recomenda-se ampliar a cobertura de testes para diferentes papéis no construtor antigo e validar a regra de derivação do campo <code>vip</code>. Não há impacto funcional direto, mas a correção melhora a confiabilidade da suíte de testes.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
