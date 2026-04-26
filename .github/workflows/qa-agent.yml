@@ -123,6 +123,7 @@ jobs:
             --artifacts-file ../target/outputs/artifacts.json \
             --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
             --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
+            --auto-fix-tests \
             --fail-on-findings
           reviewer_exit=$?
           cd ..

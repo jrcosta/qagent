@@ -55,6 +55,7 @@ jobs:
           python -m src.main_test_reviewer \
             --repo-path .. \
             --artifacts-file ../outputs/artifacts.json \
+            --auto-fix-tests \
             --fail-on-findings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
