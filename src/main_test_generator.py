@@ -10,6 +10,11 @@ from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.analysis_orchestrator import AnalysisOrchestrator
 from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
+from src.services.token_budget_planner import (
+    TokenBudgetPlanner,
+    build_code_content_for_plan,
+)
+from src.utils.git_utils import get_file_diff
 from src.utils.pr_utils import (
     build_pr_body,
     create_branch_and_commit,
@@ -107,6 +112,7 @@ def main() -> None:
     crew_runner = TestGeneratorCrewRunner(settings)
     high_risk_runner = HighRiskTestStrategyRunner(settings)
     orchestrator = AnalysisOrchestrator(high_risk_runner)
+    token_budget_planner = TokenBudgetPlanner()
 
     qa_report = read_report(args.report_file)
     report_sections = extract_report_sections(qa_report)
@@ -132,6 +138,23 @@ def main() -> None:
             continue
 
         section_report = report_sections[file_path]
+        file_diff = get_file_diff(
+            file_path=file_path,
+            repo_path=repo_path,
+            base_sha=args.base_sha,
+            head_sha=args.head_sha,
+        )
+        token_budget_plan = token_budget_planner.plan(
+            file_path=file_path,
+            file_diff=file_diff,
+            code_content=code_content,
+            cooperative_requested=False,
+        )
+        prompt_code_content = build_code_content_for_plan(
+            code_content=code_content,
+            file_diff=file_diff,
+            plan=token_budget_plan,
+        )
 
         # Gera ReviewResult estruturado a partir do markdown de QA
         review_result = parse_review_markdown_to_review_result(section_report)
@@ -139,10 +162,14 @@ def main() -> None:
         # 1. Monta artefato parcial e avalia risco
         artifact = FileAnalysisArtifact(
             file_path=file_path,
+            token_budget_plan=token_budget_plan,
             raw_review_markdown=section_report,
             review_result=review_result,
         )
         artifact.mark_step_executed("parse_review")
+        artifact.add_policy(f"token_budget_{token_budget_plan.analysis_mode}")
+        artifact.add_policy(f"context_{token_budget_plan.context_level}")
+        artifact.add_note(token_budget_plan.reason)
 
         # --- Pipeline de avaliação e estratégia ---
         orchestrator.run_artifact_pipeline(artifact)
@@ -159,10 +186,14 @@ def main() -> None:
         result = crew_runner.run(
             qa_report=section_report,
             file_path=file_path,
-            code_content=code_content,
+            code_content=prompt_code_content,
             repo_path=str(repo_path),
             test_strategy=artifact.test_strategy_result,
+            review_result=artifact.review_result,
+            token_budget_plan=token_budget_plan,
+            risk_level=artifact.risk_level,
         )
+        artifact.context_result = crew_runner.last_context_result
         artifact.memory_query = crew_runner.last_memory_query
         artifact.memories_used_raw = crew_runner.last_memories_raw
         artifact.memories_used = crew_runner.last_memories_used
