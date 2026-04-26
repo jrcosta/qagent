@@ -1,165 +1,352 @@
-# Memórias de Revisão (PR Comment → Lessons Learned)
+# Sistema de Memórias & Code Review
 
 ## Visão geral
 
-Quando o agente gerador de testes unitários cria um PR no **repo alvo**, o
-agente revisor de testes roda como uma etapa separada, avalia o PR criado e
-publica uma crítica estruturada com a hashtag:
+O QAgent possui um fluxo de memória para reaproveitar lições aprendidas em revisões de testes gerados automaticamente.
 
-> #qagent-test-review
+A ideia central é simples:
 
-Um workflow no repo alvo encaminha apenas comentários contendo essa hashtag
-para o repositório `qagent` via `repository_dispatch`. No `qagent`, um
-**agente sumarizador** (CrewAI) extrai
-as lições aprendidas e as persiste utilizando um banco vetorial com **LanceDB** na
-pasta `data/lancedb`, com auxílio de sentence-transformers.
+1. O QAgent gera testes para um repositório alvo.
+2. O agente revisor avalia criticamente esses testes.
+3. Comentários de revisão contendo aprendizados são transformados em lições curtas e acionáveis.
+4. Essas lições são armazenadas em um banco vetorial com **LanceDB**.
+5. Em execuções futuras, o gerador de testes consulta memórias semanticamente parecidas e injeta essas lições no prompt para evitar repetir erros.
 
-Quando a revisão crítica encontra problemas nos testes gerados, o workflow do
-`qagent` também publica um commit status chamado `QAgent Test Review` no commit
-do PR criado no repo alvo. Para bloquear merge automaticamente, configure a
-proteção da branch do repo alvo exigindo esse status como obrigatório.
+O objetivo não é substituir a revisão humana, mas criar um ciclo incremental de melhoria: cada revisão relevante melhora as próximas gerações.
 
-Na próxima execução do gerador de testes, essas lições são consultadas via buscas
-de similaridade nos embeddings vetoriais e repassadas ao prompt,
-injetadas no prompt, evitando que os mesmos erros se repitam.
+---
 
-## Arquitetura
+## Estado atual da implementação
 
-```
-Repo Alvo                              Repo qagent
-─────────                              ───────────
-PR criado pelo agente
-  └─ agente revisor publica:
-     "#qagent-test-review ..."
-         │
-         ▼
-forward-pr-comment.yml                ingest-pr-comment.yml
-  (filtra #qagent-test-review)  ──►      (repository_dispatch)
-  envia payload via dispatch              │
-                                          ▼
-                                   ingest_comment.py
-                                     → MemoryCrewRunner
-                                       (agente sumarizador)
-                                          │
-                                          ▼
-                                   data/memories.db
-                                     (SQLite, commitado)
-                                          │
-                                          ▼
-                                   Próxima execução do
-                                   gerador de testes lê
-                                   memórias via QueryMemoriesTool
-```
+A documentação antiga descrevia uma solução baseada em SQLite, `memories.db`, fuzzy match e `rapidfuzz`. Essa abordagem não representa mais o caminho atual do projeto.
 
-## Arquivos envolvidos
+No estado atual do código, o sistema de memórias usa:
 
-### No repo qagent
+| Item | Implementação atual |
+|------|---------------------|
+| Banco de memória | LanceDB |
+| Diretório padrão | `data/lancedb` |
+| Tabela | `memories` |
+| Modelo de embedding | `sentence-transformers/all-MiniLM-L6-v2` |
+| Dimensão do vetor | 384 |
+| Consulta | Busca vetorial por similaridade |
+| Uso principal | Injetar lições aprendidas no prompt do gerador de testes |
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `.github/workflows/ingest-pr-comment.yml` | Workflow que recebe `repository_dispatch` tipo `pr_comment_created` e executa o script de ingestão |
-| `.github/workflows/qa-agent.yml` | Publica o status `QAgent Test Review` no commit do PR gerado no repo alvo |
-| `.github/scripts/ingest_comment.py` | Script que chama o agente sumarizador e persiste lições no SQLite |
-| `src/agent/memory_agent.py` | Factory do agente sumarizador (CrewAI) |
-| `src/tasks/memory_task.py` | Task que instrui o agente a extrair lições do comentário |
-| `src/crew/memory_crew.py` | Crew runner do agente sumarizador |
-| `src/tools/memory_tools.py` | Tools CrewAI: `QueryMemoriesTool` e `ListAllMemoriesTool` para leitura do banco |
-| `src/crew/test_generator_crew.py` | Atualizado para consultar memórias antes de gerar testes |
-| `src/tasks/test_generator_task.py` | Atualizado para injetar memórias no prompt |
-| `src/main_test_generator.py` | Cria branch, commit, push e PR com os testes unitários gerados |
-| `src/main_test_reviewer.py` | Revisa criticamente os testes do PR e publica comentário com `#qagent-test-review` |
-| `src/utils/pr_utils.py` | Nova função `add_pr_comment` |
-| `data/memories.db` | Banco SQLite com as lições (commitado no repo) |
+> Observação importante: no ZIP avaliado, a leitura/consulta de memórias está implementada em `src/tools/memory_tools.py`. A documentação abaixo descreve o fluxo esperado e o que já está refletido no código, mas o fluxo completo de ingestão automatizada via GitHub Actions/script ainda precisa ser validado no repositório.
 
-### No repo alvo
+---
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `.github/workflows/forward-qagent-test-review-comment.yml` | Workflow que escuta `issue_comment` em PRs contendo `#qagent-test-review` e encaminha para `qagent` via `repository_dispatch` |
+## Arquitetura do fluxo
 
-## Configuração de Secrets
-
-### No repo alvo
-
-| Secret | Descrição |
-|--------|-----------|
-| `QAGENT_DISPATCH_PAT` | Personal Access Token (classic) com scope `repo` que permite disparar `repository_dispatch` no repo `jrcosta/qagent` |
-
-### No repo qagent
-
-| Secret | Descrição |
-|--------|-----------|
-| `GROQ_API_KEY` | Chave de API para o LLM usado pelo agente sumarizador |
-
-## Esquema do banco SQLite
-
-```sql
-CREATE TABLE memories (
-    id TEXT PRIMARY KEY,
-    repo TEXT NOT NULL,
-    pr_number INTEGER NOT NULL,
-    lesson TEXT NOT NULL,
-    original_comment TEXT,
-    author TEXT,
-    created_at TEXT,
-    tags TEXT
-);
+```mermaid
+flowchart TD
+    A[PR com testes gerados pelo QAgent] --> B[Test Reviewer Agent]
+    B --> C[Comentário de revisão com #qagent-test-review]
+    C --> D[Memory Agent]
+    D --> E[Lições curtas e acionáveis]
+    E --> F[(LanceDB: data/lancedb)]
+    F --> G[QueryMemoriesTool]
+    G --> H[Test Generator Agent]
+    H --> I[Novos testes com lições injetadas no prompt]
 ```
 
-- `lesson`: frase curta e acionável extraída pelo agente sumarizador
-- `original_comment`: texto completo do comentário original (para auditoria)
-- Deduplicação por fuzzy match (score >= 90) antes de inserir
+---
 
-## Como funciona a consulta de memórias
+## Componentes envolvidos
 
-Antes de gerar testes, o `TestGeneratorCrewRunner` chama `QueryMemoriesTool`
-com o nome do arquivo sendo testado. A tool faz fuzzy match (rapidfuzz) contra
-todas as lições armazenadas e retorna as mais relevantes. Essas lições são
-injetadas no prompt do agente de testes na seção "Lições aprendidas".
+### `src/tools/memory_tools.py`
 
-## Persistência
+Responsável pela integração com o LanceDB.
 
-O workflow `ingest-pr-comment.yml` faz commit automático de `data/memories.db`
-na branch `main` após cada ingestão. Isso garante que as memórias estejam
-disponíveis para todas as execuções futuras.
+Principais responsabilidades:
 
-## Como testar localmente
+- criar/conectar ao banco `data/lancedb`;
+- criar a tabela `memories`, caso ela ainda não exista;
+- carregar o modelo de embeddings `all-MiniLM-L6-v2` de forma lazy;
+- consultar memórias semanticamente parecidas;
+- listar memórias existentes.
+
+Principais elementos:
+
+| Elemento | Função |
+|---------|--------|
+| `MemoryModel` | Schema da tabela LanceDB |
+| `_get_table()` | Abre/cria a tabela `memories` |
+| `get_encoder()` | Inicializa o modelo de embeddings sob demanda |
+| `QueryMemoriesTool` | Busca memórias relevantes por similaridade vetorial |
+| `ListAllMemoriesTool` | Lista memórias armazenadas por data decrescente |
+| `fetch_all_lessons()` | Retorna lições salvas para inspeção/listagem |
+| `save_lesson()` | Persiste uma lição usando o schema oficial e gerando embedding |
+
+---
+
+### `src/crew/test_generator_crew.py`
+
+Antes de gerar testes, o `TestGeneratorCrewRunner` monta uma consulta baseada em:
+
+- caminho do arquivo alvo;
+- trecho inicial do código fonte;
+- contexto da geração de testes.
+
+A consulta é enviada para `QueryMemoriesTool` com limite padrão de 5 memórias relevantes.
+
+Quando memórias são encontradas, o runner registra:
+
+| Campo | Descrição |
+|------|-----------|
+| `last_memory_query` | Consulta usada na busca vetorial |
+| `last_memories_raw` | Texto bruto retornado pela ferramenta |
+| `last_memories_used` | Lista estruturada de memórias usadas |
+
+Esses dados depois podem ser persistidos no artefato de análise.
+
+---
+
+### `src/tasks/test_generator_task.py`
+
+Quando existem memórias relevantes, elas são injetadas no prompt do gerador de testes dentro do bloco:
+
+```text
+IMPORTANTE — Lições aprendidas de execuções anteriores (NÃO repita estes erros):
+[INICIO_MEMORIAS]
+...
+[FIM_MEMORIAS]
+```
+
+Isso orienta o agente a evitar problemas já identificados em revisões anteriores, como:
+
+- nomes genéricos de testes;
+- ausência de mocks;
+- duplicação de cenários;
+- baixa cobertura de casos negativos;
+- testes frágeis ou dependentes de serviços externos.
+
+---
+
+### `src/schemas/file_analysis_artifact.py`
+
+O artefato de análise possui campos específicos para rastrear o uso das memórias:
+
+| Campo | Descrição |
+|------|-----------|
+| `memory_query` | Consulta usada para buscar memórias no banco vetorial |
+| `memories_used_raw` | Texto bruto das memórias recuperadas |
+| `memories_used` | Lista estruturada das memórias utilizadas na geração |
+
+Esses campos são importantes para auditoria: permitem saber se uma geração de testes foi influenciada por aprendizados anteriores.
+
+---
+
+## Schema atual da memória no LanceDB
+
+A tabela `memories` segue o modelo definido em `MemoryModel`:
+
+| Campo | Tipo | Descrição |
+|------|------|-----------|
+| `id` | `str` | Identificador único da memória |
+| `repo` | `str` | Repositório de origem |
+| `pr_number` | `int` | Número do PR relacionado |
+| `lesson` | `str` | Lição curta e acionável |
+| `original_comment` | `str` | Comentário original usado como fonte |
+| `author` | `str` | Autor do comentário/revisão |
+| `created_at` | `str` | Data/hora de criação |
+| `tags` | `str` | Tags auxiliares para classificação |
+| `vector` | `Vector(384)` | Embedding da lição |
+
+---
+
+## Como a busca de memórias funciona
+
+1. O QAgent monta uma query textual com o arquivo e parte do código.
+2. A query é convertida em embedding pelo modelo `all-MiniLM-L6-v2`.
+3. O LanceDB executa uma busca vetorial na tabela `memories`.
+4. O QAgent limita os resultados mais relevantes.
+5. Resultados com distância acima do threshold configurado são descartados.
+6. As lições restantes são formatadas e injetadas no prompt do gerador de testes.
+
+Atualmente, o threshold usado na ferramenta é:
+
+```python
+if dist > 1.3:
+    continue
+```
+
+Ou seja, memórias muito distantes semanticamente são ignoradas.
+
+---
+
+## Exemplo de retorno de memória
+
+```text
+[distance=0.421] (PR #63 em jrcosta/repo_alvo_api_simples, por qagent[bot])
+  Lição: Validar campos novos no contrato JSON.
+
+[distance=0.612] (PR #64 em jrcosta/repo_alvo_api_simples, por qagent[bot])
+  Lição: Mockar chamadas externas em vez de depender de serviços reais.
+```
+
+Esse formato também é interpretado por `_parse_memory_result()` em `src/crew/test_generator_crew.py`, que transforma o texto bruto em uma lista estruturada.
+
+---
+
+## Como testar localmente a consulta
+
+Depois de instalar as dependências:
 
 ```bash
-# Instalar dependências
 pip install -r requirements.txt
-
-# Criar evento fake
-cat > /tmp/event.json << 'EOF'
-{
-  "client_payload": {
-    "comment_body": "#qagent-test-review\n\n### 🔍 QAgent: Revisão Crítica de Testes\n\n- Os testes usam nomes genéricos como test1, deveriam descrever o cenário. Também faltou mockar o serviço externo.",
-    "author": "qagent[bot]",
-    "repo": "jrcosta/repo_alvo_api_simples",
-    "pr_number": "42"
-  }
-}
-EOF
-
-# Executar ingestão
-GITHUB_EVENT_PATH=/tmp/event.json python .github/scripts/ingest_comment.py
-
-# Verificar memórias salvas
-python -c "
-import sqlite3
-conn = sqlite3.connect('data/memories.db')
-for r in conn.execute('SELECT id, lesson, created_at FROM memories'):
-    print(r)
-conn.close()
-"
 ```
 
-## Limitações e próximos passos
+Você pode testar a leitura/listagem com Python:
 
-- **Busca**: atualmente usa fuzzy match textual (rapidfuzz). Para buscas
-  semânticas, considerar gerar embeddings e migrar para pgvector
-  (Supabase/Neon).
-- **Concorrência**: SQLite com WAL suporta baixa taxa de escrita; suficiente
-  para comentários esporádicos de revisão.
-- **Escala multi-repo**: o forwarding workflow precisa ser adicionado a cada
-  repo alvo. Para muitos repos, considerar uma GitHub App centralizada.
+```bash
+python - <<'PY'
+from src.tools.memory_tools import QueryMemoriesTool, ListAllMemoriesTool
+
+print("=== Todas as memórias ===")
+print(ListAllMemoriesTool()._run(limit=10))
+
+print("\n=== Busca semântica ===")
+print(QueryMemoriesTool()._run(
+    query="Gerar testes unitários para serviço com dependência externa e validação de contrato JSON",
+    limit=5,
+))
+PY
+```
+
+Se ainda não houver banco ou registros, a saída esperada será algo como:
+
+```text
+Nenhuma memória disponível ainda (banco não existe).
+```
+
+ou:
+
+```text
+Nenhuma memória registrada ainda.
+```
+
+---
+
+## Como deveria funcionar a ingestão
+
+O fluxo esperado para ingestão é:
+
+1. O agente revisor publica um comentário com `#qagent-test-review`.
+2. Um workflow no repositório alvo filtra comentários com essa hashtag.
+3. O comentário é encaminhado ao repositório do QAgent via `repository_dispatch`.
+4. Um workflow no QAgent executa um script de ingestão.
+5. O `MemoryCrewRunner` transforma o comentário em lições curtas.
+6. As lições são convertidas em embeddings.
+7. As lições são gravadas na tabela `memories` do LanceDB.
+
+No ZIP avaliado, existe o template:
+
+```text
+templates/forward-qagent-test-review-comment.yml
+```
+
+Esse arquivo representa o lado do repositório alvo, responsável por encaminhar comentários contendo `#qagent-test-review`.
+
+Para completar a rastreabilidade do fluxo, recomenda-se garantir que existam também:
+
+```text
+.github/workflows/ingest-pr-comment.yml
+.github/scripts/ingest_comment.py
+```
+
+E que o script de ingestão grave dados no LanceDB usando o mesmo schema de `MemoryModel`.
+
+---
+
+## Exemplo de escrita no LanceDB
+
+Scripts de ingestão devem usar `save_lesson()` em vez de duplicar a criação de vetor e o schema da tabela:
+
+```python
+from src.tools.memory_tools import save_lesson
+
+save_lesson(
+    repo="jrcosta/repo_alvo_api_simples",
+    pr_number=42,
+    lesson="Mockar chamadas externas em vez de depender de serviços reais.",
+    original_comment="#qagent-test-review ...",
+    author="qagent[bot]",
+    tags="test-review,mock,external-dependency",
+)
+```
+
+---
+
+## Recomendações de evolução
+
+### 1. Implementar deduplicação semântica
+
+Antes de inserir uma nova lição, consultar memórias parecidas e evitar duplicatas.
+
+Critérios possíveis:
+
+- mesma lição normalizada;
+- distância vetorial abaixo de um threshold forte;
+- mesmo repositório + mesmo tipo de problema.
+
+---
+
+### 2. Separar dependências de runtime e desenvolvimento
+
+Como `sentence-transformers` pode ser pesado, vale separar dependências em:
+
+```text
+requirements.txt
+requirements-dev.txt
+```
+
+Ou migrar para `pyproject.toml` com grupos de dependências.
+
+---
+
+### 3. Versionar exemplos de memórias
+
+Criar um pequeno script ou fixture para popular memórias fake em ambiente local:
+
+```text
+scripts/seed_memories.py
+```
+
+Isso facilita demonstrar o ciclo:
+
+```text
+memória salva → busca semântica → injeção no prompt → artefato com memories_used
+```
+
+---
+
+### 4. Documentar privacidade e retenção
+
+Como comentários de PR podem conter trechos de código, decisões técnicas ou nomes de pessoas, é importante documentar:
+
+- o que pode ser salvo;
+- o que não deve ser salvo;
+- se comentários completos devem ser persistidos;
+- quando anonimizar dados;
+- como limpar `data/lancedb`.
+
+---
+
+## Limitações atuais
+
+- O banco local em `data/lancedb` funciona bem para uso inicial, mas pode não ser ideal para múltiplas execuções concorrentes em CI.
+- O modelo `all-MiniLM-L6-v2` é leve e prático, mas pode perder nuances de domínio em casos complexos.
+- O threshold de distância ainda é heurístico e precisa ser calibrado com dados reais.
+- A ingestão automatizada precisa estar alinhada ao schema atual do LanceDB.
+- Persistir `data/lancedb` no repositório pode ser útil no MVP, mas pode se tornar pesado com o tempo.
+
+---
+
+## Próximos passos recomendados
+
+1. Criar/validar script `.github/scripts/ingest_comment.py` usando LanceDB.
+2. Criar workflow `.github/workflows/ingest-pr-comment.yml`.
+3. Implementar deduplicação antes de inserir novas memórias.
+4. Criar `scripts/seed_memories.py` para demo local.
+5. Atualizar README com um exemplo curto de uso das memórias.
