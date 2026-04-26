@@ -2,7 +2,9 @@
 
 import os
 from pathlib import Path
+from datetime import datetime, timezone
 from typing import List, Type, Dict, Any
+from uuid import uuid4
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -51,6 +53,44 @@ def fetch_all_lessons(limit: int = None) -> list[dict]:
     results = query.to_list()
     results.sort(key=lambda x: x['created_at'], reverse=True)
     return results
+
+
+def save_lesson(
+    repo: str,
+    pr_number: int,
+    lesson: str,
+    original_comment: str,
+    author: str,
+    tags: str = "",
+) -> dict[str, Any]:
+    """
+    Persiste uma lição aprendida no LanceDB usando o schema oficial.
+
+    Mantém a lógica de embedding e formato do registro em um único ponto para
+    evitar que scripts de ingestão dupliquem contrato de memória.
+    """
+    normalized_lesson = lesson.strip()
+    if not normalized_lesson:
+        raise ValueError("lesson não pode ser vazia")
+
+    encoder = get_encoder()
+    vector = encoder.encode(normalized_lesson).tolist()
+
+    row: dict[str, Any] = {
+        "id": str(uuid4()),
+        "repo": repo,
+        "pr_number": int(pr_number),
+        "lesson": normalized_lesson,
+        "original_comment": original_comment,
+        "author": author,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "tags": tags,
+        "vector": vector,
+    }
+
+    table = _get_table()
+    table.add([row])
+    return row
 
 
 # ---------------------------------------------------------------------------

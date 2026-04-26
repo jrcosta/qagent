@@ -4,6 +4,25 @@ on:
   repository_dispatch:
     types: [analyze_target_repo]
   workflow_dispatch:
+    inputs:
+      target_owner:
+        description: "Dono do repositório alvo"
+        required: true
+      target_repo:
+        description: "Nome do repositório alvo"
+        required: true
+      target_ref:
+        description: "Ref/SHA para checkout do repositório alvo"
+        required: true
+      target_branch:
+        description: "Branch base do PR no repositório alvo"
+        required: true
+      base_sha:
+        description: "Commit base para análise"
+        required: true
+      head_sha:
+        description: "Commit final para análise"
+        required: true
 
 permissions:
   contents: write
@@ -12,18 +31,18 @@ permissions:
 jobs:
   qa-review:
     runs-on: ubuntu-latest
-    if: github.event_name == 'repository_dispatch'
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
 
     steps:
 
       - name: Debug payload
         run: |
-          echo "target_owner=${{ github.event.client_payload.target_owner }}"
-          echo "target_repo=${{ github.event.client_payload.target_repo }}"
-          echo "target_ref=${{ github.event.client_payload.target_ref }}"
-          echo "target_branch=${{ github.event.client_payload.target_branch }}"
-          echo "base_sha=${{ github.event.client_payload.base_sha }}"
-          echo "head_sha=${{ github.event.client_payload.head_sha }}"
+          echo "target_owner=${{ github.event.client_payload.target_owner || inputs.target_owner }}"
+          echo "target_repo=${{ github.event.client_payload.target_repo || inputs.target_repo }}"
+          echo "target_ref=${{ github.event.client_payload.target_ref || inputs.target_ref }}"
+          echo "target_branch=${{ github.event.client_payload.target_branch || inputs.target_branch }}"
+          echo "base_sha=${{ github.event.client_payload.base_sha || inputs.base_sha }}"
+          echo "head_sha=${{ github.event.client_payload.head_sha || inputs.head_sha }}"
 
       - name: Checkout do repo do agente
         uses: actions/checkout@v4
@@ -34,8 +53,8 @@ jobs:
       - name: Checkout do repo alvo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.client_payload.target_owner }}/${{ github.event.client_payload.target_repo }}
-          ref: ${{ github.event.client_payload.target_ref }}
+          repository: ${{ github.event.client_payload.target_owner || inputs.target_owner }}/${{ github.event.client_payload.target_repo || inputs.target_repo }}
+          ref: ${{ github.event.client_payload.target_ref || inputs.target_ref }}
           path: target
           fetch-depth: 0
           token: ${{ secrets.TARGET_REPO_PAT }}
@@ -63,8 +82,8 @@ jobs:
           python -m src.main \
             --repo-path ../target \
             --output-file ../target/outputs/analysis.md \
-            --base-sha "${{ github.event.client_payload.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha }}"
+            --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
+            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}"
 
       - name: Mostrar relatório gerado
         run: |
@@ -76,7 +95,7 @@ jobs:
           python -m src.main_test_generator \
             --repo-path ../target \
             --report-file ../target/outputs/analysis.md \
-            --base-branch "${{ github.event.client_payload.target_branch }}"
+            --base-branch "${{ github.event.client_payload.target_branch || inputs.target_branch }}"
         env:
           GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
 
@@ -89,7 +108,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.event.client_payload.target_owner }}/${{ github.event.client_payload.target_repo }}/statuses/${target_sha}" \
+            "https://api.github.com/repos/${{ github.event.client_payload.target_owner || inputs.target_owner }}/${{ github.event.client_payload.target_repo || inputs.target_repo }}/statuses/${target_sha}" \
             -d "$(jq -n \
               --arg state "pending" \
               --arg context "QAgent Test Review" \
@@ -101,8 +120,8 @@ jobs:
           python -m src.main_test_reviewer \
             --repo-path ../target \
             --artifacts-file ../target/outputs/artifacts.json \
-            --base-sha "${{ github.event.client_payload.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha }}" \
+            --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
+            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
             --fail-on-findings
           reviewer_exit=$?
           cd ..
@@ -119,7 +138,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.event.client_payload.target_owner }}/${{ github.event.client_payload.target_repo }}/statuses/${target_sha}" \
+            "https://api.github.com/repos/${{ github.event.client_payload.target_owner || inputs.target_owner }}/${{ github.event.client_payload.target_repo || inputs.target_repo }}/statuses/${target_sha}" \
             -d "$(jq -n \
               --arg state "$review_state" \
               --arg context "QAgent Test Review" \
@@ -152,8 +171,8 @@ jobs:
         run: |
           python scripts/build_pages_site.py \
             --analysis-file ../target/outputs/analysis.md \
-            --target-owner "${{ github.event.client_payload.target_owner }}" \
-            --target-repo "${{ github.event.client_payload.target_repo }}"
+            --target-owner "${{ github.event.client_payload.target_owner || inputs.target_owner }}" \
+            --target-repo "${{ github.event.client_payload.target_repo || inputs.target_repo }}"
         working-directory: agent
 
       - name: Remover worktree temporário

@@ -2,7 +2,7 @@
 
 Pipeline multi-stage com agentes especializados e roteamento condicional para **análise de QA**, **geração de testes** e **aprendizado contínuo** em repositórios automatizados.
 
-![Python](https://img.shields.io/badge/Python-3.14.7+-3776AB?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![CrewAI](https://img.shields.io/badge/CrewAI-Agent%20Orchestration-6B46C1)
 ![Groq](https://img.shields.io/badge/Groq-LLM-F55036)
 ![LanceDB](https://img.shields.io/badge/LanceDB-Vector%20DB-0066FF)
@@ -126,7 +126,7 @@ flowchart TD
 ```text
 qagent/
 ├─ docs/                      # Documentações técnicas
-├─ data/lancedb/              # Banco vetorial de memórias
+├─ data/lancedb/              # Banco vetorial versionado com memórias iniciais do MVP
 ├─ src/
 │  ├─ agent/                  # Perfis dos Agentes (Role, Goal, Backstory)
 │  ├─ crew/                   # Runners CrewAI (QA, TestGen, HighRisk, Memory)
@@ -155,6 +155,8 @@ qagent/
 ---
 
 ## Como Instalar
+
+> Versões suportadas: Python 3.11 ou 3.12. As dependências principais do stack de agentes ainda não declaram suporte a Python 3.14.
 
 ```bash
 # 1. Crie e ative um ambiente virtual

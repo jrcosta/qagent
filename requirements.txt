@@ -1,11 +1,28 @@
-crewai
-litellm
-python-dotenv
-pydantic
-PyGithub
-fastapi>=0.110.0
-uvicorn>=0.29.0
-markdown
-rapidfuzz
-lancedb
-sentence-transformers
+# QAgent dependencies
+# Recommended Python: 3.11 or 3.12.
+# Note: CrewAI currently declares support for Python >=3.10,<3.14.
+
+# Agent orchestration / LLM access
+crewai==1.14.3
+openai==2.24.0
+
+# Configuration and validation
+python-dotenv==1.2.2
+pydantic==2.11.9
+
+# GitHub integration
+PyGithub==2.9.1
+
+# Memory / vector search
+lancedb==0.30.0
+sentence-transformers==5.4.1
+
+# Documentation/site generation
+Markdown==3.10.2
+
+# Optional API/runtime dependencies kept from the original project setup
+fastapi==0.136.1
+uvicorn==0.46.0
+
+# Test tooling
+pytest==9.0.3

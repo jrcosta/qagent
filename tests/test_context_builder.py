@@ -37,11 +37,15 @@ class RepoContextBuilderTests(unittest.TestCase):
                 code_content=changed_file.read_text(encoding="utf-8"),
             )
 
-            self.assertIn("# Testes existentes identificados", context)
-            self.assertIn("test_calculator.py", context)
-            self.assertIn("test_soma_basica", context)
-            self.assertIn("helpers.py", context)
-            self.assertIn("soma_segura", context)
+            self.assertEqual(context.file_path, "module/calculator.py")
+            self.assertIn("# Testes existentes identificados", context.summary)
+            self.assertIn("test_calculator.py", context.summary)
+            self.assertIn("test_soma_basica", context.summary)
+            self.assertIn("helpers.py", context.summary)
+            self.assertIn("soma_segura", context.summary)
+            self.assertTrue(
+                any(path.endswith("test_calculator.py") for path in context.existing_tests)
+            )
 
     def test_build_reports_when_no_existing_tests_are_found(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -57,8 +61,11 @@ class RepoContextBuilderTests(unittest.TestCase):
                 code_content=changed_file.read_text(encoding="utf-8"),
             )
 
-            self.assertIn("Nenhum teste encontrado.", context)
-            self.assertIn("Nenhum teste existente identificado no repositório.", context)
+            self.assertEqual(context.existing_tests, [])
+            self.assertIn("Nenhum teste encontrado.", context.summary)
+            self.assertIn(
+                "Nenhum teste existente identificado no repositório.", context.summary
+            )
 
     def test_build_detects_existing_tests_in_other_languages(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -89,8 +96,11 @@ class RepoContextBuilderTests(unittest.TestCase):
                 code_content=changed_file.read_text(encoding="utf-8"),
             )
 
-            self.assertIn("OrderServiceTest.java", context)
-            self.assertIn("shouldSumTotals", context)
+            self.assertIn("OrderServiceTest.java", context.summary)
+            self.assertIn("shouldSumTotals", context.summary)
+            self.assertTrue(
+                any(path.endswith("OrderServiceTest.java") for path in context.existing_tests)
+            )
 
 
 if __name__ == "__main__":

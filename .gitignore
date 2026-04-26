@@ -4,3 +4,5 @@ __pycache__/
 .env
 outputs/
 .pytest_cache/
+.tmp.drivedownload
+.tmp.driveupload
