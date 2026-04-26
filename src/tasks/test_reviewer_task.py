@@ -12,6 +12,7 @@ class TestReviewerTaskFactory:
         test_strategy: str,
         generated_tests: str,
         file_diff: str = "",
+        ci_execution_summary: str = "",
     ) -> Task:
         diff_block = ""
         if file_diff:
@@ -20,6 +21,15 @@ DIFF ANALISADO (Mudanças que motivaram os testes):
 [INICIO_DIFF]
 {file_diff}
 [FIM_DIFF]
+"""
+
+        ci_block = ""
+        if ci_execution_summary:
+            ci_block = f"""
+RESULTADO REAL DO CI DO PR COM OS TESTES GERADOS:
+[INICIO_CI]
+{ci_execution_summary}
+[FIM_CI]
 """
 
         description = f"""
@@ -47,13 +57,17 @@ TESTES GERADOS PARA REVISÃO:
 {generated_tests}
 [FIM_TESTES_GERADOS]
 
+{ci_block}
+
 SUA TAREFA:
-1. Avalie se os testes cobrem os riscos reais apontados no relatório de QA e as mudanças mostradas no DIFF.
-2. Verifique se os testes usam nomes de métodos/classes que realmente existem no código original.
-3. Identifique se há testes genéricos demais (ex: apenas testa se não lança exceção sem validar o retorno).
-4. Procure por imports quebrados ou mocks incoerentes.
-5. Verifique se a estratégia de testes foi seguida (ex: se pediu testes de borda, eles existem?).
-6. Identifique cenários críticos ausentes.
+1. Use primeiro o resultado real do CI, quando fornecido, como evidência principal para a crítica.
+2. Se o CI falhou, relacione as falhas aos testes gerados e explique se o problema é teste incorreto, expectativa especulativa, import quebrado, mock incoerente ou contrato real não implementado.
+3. Avalie se os testes cobrem os riscos reais apontados no relatório de QA e as mudanças mostradas no DIFF.
+4. Verifique se os testes usam nomes de métodos/classes que realmente existem no código original.
+5. Identifique se há testes genéricos demais (ex: apenas testa se não lança exceção sem validar o retorno).
+6. Procure por imports quebrados ou mocks incoerentes.
+7. Verifique se a estratégia de testes foi seguida (ex: se pediu testes de borda, eles existem?).
+8. Identifique cenários críticos ausentes.
 
 CRITÉRIOS DE STATUS:
 - APPROVED: Testes estão corretos, coerentes e cobrem os riscos. Use este status somente quando `issues`, `missing_scenarios` e `suggested_fixes` estiverem vazios.
@@ -64,6 +78,7 @@ REGRA DE CONSISTÊNCIA:
 - Nunca retorne APPROVED se você apontou problemas, cenários ausentes ou correções recomendadas.
 - Se houver qualquer issue com severity ERROR, o status deve ser INVALID.
 - Se houver qualquer issue WARN/INFO, cenário ausente ou correção recomendada, o status deve ser NEEDS_CHANGES.
+- Se o CI reportou falhas causadas pelos testes gerados, não retorne APPROVED.
 
 Sua resposta deve ser estruturada conforme o schema GeneratedTestsReviewResult.
 """
