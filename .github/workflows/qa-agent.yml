@@ -83,7 +83,8 @@ jobs:
             --repo-path ../target \
             --output-file ../target/outputs/analysis.md \
             --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}"
+            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
+            --cooperative-analysis
 
       - name: Mostrar relatório gerado
         run: |
