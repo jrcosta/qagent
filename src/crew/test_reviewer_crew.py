@@ -20,6 +20,7 @@ class TestReviewerCrewRunner:
         test_strategy: str,
         generated_tests: str,
         file_diff: str = "",
+        ci_execution_summary: str = "",
     ) -> GeneratedTestsReviewResult:
         agent = TestReviewerAgentFactory(self.settings).create()
         task = TestReviewerTaskFactory.create(
@@ -30,6 +31,7 @@ class TestReviewerCrewRunner:
             test_strategy=test_strategy,
             generated_tests=generated_tests,
             file_diff=file_diff,
+            ci_execution_summary=ci_execution_summary,
         )
 
         crew = Crew(

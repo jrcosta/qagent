@@ -9,6 +9,7 @@ from src.config.settings import get_settings
 from src.crew.test_reviewer_crew import TestReviewerCrewRunner
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.schemas.test_strategy_result import render_test_strategy_result_for_prompt
+from src.services.ci_failure_collector import CIFailureCollector, render_ci_result_for_prompt
 from src.utils.git_utils import get_file_diff
 from src.utils.pr_utils import add_pr_comment, get_repo_full_name, get_current_branch
 from src.utils.review_comment_utils import build_test_review_comment, review_result_to_finding
@@ -59,6 +60,13 @@ def parse_args():
         help="Encerra com erro quando a revisão encontrar NEEDS_CHANGES ou INVALID",
     )
 
+    parser.add_argument(
+        "--ci-check-timeout-seconds",
+        type=int,
+        default=180,
+        help="Tempo máximo para aguardar checks de CI do PR alvo antes da revisão",
+    )
+
     return parser.parse_args()
 
 
@@ -85,6 +93,28 @@ def main() -> None:
 
     settings = get_settings()
     reviewer_runner = TestReviewerCrewRunner(settings)
+
+    repo_full_name = get_repo_full_name(repo_path)
+    branch_name = args.branch_name
+    if not branch_name:
+        branch_name_file = artifacts_path.parent / ".branch_name"
+        if branch_name_file.exists():
+            branch_name = branch_name_file.read_text(encoding="utf-8").strip()
+            print(f"🌿 Usando branch detectada: {branch_name}")
+
+    if not branch_name:
+        branch_name = get_current_branch(repo_path)
+
+    print("\n🧪 Consultando CI do PR alvo antes da revisão crítica...")
+    ci_result = CIFailureCollector(
+        repo_path=repo_path,
+        repo_full_name=repo_full_name,
+        branch_name=branch_name,
+        pr_url=args.pr_url or "",
+        timeout_seconds=args.ci_check_timeout_seconds,
+    ).collect()
+    ci_execution_summary = render_ci_result_for_prompt(ci_result)
+    print(f"  CI: {ci_result.status} | {ci_result.summary.splitlines()[0]}")
     
     all_findings = []
 
@@ -128,10 +158,14 @@ def main() -> None:
             test_strategy=test_strategy,
             generated_tests=generated_tests,
             file_diff=file_diff,
+            ci_execution_summary=ci_execution_summary,
         )
         artifact.generated_test_review_result = review_result
         artifact.record_duration("test_review", (time.perf_counter() - t0) * 1000)
+        artifact.mark_step_executed("ci_test_validation")
         artifact.mark_step_executed("test_review")
+        artifact.add_policy(f"ci_validation_{ci_result.status}")
+        artifact.add_note(ci_result.summary)
 
         print(f"  📝 Status da Revisão: {review_result.status}")
         if review_result.issues:
@@ -153,19 +187,6 @@ def main() -> None:
     if not github_token:
         print("\n⚠️ GITHUB_TOKEN não definido. Não foi possível postar o comentário no PR.")
         return
-
-    repo_full_name = get_repo_full_name(repo_path)
-    
-    # Tenta obter o nome da branch do arquivo salvo pelo generator
-    branch_name = args.branch_name
-    if not branch_name:
-        branch_name_file = artifacts_path.parent / ".branch_name"
-        if branch_name_file.exists():
-            branch_name = branch_name_file.read_text(encoding="utf-8").strip()
-            print(f"🌿 Usando branch detectada: {branch_name}")
-    
-    if not branch_name:
-        branch_name = get_current_branch(repo_path)
 
     try:
         add_pr_comment(
