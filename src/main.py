@@ -4,6 +4,7 @@ import time
 
 from src.config.settings import get_settings
 from src.crew.qa_crew import QACrewRunner
+from src.crew.cooperative_analysis_crew import CooperativeAnalysisCrewRunner
 from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
@@ -38,6 +39,15 @@ def parse_args():
         help="Commit final para comparação",
     )
 
+    parser.add_argument(
+        "--cooperative-analysis",
+        action="store_true",
+        help=(
+            "Usa uma Crew hierárquica experimental com gerente coordenando "
+            "especialistas para produzir o relatório inicial de QA."
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -67,6 +77,7 @@ def main() -> None:
 
     settings = get_settings()
     crew_runner = QACrewRunner(settings)
+    cooperative_runner = CooperativeAnalysisCrewRunner(settings)
     high_risk_runner = HighRiskTestStrategyRunner(settings)
     orchestrator = AnalysisOrchestrator(high_risk_runner)
 
@@ -102,12 +113,37 @@ def main() -> None:
 
         # --- QA Review ---
         t0 = time.perf_counter()
-        crew_result = crew_runner.run(
-            file_path=file_path,
-            file_diff=file_diff,
-            code_content=code_content,
-            repo_path=str(repo_path),
-        )
+        cooperative_succeeded = False
+        cooperative_failed_reason = ""
+        if args.cooperative_analysis:
+            try:
+                print("  🤝 Usando análise cooperativa multiagente")
+                crew_result = cooperative_runner.run(
+                    file_path=file_path,
+                    file_diff=file_diff,
+                    code_content=code_content,
+                    repo_path=str(repo_path),
+                )
+                cooperative_succeeded = True
+            except Exception as exc:
+                cooperative_failed_reason = str(exc)
+                print(
+                    "  ⚠️ Fallback: análise cooperativa falhou; "
+                    f"usando QA Agent padrão. Erro: {exc}"
+                )
+                crew_result = crew_runner.run(
+                    file_path=file_path,
+                    file_diff=file_diff,
+                    code_content=code_content,
+                    repo_path=str(repo_path),
+                )
+        else:
+            crew_result = crew_runner.run(
+                file_path=file_path,
+                file_diff=file_diff,
+                code_content=code_content,
+                repo_path=str(repo_path),
+            )
         qa_duration = (time.perf_counter() - t0) * 1000
 
         # 1. Monta artefato parcial e avalia risco
@@ -117,6 +153,15 @@ def main() -> None:
             review_result=crew_result.review_result,
         )
         artifact.mark_step_executed("qa_review")
+        if cooperative_succeeded:
+            artifact.add_policy("cooperative_analysis_experimental")
+            artifact.mark_step_executed("cooperative_analysis")
+        elif args.cooperative_analysis:
+            artifact.add_fallback("cooperative_analysis_to_qa_agent")
+            artifact.mark_step_skipped(
+                "cooperative_analysis",
+                cooperative_failed_reason or "erro não informado",
+            )
         artifact.record_duration("qa_review", qa_duration)
 
         # --- Pipeline de avaliação e estratégia ---

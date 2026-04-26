@@ -188,6 +188,21 @@ python -m src.main \
     --output-file review.md
 ```
 
+### Análise cooperativa experimental
+
+O fluxo padrão continua usando um QA Agent único e o `AnalysisOrchestrator` determinístico. Para experimentar uma Crew hierárquica com gerente coordenando especialistas, use:
+
+```bash
+python -m src.main \
+    --repo-path ./meu-repo \
+    --base-sha COMMIT_A \
+    --head-sha COMMIT_B \
+    --output-file review.md \
+    --cooperative-analysis
+```
+
+Nesse modo, um gerente coordena agentes de QA, estratégia de testes e crítica. Se a execução cooperativa falhar, o QAgent volta automaticamente para o QA Agent padrão e registra o fallback no artefato.
+
 ### Agente Gerador de Testes
 
 ```bash
