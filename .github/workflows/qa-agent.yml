@@ -100,6 +100,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
 
+      - name: Instalar dependências do alvo (Python)
+        run: |
+          if [ -f target/python-api/requirements.txt ]; then
+            python -m pip install -r target/python-api/requirements.txt
+          elif [ -f target/requirements.txt ]; then
+            python -m pip install -r target/requirements.txt
+          fi
+          python -m pip install pytest pytest-asyncio  # Garante pytest no ambiente
+
       - name: Executar revisão crítica dos testes (Test Reviewer)
         run: |
           set +e
@@ -118,11 +127,15 @@ jobs:
               '{state: $state, context: $context, description: $description, target_url: $target_url}')"
 
           cd agent
+          # Define PYTHONPATH para que o TestExecutionRunner (pytest) encontre a app
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/../target/python-api
+          
           python -m src.main_test_reviewer \
             --repo-path ../target \
             --artifacts-file ../target/outputs/artifacts.json \
             --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
             --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
+            --execute-tests \
             --auto-fix-tests \
             --fail-on-findings
           reviewer_exit=$?
