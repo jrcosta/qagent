@@ -162,6 +162,10 @@ details summary:hover { color: var(--accent-hover); }
 .raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
 
 .error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+.md-content p { margin: 8px 0; }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 8px 0; }
+.md-content li { margin: 4px 0; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
          border-top: 1px solid var(--border); margin-top: 40px; }
 """
@@ -332,7 +336,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
               <div class="sub-section">
                 <div class="sub-section-title">🛡️ Review de QA</div>
-                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="md-content" style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary_html || escapeHtml(a.review_result?.summary || 'Sem resumo disponível')}</div>
                 <div class="data-grid">
                   <div class="data-item">
                     <span class="data-label">Principais Riscos</span>
@@ -509,14 +513,29 @@ def write_run_pages(slug: str, analysis_md: str, artifacts_dir: Path | None = No
     has_artifacts = False
     has_summary = False
     if artifacts_dir and artifacts_dir.is_dir():
-        for json_name in ("artifacts.json", "run_summary.json"):
-            src = artifacts_dir / json_name
-            if src.exists():
-                shutil.copy2(src, run_dir / json_name)
-                if json_name == "artifacts.json":
-                    has_artifacts = True
-                else:
-                    has_summary = True
+        # process artifacts.json to render markdown to html
+        artifacts_json_path = artifacts_dir / "artifacts.json"
+        if artifacts_json_path.exists():
+            try:
+                raw_data = json.loads(artifacts_json_path.read_text(encoding="utf-8"))
+                for art in raw_data:
+                    review = art.get("review_result")
+                    if review and review.get("summary"):
+                        review["summary_html"] = md_to_html(review["summary"])
+                (run_dir / "artifacts.json").write_text(
+                    json.dumps(raw_data, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
+                has_artifacts = True
+            except Exception as e:
+                print(f"Erro ao processar artifacts.json: {e}")
+                shutil.copy2(artifacts_json_path, run_dir / "artifacts.json")
+                has_artifacts = True
+        
+        # summary doesn't need enrichment usually, just copy it
+        summary_json_path = artifacts_dir / "run_summary.json"
+        if summary_json_path.exists():
+            shutil.copy2(summary_json_path, run_dir / "run_summary.json")
+            has_summary = True
 
     # Build data links bar
     data_links = []
