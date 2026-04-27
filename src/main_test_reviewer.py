@@ -231,7 +231,7 @@ def main() -> None:
             review_report += f"SUMMARY: {artifact.generated_test_review_result.summary}\n\n"
             review_report += "ISSUES:\n"
             for issue in artifact.generated_test_review_result.issues:
-                review_report += f"- [{issue.severity}] {issue.description} (Fix: {issue.suggest_fix or 'N/A'})\n"
+                review_report += f"- [{issue.severity}] {issue.description} (Fix: {issue.suggested_fix or 'N/A'})\n"
 
             t0 = time.perf_counter()
             fixed_output = fixer_runner.run(
