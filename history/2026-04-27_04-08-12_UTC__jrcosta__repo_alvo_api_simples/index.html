@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 27 Apr 2026 – 04:08:12 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-27_04-08-12_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>27 Apr 2026 – 04:08:12 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-python-apiappapiroutespy">Arquivo analisado: python-api/app/api/routes.py</h1>
+<h1 id="analise-da-mudanca-no-arquivo-python-apiappapiroutespy">Análise da Mudança no arquivo <code>python-api/app/api/routes.py</code></h1>
+<hr />
+<h2 id="tipo-da-mudanca">Tipo da mudança</h2>
+<ul>
+<li><strong>Nova funcionalidade</strong>: Inclusão de endpoint HTTP PUT para atualização de usuário.</li>
+<li><strong>Correção/validação de negócio</strong>: Adição de verificação para evitar duplicidade de e-mail em atualização.</li>
+<li><strong>Tratamento de erros</strong>: Retorno de HTTP 404 para usuário não encontrado e HTTP 409 para conflito de e-mail.</li>
+</ul>
+<hr />
+<h2 id="evidencias-observadas">Evidências observadas</h2>
+<ul>
+<li>Inclusão do import <code>UserUpdate</code> no início do arquivo, indicando uso de novo schema para atualização.</li>
+<li>Novo endpoint <code>@router.put("/users/{user_id}", ...)</code> implementado para atualizar dados do usuário.</li>
+<li>Validação explícita para verificar se o e-mail enviado no payload já existe para outro usuário, com retorno HTTP 409.</li>
+<li>Chamada ao método <code>user_service.update_user(user_id, payload)</code> para realizar a atualização.</li>
+<li>Caso o usuário não seja encontrado, retorna HTTP 404.</li>
+<li>O endpoint retorna o usuário atualizado no formato <code>UserResponse</code>.</li>
+<li>Comentários no código explicam os retornos esperados (404 e 409).</li>
+<li>O arquivo contém endpoints relacionados a usuários, com padrões similares de tratamento de erros e uso de schemas.</li>
+<li>Contexto do repositório indica que <code>user_service</code> é a camada de negócio responsável por manipular usuários.</li>
+<li>Testes existentes no repositório indicam cobertura para endpoints de usuários, mas não há evidência direta de testes para atualização.</li>
+</ul>
+<hr />
+<h2 id="impacto-provavel">Impacto provável</h2>
+<ul>
+<li><strong>Funcionalidade de atualização de usuário</strong>: Agora é possível atualizar dados de um usuário existente via API REST.</li>
+<li><strong>Validação de unicidade de e-mail</strong>: Evita que dois usuários tenham o mesmo e-mail, mantendo integridade dos dados.</li>
+<li><strong>Tratamento de erros consistente</strong>: Usuário não encontrado e conflito de e-mail são tratados com códigos HTTP apropriados.</li>
+<li><strong>Possível impacto em clientes da API</strong>: Clientes que consumirem o endpoint <code>/users/{user_id}</code> via PUT poderão alterar dados do usuário, o que pode afetar fluxos que dependem desses dados.</li>
+<li><strong>Dependência do método <code>user_service.update_user</code></strong>: A lógica de atualização e persistência está delegada ao serviço, que deve garantir a atualização correta.</li>
+</ul>
+<hr />
+<h2 id="riscos-identificados">Riscos identificados</h2>
+<ul>
+<li><strong>Risco de inconsistência se <code>user_service.update_user</code> não validar corretamente</strong>: Se o serviço não validar ou persistir corretamente, pode haver dados inconsistentes.</li>
+<li><strong>Conflito de e-mail pode não ser detectado se <code>user_service.find_by_email</code> não for eficiente ou consistente</strong>: Pode permitir duplicidade se a busca não for precisa.</li>
+<li><strong>Possível ausência de validação de outros campos no payload</strong>: O código só valida e-mail, mas não há evidência de validação para outros campos do <code>UserUpdate</code>.</li>
+<li><strong>Falha silenciosa se <code>user_service.update_user</code> retornar <code>None</code> por outros motivos além de usuário não encontrado</strong>: Pode mascarar erros internos.</li>
+<li><strong>Não há controle explícito de permissões/autenticação no endpoint</strong>: Pode permitir atualizações indevidas se não houver controle externo.</li>
+<li><strong>Não há logs ou auditoria visível para atualizações</strong>: Pode dificultar rastreamento de alterações.</li>
+<li><strong>Duplicidade do endpoint <code>/users/count</code> no arquivo</strong>: Embora não relacionado diretamente, pode causar confusão.</li>
+</ul>
+<hr />
+<h2 id="cenarios-de-testes-manuais">Cenários de testes manuais</h2>
+<ol>
+<li>
+<p><strong>Atualização bem-sucedida de usuário existente</strong><br />
+   - Enviar PUT para <code>/users/{user_id}</code> com payload válido (ex: nome, e-mail diferente do atual e outros campos).<br />
+   - Verificar retorno HTTP 200 e dados atualizados no corpo da resposta.<br />
+   - Confirmar que os dados foram realmente alterados (GET subsequente).</p>
+</li>
+<li>
+<p><strong>Atualização com e-mail já existente em outro usuário</strong><br />
+   - Enviar PUT com e-mail que pertence a outro usuário.<br />
+   - Verificar retorno HTTP 409 com mensagem "E-mail já cadastrado por outro usuário".</p>
+</li>
+<li>
+<p><strong>Atualização de usuário inexistente</strong><br />
+   - Enviar PUT para <code>user_id</code> que não existe.<br />
+   - Verificar retorno HTTP 404 com mensagem "Usuário não encontrado".</p>
+</li>
+<li>
+<p><strong>Atualização sem alteração de e-mail</strong><br />
+   - Enviar PUT com payload que não altera o e-mail (ou e-mail igual ao atual).<br />
+   - Verificar que atualização ocorre normalmente.</p>
+</li>
+<li>
+<p><strong>Atualização com payload parcial (ex: apenas nome)</strong><br />
+   - Enviar PUT com apenas alguns campos preenchidos.<br />
+   - Verificar que somente os campos enviados são atualizados.</p>
+</li>
+<li>
+<p><strong>Envio de payload inválido (ex: formato de e-mail inválido)</strong><br />
+   - Verificar se a validação do schema <code>UserUpdate</code> rejeita o payload com erro 422.</p>
+</li>
+<li>
+<p><strong>Testar comportamento com campos adicionais não esperados</strong><br />
+   - Enviar campos extras no payload e verificar se são ignorados ou causam erro.</p>
+</li>
+</ol>
+<hr />
+<h2 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h2>
+<ul>
+<li>Testar <code>update_user</code> do <code>user_service</code> para:</li>
+<li>Atualizar usuário existente com dados válidos.</li>
+<li>Retornar <code>None</code> quando usuário não existe.</li>
+<li>Lançar exceção ou retornar erro se dados inválidos.</li>
+<li>Testar função do endpoint <code>update_user</code> para:</li>
+<li>Retornar HTTP 409 se e-mail já existe para outro usuário.</li>
+<li>Retornar HTTP 404 se usuário não encontrado.</li>
+<li>Retornar usuário atualizado corretamente.</li>
+<li>Mockar <code>user_service.find_by_email</code> e <code>user_service.update_user</code> para simular os cenários acima.</li>
+<li>Testar payloads válidos e inválidos para <code>UserUpdate</code>.</li>
+</ul>
+<hr />
+<h2 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h2>
+<ul>
+<li>Testar fluxo completo de atualização via API:</li>
+<li>Criar usuário via POST.</li>
+<li>Atualizar usuário via PUT com dados válidos.</li>
+<li>Verificar dados atualizados via GET.</li>
+<li>Testar conflito de e-mail:</li>
+<li>Criar dois usuários.</li>
+<li>Tentar atualizar um com e-mail do outro e verificar HTTP 409.</li>
+<li>Testar atualização de usuário inexistente e verificar HTTP 404.</li>
+<li>Testar atualização parcial e verificar persistência correta.</li>
+<li>Testar integração com banco de dados real ou mockado para garantir persistência.</li>
+</ul>
+<hr />
+<h2 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h2>
+<ul>
+<li><strong>Não aplicável</strong>: A mudança não indica impacto direto em performance ou carga.</li>
+</ul>
+<hr />
+<h2 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h2>
+<ul>
+<li>O que acontece se o payload <code>UserUpdate</code> contiver campos inválidos ou mal formatados? A validação é feita pelo Pydantic? (provavelmente sim, mas confirmar)</li>
+<li>O método <code>user_service.update_user</code> trata atualização parcial ou exige todos os campos? Como é o comportamento interno?</li>
+<li>Existe controle de autenticação/autorização para este endpoint? Quem pode atualizar usuários?</li>
+<li>Há necessidade de auditoria ou logs para atualizações de usuário?</li>
+<li>Como o sistema lida com concorrência em atualizações simultâneas? Há risco de condição de corrida para e-mails duplicados?</li>
+<li>O endpoint <code>/users/count</code> está duplicado no arquivo, isso é intencional?</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança introduz um endpoint PUT para atualização de usuários, com validação para evitar duplicidade de e-mail e tratamento de erros para usuário não encontrado. O impacto funcional é a adição de uma operação crítica para manutenção dos dados de usuários. Os riscos principais envolvem a consistência da validação e persistência, além da ausência aparente de controle de acesso. Recomenda-se testes manuais e automatizados focados em cenários de sucesso, conflito de e-mail, inexistência de usuário e validação de payload. Pontos de negócio e segurança devem ser esclarecidos para garantir robustez da funcionalidade.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappschemaspy">Arquivo analisado: python-api/app/schemas.py</h1>
+<h1 id="analise-da-mudanca-no-arquivo-python-apiappschemaspy">Análise da Mudança no arquivo <code>python-api/app/schemas.py</code></h1>
+<hr />
+<h2 id="tipo-da-mudanca_1">Tipo da mudança</h2>
+<ul>
+<li><strong>Adição de novo schema Pydantic para atualização parcial de usuário (<code>UserUpdate</code>).</strong></li>
+</ul>
+<hr />
+<h2 id="evidencias-observadas_1">Evidências observadas</h2>
+<ul>
+<li>Foi introduzida a classe <code>UserUpdate</code> derivada de <code>BaseModel</code> do Pydantic.</li>
+<li>Campos da classe <code>UserUpdate</code> são todos opcionais (<code>str | None</code>, <code>EmailStr | None</code>, <code>StrictBool | None</code>), indicando uso para atualização parcial.</li>
+<li>Validador customizado <code>reject_blank_name</code> foi adicionado para o campo <code>name</code> para rejeitar strings em branco, similar ao existente em <code>UserCreate</code> e <code>UserResponse</code>.</li>
+<li>O schema <code>UserCreate</code> exige <code>name</code> obrigatório com <code>min_length=3</code>, enquanto <code>UserUpdate</code> permite <code>None</code> e mantém <code>min_length=3</code> quando informado.</li>
+<li>O contexto do repositório indica que <code>schemas.py</code> define modelos Pydantic para requests e responses da API, e que há testes específicos para schemas (<code>python-api/tests/test_schemas.py</code>).</li>
+</ul>
+<hr />
+<h2 id="impacto-provavel_1">Impacto provável</h2>
+<ul>
+<li>
+<p><strong>Funcionalidade de atualização parcial de usuário:</strong><br />
+  A introdução do schema <code>UserUpdate</code> sugere que a API agora suporta operações de atualização onde os campos podem ser enviados de forma opcional, permitindo modificar apenas alguns atributos do usuário.</p>
+</li>
+<li>
+<p><strong>Validação de dados de entrada para update:</strong><br />
+  A validação para o campo <code>name</code> impede que seja enviado um nome em branco (ex: <code>"   "</code>), mesmo que o campo seja opcional. Isso evita dados inválidos no banco ou lógica de negócio.</p>
+</li>
+<li>
+<p><strong>Possível integração com endpoints de update:</strong><br />
+  Provavelmente, o schema será usado em endpoints REST para atualizar usuários, substituindo ou complementando o uso do <code>UserCreate</code> que exige todos os campos.</p>
+</li>
+</ul>
+<hr />
+<h2 id="riscos-identificados_1">Riscos identificados</h2>
+<ul>
+<li>
+<p><strong>Inconsistência na validação de <code>min_length</code> para <code>name</code> quando <code>None</code>:</strong><br />
+  O campo <code>name</code> em <code>UserUpdate</code> tem <code>min_length=3</code> definido no <code>Field</code>, mas também é opcional (<code>None</code>). O Pydantic pode não aplicar <code>min_length</code> quando o valor é <code>None</code>, mas se for uma string vazia ou com menos de 3 caracteres, o validador customizado rejeita apenas strings em branco, não strings curtas (ex: <code>"ab"</code>). Isso pode permitir nomes com 1 ou 2 caracteres, diferente do <code>UserCreate</code> que exige mínimo 3.</p>
+</li>
+<li>
+<p><strong>Possível falta de validação para strings curtas no update:</strong><br />
+  O validador <code>reject_blank_name</code> só rejeita strings vazias ou espaços em branco, não strings curtas. Isso pode gerar inconsistência na validação entre criação e atualização.</p>
+</li>
+<li>
+<p><strong>Não há validação explícita para os outros campos (<code>email</code>, <code>is_vip</code>):</strong><br />
+  Embora <code>email</code> use <code>EmailStr</code> e <code>is_vip</code> <code>StrictBool</code>, não há validações adicionais. Se houver regras de negócio específicas para atualização, elas não estão refletidas aqui.</p>
+</li>
+<li>
+<p><strong>Dependência do uso correto do schema no serviço e endpoints:</strong><br />
+  Se o schema não for corretamente utilizado nos endpoints de update, pode haver falha na validação esperada.</p>
+</li>
+</ul>
+<hr />
+<h2 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h2>
+<ol>
+<li>
+<p><strong>Atualização parcial com todos os campos válidos:</strong><br />
+   Enviar payload com <code>name</code>, <code>email</code> e <code>is_vip</code> válidos e verificar aceitação.</p>
+</li>
+<li>
+<p><strong>Atualização parcial com apenas um campo (ex: só <code>email</code>):</strong><br />
+   Enviar payload com apenas <code>email</code> e verificar que atualização parcial funciona.</p>
+</li>
+<li>
+<p><strong>Envio de <code>name</code> como string vazia ou espaços em branco:</strong><br />
+   Enviar <code>"name": "   "</code> e verificar que a validação rejeita com erro apropriado.</p>
+</li>
+<li>
+<p><strong>Envio de <code>name</code> com menos de 3 caracteres (ex: <code>"ab"</code>):</strong><br />
+   Verificar se a validação aceita ou rejeita (espera-se que aceite, mas isso pode ser um problema).</p>
+</li>
+<li>
+<p><strong>Envio de <code>email</code> inválido:</strong><br />
+   Enviar email mal formatado e verificar rejeição.</p>
+</li>
+<li>
+<p><strong>Envio de <code>is_vip</code> com valores não booleanos:</strong><br />
+   Enviar valores como <code>"true"</code> (string) e verificar rejeição.</p>
+</li>
+<li>
+<p><strong>Envio de payload vazio (todos campos <code>None</code>):</strong><br />
+   Verificar se o schema aceita e qual o comportamento esperado na aplicação.</p>
+</li>
+</ol>
+<hr />
+<h2 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h2>
+<ul>
+<li>
+<p>Testar criação de instância <code>UserUpdate</code> com:</p>
+</li>
+<li>
+<p>Todos os campos válidos.</p>
+</li>
+<li><code>name</code> como <code>None</code>.</li>
+<li><code>name</code> como string vazia (deve lançar <code>ValueError</code>).</li>
+<li><code>name</code> com menos de 3 caracteres (verificar comportamento).</li>
+<li><code>email</code> inválido (deve lançar erro de validação).</li>
+<li><code>is_vip</code> com valores inválidos (ex: string).</li>
+<li>
+<p>Payload vazio (todos campos <code>None</code>).</p>
+</li>
+<li>
+<p>Testar o validador <code>reject_blank_name</code> isoladamente para:</p>
+</li>
+<li>
+<p><code>None</code> (deve passar).</p>
+</li>
+<li>String vazia (deve falhar).</li>
+<li>String com espaços (deve falhar).</li>
+<li>String válida (deve passar).</li>
+</ul>
+<hr />
+<h2 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h2>
+<ul>
+<li>
+<p>Testar endpoint de atualização de usuário (se existir) usando o schema <code>UserUpdate</code>:</p>
+</li>
+<li>
+<p>Atualização parcial com um campo.</p>
+</li>
+<li>Atualização com <code>name</code> inválido (string vazia).</li>
+<li>Atualização com <code>email</code> inválido.</li>
+<li>Atualização com payload vazio.</li>
+<li>
+<p>Verificar resposta HTTP e mensagens de erro.</p>
+</li>
+<li>
+<p>Testar fluxo completo de criação (<code>UserCreate</code>) e atualização (<code>UserUpdate</code>) para garantir consistência de validação.</p>
+</li>
+</ul>
+<hr />
+<h2 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h2>
+<ul>
+<li><strong>Não aplicável:</strong><br />
+  A mudança é apenas na definição de schema e validação de dados, sem impacto direto em performance ou carga.</li>
+</ul>
+<hr />
+<h2 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h2>
+<ul>
+<li>
+<p><strong>Validação do tamanho mínimo do campo <code>name</code> em <code>UserUpdate</code>:</strong><br />
+  O campo tem <code>min_length=3</code> no <code>Field</code>, mas o validador customizado não rejeita strings curtas, apenas vazias. Qual o comportamento esperado para nomes com 1 ou 2 caracteres na atualização? Deve ser rejeitado como na criação?</p>
+</li>
+<li>
+<p><strong>Uso do schema <code>UserUpdate</code> nos endpoints:</strong><br />
+  Quais endpoints ou serviços utilizam esse schema? Há testes existentes cobrindo esses fluxos?</p>
+</li>
+<li>
+<p><strong>Regras de negócio para atualização parcial:</strong><br />
+  Existem restrições adicionais para os campos na atualização que não estão refletidas no schema?</p>
+</li>
+</ul>
+<hr />
+<h1 id="resumo_1">Resumo</h1>
+<p>A mudança introduz um novo schema <code>UserUpdate</code> para suportar atualização parcial de usuários, com validação para evitar nomes em branco. Isso amplia a modelagem dos dados da API, mas traz risco de inconsistência na validação do tamanho mínimo do nome entre criação e atualização. Recomenda-se validar cuidadosamente o uso do schema nos endpoints e complementar testes para garantir que dados inválidos não sejam aceitos.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappservicesuser_servicepy">Arquivo analisado: python-api/app/services/user_service.py</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<p>Adição de funcionalidade (feature) no serviço de usuário, com implementação de método para atualização parcial ou total de dados de usuário existente.</p>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>Inclusão da função <code>update_user</code> no arquivo <code>python-api/app/services/user_service.py</code>.</li>
+<li>A função percorre a lista interna <code>_users</code>, identifica o usuário pelo <code>user_id</code> e atualiza os campos <code>name</code>, <code>email</code> e <code>is_vip</code> se fornecidos no payload <code>UserUpdate</code>.</li>
+<li>Campos não fornecidos no payload mantêm seus valores atuais.</li>
+<li>Retorna o usuário atualizado ou <code>None</code> se não encontrado.</li>
+<li>O serviço mantém usuários em memória, com métodos para criar, listar, buscar e resetar usuários.</li>
+<li>Não há testes explícitos para <code>update_user</code> no diff.</li>
+<li>Contexto do repositório indica uso de FastAPI, Pydantic, pytest, e testes unitários e de integração para UserService, mas sem evidência de rota HTTP para update_user.</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Permite atualização de dados de usuários existentes, funcionalidade essencial para manutenção dos dados.</li>
+<li>Pode afetar a integridade dos dados se a atualização for feita com dados incompletos ou inválidos.</li>
+<li>Pode impactar fluxos que dependem da consistência dos dados do usuário.</li>
+<li>Ausência de sincronização pode causar problemas em ambientes concorrentes.</li>
+<li>Falta de rota HTTP para update_user pode limitar o uso via API REST.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Integridade dos dados:</strong> Atualização parcial pode causar inconsistências se não houver validação rigorosa.</li>
+<li><strong>Condições de corrida:</strong> Armazenamento em memória sem mecanismos de sincronização pode levar a sobrescritas ou dados inconsistentes em acessos concorrentes.</li>
+<li><strong>Ausência de testes específicos:</strong> Falta de cobertura para update_user aumenta risco de regressão e falhas não detectadas.</li>
+<li><strong>Tratamento do retorno None:</strong> Se não tratado adequadamente na camada de rota, pode causar erros silenciosos.</li>
+<li><strong>Segurança e autorização:</strong> Sem evidência de controle de acesso, pode haver risco de atualizações indevidas.</li>
+<li><strong>Falta de documentação e critérios claros:</strong> Pode gerar divergência entre implementação e expectativas de negócio.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ul>
+<li>Atualizar usuário existente com todos os campos preenchidos.</li>
+<li>Atualizar usuário existente com apenas alguns campos (atualização parcial).</li>
+<li>Tentar atualizar usuário inexistente e observar resposta do sistema.</li>
+<li>Atualizar usuário com dados inválidos (ex: email mal formatado).</li>
+<li>Testar atualizações simultâneas para o mesmo usuário para verificar consistência.</li>
+<li>Verificar se campos não atualizados permanecem inalterados.</li>
+<li>Testar comportamento da API (se rota implementada) para atualização, incluindo respostas HTTP e mensagens de erro.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li><code>test_update_user_partial_fields</code>: atualizar apenas alguns campos e verificar preservação dos demais.</li>
+<li><code>test_update_user_all_fields</code>: atualizar todos os campos e validar retorno.</li>
+<li><code>test_update_user_no_fields_to_update</code>: payload com todos campos None deve retornar usuário sem alterações.</li>
+<li><code>test_update_user_nonexistent_user_returns_none</code>: tentar atualizar usuário inexistente e verificar retorno None.</li>
+<li><code>test_update_user_preserves_other_fields</code>: garantir que campos não atualizados permanecem iguais.</li>
+<li><code>test_update_user_invalid_payload_raises_error</code>: validar comportamento com dados inválidos (se aplicável).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar rota HTTP PATCH/PUT para atualização do usuário (quando implementada).</li>
+<li><code>test_api_update_user_partial_success</code>: atualização parcial via API e validação da resposta.</li>
+<li><code>test_api_update_user_full_success</code>: atualização completa via API.</li>
+<li><code>test_api_update_user_not_found</code>: tentativa de atualização de usuário inexistente retorna 404.</li>
+<li><code>test_api_update_user_invalid_payload</code>: payload inválido retorna 400.</li>
+<li>Testar autenticação e autorização para atualização (se aplicável).</li>
+<li>Verificar persistência dos dados após atualização via API.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a atualização é em memória e não há indicação de impacto de performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existe rota HTTP para update_user? Qual o método e endpoint?</li>
+<li>Quais regras de negócio específicas regem a atualização de usuários? Há campos que não podem ser alterados?</li>
+<li>Como é tratado o retorno None na camada de rota? Há mensagens ou códigos HTTP específicos?</li>
+<li>Há controle de acesso para atualização de usuários?</li>
+<li>O sistema deve suportar concorrência? Há planos para sincronização ou persistência fora da memória?</li>
+<li>Quais validações adicionais são esperadas para os dados atualizados?</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<ul>
+<li>A análise de riscos foi realizada pelo QA Sênior Investigador, que destacou riscos técnicos e de negócio, incluindo integridade dos dados e concorrência.</li>
+<li>A estratégia de testes foi elaborada pelo Especialista em Estratégia de Testes para Código de Alto Risco, detalhando cobertura unitária, integração e casos de borda.</li>
+<li>O Crítico de Análise de QA revisou as análises e apontou fragilidades importantes, como ausência de testes específicos, validação insuficiente e necessidade de critérios claros.</li>
+<li>A consolidação final reflete a síntese dessas contribuições, garantindo uma visão objetiva, rastreável e útil para revisão humana.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-python-apiteststest_user_updatepy">Arquivo analisado: python-api/tests/test_user_update.py</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Inclusão de testes automatizados para o endpoint de atualização de usuário (<code>PUT /users/{id}</code>) na API Python.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a criação do arquivo <code>python-api/tests/test_user_update.py</code> com 34 linhas contendo testes para o endpoint de atualização de usuário.</li>
+<li>Os testes cobrem:</li>
+<li>Atualização bem-sucedida de usuário existente (<code>test_update_user_success</code>).</li>
+<li>Conflito de e-mail ao tentar atualizar com e-mail já cadastrado em outro usuário (<code>test_update_user_email_conflict</code>).</li>
+<li>Tentativa de atualização de usuário inexistente (<code>test_update_user_not_found</code>).</li>
+<li>Validação de nome inválido (nome vazio ou espaços) retornando erro 422 (<code>test_update_user_invalid_name</code>).</li>
+<li>O arquivo usa <code>TestClient</code> do FastAPI para simular requisições HTTP.</li>
+<li>O contexto adicional confirma que não havia testes específicos para atualização de usuário na API Python, e que o projeto usa pytest.</li>
+<li>Os testes usam dados fixos, por exemplo, usuário com id=1 é "Ana Silva" com email "ana@example.com", e id=2 é "Bruno" com email "bruno@example.com", evidenciando um banco de dados de teste com dados seed.</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>A inclusão desses testes aumenta a cobertura da API para o endpoint de atualização de usuário, validando comportamentos críticos:</li>
+<li>Atualização parcial e total de campos.</li>
+<li>Regras de negócio para e-mails duplicados.</li>
+<li>Tratamento de erros para usuário não encontrado.</li>
+<li>Validação de dados de entrada (nome inválido).</li>
+<li>Isso contribui para maior confiabilidade e detecção precoce de regressões na funcionalidade de atualização de usuário.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li><strong>Dependência de dados fixos no banco de teste:</strong> Os testes assumem que os usuários com id=1 e id=2 existem com emails específicos. Se o banco de dados de teste mudar, os testes podem falhar.</li>
+<li><strong>Testes não isolados:</strong> Não há evidência de setup/teardown para garantir estado limpo entre testes, o que pode causar interferência entre execuções.</li>
+<li><strong>Cobertura limitada a alguns campos:</strong> Os testes atualizam apenas <code>name</code>, <code>is_vip</code> e <code>email</code>. Campos adicionais que possam existir (ex: role, status, telefone) não são testados.</li>
+<li><strong>Validação parcial:</strong> Apenas nome inválido é testado para erro 422. Outros campos e formatos não são validados.</li>
+<li><strong>Não há teste para atualização parcial com campos opcionais ausentes.</strong></li>
+<li><strong>Não há teste para atualização com payload vazio ou inválido (ex: tipos errados).</strong></li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ul>
+<li>Atualizar usuário existente com nome e is_vip diferentes, verificar retorno 200 e dados atualizados.</li>
+<li>Tentar atualizar usuário com e-mail já usado por outro usuário, verificar retorno 409 e mensagem de conflito.</li>
+<li>Tentar atualizar usuário inexistente, verificar retorno 404 e mensagem adequada.</li>
+<li>Enviar nome inválido (ex: string vazia ou só espaços), verificar retorno 422.</li>
+<li>Atualizar usuário com payload contendo apenas um campo (ex: só email), verificar atualização parcial.</li>
+<li>Atualizar usuário com campos adicionais (se existirem), validar comportamento.</li>
+<li>Enviar payload com tipos incorretos (ex: is_vip como string), verificar tratamento de erro.</li>
+<li>Testar atualização com payload vazio <code>{}</code>, verificar comportamento esperado (erro ou sem alteração).</li>
+<li>Testar atualização com campos extras não esperados, verificar se são ignorados ou causam erro.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar atualização parcial de usuário com apenas um campo (ex: só <code>is_vip</code>).</li>
+<li>Testar atualização com campos adicionais (ex: role, telefone) se existirem no modelo.</li>
+<li>Testar validação de outros campos além do nome (ex: formato de email, tipos).</li>
+<li>Testar payload vazio ou nulo, esperando erro 422.</li>
+<li>Testar atualização com dados inválidos de tipos (ex: <code>is_vip</code> como string).</li>
+<li>Testar comportamento quando o banco de dados lança exceção (mockar camada de dados).</li>
+<li>Testar que o endpoint não permite atualização de campos imutáveis (ex: id).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo de atualização: criar usuário, atualizar dados, buscar e validar dados atualizados.</li>
+<li>Testar concorrência: duas atualizações simultâneas no mesmo usuário, verificar consistência.</li>
+<li>Testar integração com banco real ou ambiente de staging para validar regras de negócio.</li>
+<li>Testar atualização com autenticação/autorização (se aplicável).</li>
+<li>Testar resposta do endpoint para payloads grandes ou com muitos campos.</li>
+<li>Testar rollback em caso de falha parcial na atualização.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois a mudança é inclusão de testes funcionais e não há indício de alteração que impacte performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O endpoint permite atualização de quais campos além de <code>name</code>, <code>email</code> e <code>is_vip</code>? Há campos obrigatórios?</li>
+<li>Qual o comportamento esperado para payload vazio ou com campos extras?</li>
+<li>Existe autenticação/autorização para atualização? Os testes consideram isso?</li>
+<li>Como é garantido o estado do banco de dados para os testes? Há fixtures ou setup para garantir dados consistentes?</li>
+<li>O que acontece se o nome for enviado como <code>null</code> ou outro tipo inválido?</li>
+<li>Há regras específicas para outros campos (ex: formato de email, status, role) que deveriam ser testadas?</li>
+</ul>
+<hr />
+<p><strong>Resumo:</strong><br />
+A mudança adiciona um conjunto inicial de testes para o endpoint de atualização de usuário, cobrindo casos básicos de sucesso, conflito de email, usuário não encontrado e validação de nome inválido. Isso melhora a cobertura e confiabilidade da API. Contudo, há riscos relacionados à dependência de dados fixos e cobertura limitada. Recomenda-se ampliar os testes para outros campos, validações e cenários de erro, além de garantir isolamento e consistência do ambiente de testes.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <p style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary || 'Sem resumo disponível'}</p>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
