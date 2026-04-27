@@ -77,6 +77,23 @@ def push_branch(repo_path: Path, branch_name: str) -> None:
     run_git(["push", "origin", branch_name], repo_path)
 
 
+def commit_and_push_to_branch(
+    repo_path: Path,
+    branch_name: str,
+    files: list[str],
+    commit_message: str,
+) -> None:
+    """Configura git, adiciona arquivos e faz push para a branch existente."""
+    run_git(["config", "user.name", "qagent[bot]"], repo_path)
+    run_git(["config", "user.email", "qagent[bot]@users.noreply.github.com"], repo_path)
+
+    for file_path in files:
+        run_git(["add", file_path], repo_path)
+
+    run_git(["commit", "-m", commit_message], repo_path)
+    run_git(["push", "origin", branch_name], repo_path)
+
+
 def build_pr_body(
     qa_report: str,
     test_files: list[str],

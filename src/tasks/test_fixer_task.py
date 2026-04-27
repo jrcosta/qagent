@@ -1,62 +1,58 @@
 from crewai import Task
 
-
 class TestFixerTaskFactory:
     @staticmethod
     def create(
         agent,
         file_path: str,
         code_content: str,
-        generated_tests: str,
-        review_summary: str,
-        ci_execution_summary: str,
+        test_strategy: str,
+        failed_tests: str,
+        review_report: str,
     ) -> Task:
         description = f"""
-Você deve corrigir os testes gerados relacionados ao arquivo analisado: {file_path}.
+Você deve corrigir os testes unitários que falharam na revisão crítica para o arquivo: {file_path}.
 
-Código de produção analisado:
-[INICIO_CODIGO]
+CÓDIGO FONTE ORIGINAL:
+[INICIO_CODIGO_ORIGINAL]
 {code_content}
-[FIM_CODIGO]
+[FIM_CODIGO_ORIGINAL]
 
-Resultado real do CI:
-[INICIO_CI]
-{ci_execution_summary}
-[FIM_CI]
+ESTRATÉGIA DE TESTES:
+[INICIO_ESTRATEGIA]
+{test_strategy}
+[FIM_ESTRATEGIA]
 
-Crítica do Test Reviewer:
+TESTES QUE PRECISAM DE CORREÇÃO:
+[INICIO_TESTES_FALHOS]
+{failed_tests}
+[FIM_TESTES_FALHOS]
+
+RELATÓRIO DE REVISÃO CRÍTICA (Problemas a corrigir):
 [INICIO_REVISAO]
-{review_summary}
+{review_report}
 [FIM_REVISAO]
 
-Testes gerados atuais:
-[INICIO_TESTES_ATUAIS]
-{generated_tests}
-[FIM_TESTES_ATUAIS]
+SUA TAREFA:
+1. Analise cada problema apontado no relatório de revisão.
+2. Corrija a lógica, imports, mocks ou assertions nos testes falhos.
+3. Se o relatório indicar cenários ausentes, implemente-os.
+4. Garanta que o código resultante seja completo e executável.
+5. Siga rigorosamente as convenções de código do arquivo original.
 
-Sua tarefa:
-1. Identifique quais testes falharam no CI e por quê.
-2. Corrija expectativas especulativas para baterem com o comportamento real do código.
-3. Remova ou ajuste mocks/imports incoerentes.
-4. Preserve cenários úteis que já são executáveis.
-5. Não altere código de produção nem proponha mudanças de contrato.
-
-Responda APENAS com arquivos completos no formato:
+Sua resposta deve ser APENAS no formato abaixo:
 
 ### FILE: <caminho_relativo_do_arquivo_de_teste>
 ```
-<conteúdo completo corrigido>
+<código completo e corrigido do arquivo de teste>
 ```
 
-Regras:
-- inclua somente arquivos de teste que precisam ser corrigidos
-- não inclua explicações fora dos blocos FILE
-- mantenha imports necessários
-- garanta que o código seja sintaticamente válido
+NÃO inclua explicações fora dos blocos de código.
 """
+        expected_output = "O código completo e corrigido dos arquivos de teste, pronto para execução."
 
         return Task(
             description=description,
-            expected_output="Arquivos de teste corrigidos em blocos FILE.",
+            expected_output=expected_output,
             agent=agent,
         )

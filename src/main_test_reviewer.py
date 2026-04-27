@@ -8,11 +8,19 @@ from typing import Any
 
 from src.config.settings import get_settings
 from src.crew.test_reviewer_crew import TestReviewerCrewRunner
+from src.crew.test_fixer_crew import TestFixerCrewRunner
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.schemas.test_strategy_result import render_test_strategy_result_for_prompt
 from src.services.test_execution_runner import TestExecutionRunner
 from src.utils.git_utils import get_file_diff
-from src.utils.pr_utils import add_pr_comment, get_repo_full_name, get_current_branch
+from src.utils.pr_utils import (
+    add_pr_comment,
+    get_repo_full_name,
+    get_current_branch,
+    parse_test_files_from_output,
+    write_test_files,
+    commit_and_push_to_branch,
+)
 from src.utils.review_comment_utils import build_test_review_comment, review_result_to_finding
 
 
@@ -65,6 +73,12 @@ def parse_args():
         "--fail-on-test-execution",
         action="store_true",
         help="Encerra com erro quando a execução real dos testes falhar",
+    )
+
+    parser.add_argument(
+        "--auto-fix-tests",
+        action="store_true",
+        help="Tenta corrigir automaticamente os testes que falharam na revisão",
     )
 
     parser.add_argument(
@@ -127,8 +141,10 @@ def main() -> None:
 
     settings = get_settings()
     reviewer_runner = TestReviewerCrewRunner(settings)
+    fixer_runner = TestFixerCrewRunner(settings)
 
     all_findings = []
+    artifacts_needing_fix = []
 
     for artifact in test_artifacts:
         print(f"\n🔍 Revisando criticamente: {artifact.file_path}")
@@ -187,10 +203,81 @@ def main() -> None:
         print(f"  📝 Status da Revisão: {review_result.status}")
         if review_result.issues:
             print(f"  ⚠️ {len(review_result.issues)} problema(s) identificado(s).")
+            if review_result.status in ["NEEDS_CHANGES", "INVALID"]:
+                artifacts_needing_fix.append(artifact)
 
         finding = review_result_to_finding(artifact.file_path, review_result)
         if finding:
             all_findings.append(finding)
+
+    # Lógica de AUTO-FIX
+    if args.auto_fix_tests and artifacts_needing_fix:
+        print(f"\n🛠️ Iniciando correção automática para {len(artifacts_needing_fix)} arquivo(s)...")
+        all_fixed_files = {}
+        
+        for artifact in artifacts_needing_fix:
+            print(f"  🔧 Corrigindo testes para: {artifact.file_path}")
+            
+            code_path = repo_path / artifact.file_path
+            code_content = code_path.read_text(encoding="utf-8")
+            
+            if artifact.test_strategy_result:
+                test_strategy = render_test_strategy_result_for_prompt(artifact.test_strategy_result)
+            else:
+                test_strategy = "Nenhuma estratégia disponível."
+
+            failed_tests = artifact.generated_tests_raw or _render_generated_test_files(artifact.generated_test_files)
+            review_report = f"STATUS: {artifact.generated_test_review_result.status}\n\n"
+            review_report += f"SUMMARY: {artifact.generated_test_review_result.summary}\n\n"
+            review_report += "ISSUES:\n"
+            for issue in artifact.generated_test_review_result.issues:
+                review_report += f"- [{issue.severity}] {issue.description} (Fix: {issue.suggest_fix or 'N/A'})\n"
+
+            t0 = time.perf_counter()
+            fixed_output = fixer_runner.run(
+                file_path=artifact.file_path,
+                code_content=code_content,
+                test_strategy=test_strategy,
+                failed_tests=failed_tests,
+                review_report=review_report
+            )
+            
+            fixed_files = parse_test_files_from_output(fixed_output)
+            if fixed_files:
+                artifact.generated_tests_raw = fixed_output
+                artifact.generated_test_files = fixed_files
+                artifact.record_duration("test_auto_fix", (time.perf_counter() - t0) * 1000)
+                artifact.mark_step_executed("test_auto_fix")
+                artifact.add_note("Testes corrigidos automaticamente após revisão crítica.")
+                all_fixed_files.update(fixed_files)
+                print(f"    ✅ {len(fixed_files)} arquivo(s) corrigido(s).")
+            else:
+                print(f"    ❌ Falha ao extrair testes corrigidos para {artifact.file_path}")
+
+        if all_fixed_files:
+            print("\n💾 Salvando arquivos corrigidos e enviando para o repositório...")
+            created_files = write_test_files(repo_path, all_fixed_files)
+            
+            repo_full_name = get_repo_full_name(repo_path)
+            branch_name = args.branch_name
+            if not branch_name:
+                branch_name_file = artifacts_path.parent / ".branch_name"
+                if branch_name_file.exists():
+                    branch_name = branch_name_file.read_text(encoding="utf-8").strip()
+            
+            if not branch_name:
+                branch_name = get_current_branch(repo_path)
+            
+            try:
+                commit_and_push_to_branch(
+                    repo_path=repo_path,
+                    branch_name=branch_name,
+                    files=created_files,
+                    commit_message=f"fix(tests): auto-fix {len(created_files)} test files after QAgent review"
+                )
+                print(f"✅ {len(created_files)} arquivo(s) de teste atualizados na branch {branch_name}")
+            except Exception as e:
+                print(f"❌ Erro ao enviar correções para o git: {e}")
 
     _save_artifacts(artifacts_path, artifacts)
     print(f"\n💾 Artefatos atualizados em: {artifacts_path}")
@@ -245,6 +332,9 @@ def _exit_if_needed(args: Any, all_findings: list, execution_failed: bool) -> No
         sys.exit(1)
 
     if args.fail_on_findings and all_findings:
+        # Se for AUTO-FIX, talvez não queiramos falhar se o fix funcionou?
+        # Mas aqui o 'all_findings' ainda reflete a revisão ORIGINAL.
+        # Por simplicidade, mantemos o comportamento de falha se houve qualquer finding.
         print(
             "\n❌ Revisão crítica encontrou problemas nos testes gerados. "
             "Bloqueando o merge via status check."

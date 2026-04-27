@@ -1,9 +1,6 @@
 from pathlib import Path
-
 from crewai import Agent, LLM
-
 from src.config.settings import Settings
-
 
 class TestFixerAgentFactory:
     def __init__(self, settings: Settings) -> None:
@@ -12,22 +9,20 @@ class TestFixerAgentFactory:
 
     def _load_system_prompt(self) -> str:
         prompt_path = Path("src/prompts/test_fixer_prompt.txt")
-        if not prompt_path.exists():
-            return "Você corrige testes gerados com base em falhas reais de CI."
         return prompt_path.read_text(encoding="utf-8")
 
     def create(self) -> Agent:
         llm = LLM(
             model=self.settings.llm_model,
             api_key=self.settings.llm_api_key,
-            temperature=0.0,
+            temperature=self.settings.llm_temperature,
         )
 
         return Agent(
-            role="Corretor de Testes Gerados",
+            role="Especialista em Correção de Testes",
             goal=(
-                "Corrigir testes automatizados gerados para que reflitam o contrato real "
-                "do código e passem no CI do PR alvo."
+                "Analisar testes com falhas na revisão crítica e aplicar correções estruturais "
+                "e lógicas para garantir testes de alta qualidade e executáveis"
             ),
             backstory=self.system_prompt,
             llm=llm,
