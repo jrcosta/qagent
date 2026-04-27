@@ -68,6 +68,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--auto-fix-tests",
+        action="store_true",
+        help="Tenta corrigir automaticamente os testes que falharam na revisão (não implementado)",
+    )
+
+    parser.add_argument(
         "--fail-on-findings",
         action="store_true",
         help="Encerra com erro quando a revisão encontrar NEEDS_CHANGES ou INVALID",
@@ -84,6 +90,9 @@ def main() -> None:
     if not artifacts_path.exists():
         print(f"❌ Arquivo de artefatos não encontrado: {artifacts_path}")
         return
+
+    if args.auto_fix_tests:
+        print("⚠️ Flag --auto-fix-tests detectada, mas a funcionalidade de autocorreção ainda não está implementada. Pulando.")
 
     with open(artifacts_path, "r", encoding="utf-8") as f:
         data = json.load(f)
