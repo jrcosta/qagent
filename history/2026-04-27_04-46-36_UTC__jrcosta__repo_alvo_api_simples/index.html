@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 27 Apr 2026 – 04:46:36 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+.md-content p { margin: 8px 0; }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 8px 0; }
+.md-content li { margin: 4px 0; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-04-27_04-46-36_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>27 Apr 2026 – 04:46:36 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-java-apisrcmainjavacomrepoalvojavaapicontrollerusercontrollerjava">Arquivo analisado: java-api/src/main/java/com/repoalvo/javaapi/controller/UserController.java</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Adição de funcionalidade (feature) com inclusão de endpoint REST para exclusão de usuário.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>Inclusão do método <code>deleteUser</code> no <code>UserController</code> com anotação <code>@DeleteMapping("/users/{userId}")</code>.</li>
+<li>O método verifica existência do usuário via <code>userService.getById(userId)</code> e lança <code>ResponseStatusException</code> 404 se não encontrado.</li>
+<li>Em caso de sucesso, chama <code>userService.delete(userId)</code> e retorna HTTP 204 No Content.</li>
+<li>Código mantém padrão de tratamento de exceções e uso de serviços já existentes.</li>
+<li>Presença de testes de integração para o endpoint DELETE no repositório (<code>UserControllerDeleteIntegrationTest</code>).</li>
+<li>Nenhuma outra rota ou funcionalidade do controller foi alterada.</li>
+<li>Contexto do repositório indica uso de Spring Boot, validação via annotations e testes automatizados.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Introdução de operação destrutiva para remoção de usuários, impactando diretamente o estado do sistema.</li>
+<li>Possível impacto em dados relacionados ao usuário (dependendo da implementação do serviço).</li>
+<li>Necessidade de garantir que exclusão não cause inconsistências ou vazamento de dados.</li>
+<li>Potencial impacto em segurança e autorização, pois exclusão é operação sensível.</li>
+<li>Fluxos existentes de listagem, busca, atualização e criação permanecem inalterados.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Falta de evidência no código sobre controle de autorização para exclusão, podendo permitir exclusão indevida.</li>
+<li>Possíveis efeitos colaterais não tratados, como remoção em cascata ou inconsistência de dados relacionados.</li>
+<li>Risco de exceções não tratadas se <code>userService.delete</code> não gerenciar corretamente erros internos.</li>
+<li>Concorrência na exclusão do mesmo usuário pode gerar condições de corrida.</li>
+<li>Ausência de mecanismos explícitos de auditoria ou rollback para exclusões acidentais.</li>
+<li>Potencial impacto em caches ou integrações externas não evidenciado no diff.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Excluir usuário existente e verificar retorno HTTP 204 e ausência do usuário em consultas subsequentes.</li>
+<li>Tentar excluir usuário inexistente e verificar retorno HTTP 404 com mensagem adequada.</li>
+<li>Testar exclusão por usuário sem permissão (se aplicável) e validar bloqueio da operação.</li>
+<li>Verificar mensagens e comportamento da interface (se houver) durante exclusão.</li>
+<li>Testar exclusão simultânea do mesmo usuário para observar tratamento de concorrência.</li>
+<li>Avaliar logs e auditoria para confirmar registro da operação de exclusão.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar método <code>deleteUser</code> para sucesso na exclusão de usuário existente.</li>
+<li>Testar lançamento de <code>ResponseStatusException</code> 404 para usuário inexistente.</li>
+<li>Testar tratamento de exceções inesperadas (ex: falha no serviço).</li>
+<li>Verificar que o método chama corretamente <code>userService.delete</code> com o ID correto.</li>
+<li>Testar comportamento com parâmetros inválidos (ex: ID negativo ou nulo).</li>
+<li>Mockar dependências para isolar o controller.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Validar exclusão real no banco de dados em ambiente de teste.</li>
+<li>Confirmar que usuário não está acessível após exclusão.</li>
+<li>Testar fluxos de erro, como exclusão de usuário inexistente.</li>
+<li>Testar autorização/autenticação para exclusão (se aplicável).</li>
+<li>Verificar efeitos colaterais em dados relacionados (ex: perfis, sessões).</li>
+<li>Testar concorrência com múltiplas requisições simultâneas para exclusão.</li>
+<li>Garantir que endpoints relacionados a usuários continuam funcionando após exclusão.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança é funcional e não altera lógica de processamento em massa.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existe controle de autorização para o endpoint DELETE? Quem pode excluir usuários?</li>
+<li>O que acontece com dados relacionados ao usuário (ex: posts, sessões, logs) após exclusão?</li>
+<li>Há mecanismos de auditoria ou logs para operações de exclusão?</li>
+<li>Existe política de retenção de dados ou requisitos legais que impactem exclusão?</li>
+<li>Como o sistema trata exclusões concorrentes ou falhas na camada de persistência?</li>
+<li>Há cache ou integrações externas que dependam do usuário e precisem ser atualizadas?</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<ul>
+<li>O QA Sênior Investigador confirmou que a mudança está isolada e que os riscos principais estão relacionados à lógica do serviço e segurança, recomendando foco em testes de autorização e integridade pós-deleção.</li>
+<li>O Especialista em Estratégia de Testes propôs uma estratégia detalhada contemplando testes unitários, integração, manuais e regressão, enfatizando a importância de validar fluxos de erro, autorização e efeitos colaterais.</li>
+<li>O Crítico de Análise de QA apontou fragilidades na análise inicial, destacando a necessidade de evidências concretas, análise de fluxos relacionados, testes específicos para segurança e concorrência, além de considerar requisitos legais e mecanismos de auditoria.</li>
+<li>A análise final consolidou essas contribuições, evitando achados genéricos e focando em riscos reais e testáveis, com sugestões práticas e contextualizadas para garantir qualidade e segurança da nova funcionalidade.</li>
+</ul>
+<hr />
+<h1 id="arquivo-analisado-java-apisrctestjavacomrepoalvojavaapiusercontrollerdeleteintegrationtestjava">Arquivo analisado: java-api/src/test/java/com/repoalvo/javaapi/UserControllerDeleteIntegrationTest.java</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Adição de testes de integração para o endpoint DELETE /users/{userId}.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>Novo arquivo <code>UserControllerDeleteIntegrationTest.java</code> criado com dois testes principais.</li>
+<li>Teste positivo verifica que ao deletar um usuário existente (userId=1), o status retornado é 204 e o usuário não é mais encontrado (GET retorna 404).</li>
+<li>Teste negativo verifica que ao tentar deletar um usuário inexistente (userId=999), o status retornado é 404.</li>
+<li>Uso de Spring Boot, JUnit 5 e MockMvc para simular requisições HTTP.</li>
+<li>Contexto do repositório indica existência de outros testes de integração e unitários para usuários, mas sem cobertura explícita para deleção.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Melhora na cobertura de testes para o endpoint DELETE /users/{userId}, garantindo que os casos básicos de sucesso e falha sejam validados.</li>
+<li>Redução do risco de regressão para a funcionalidade de deleção de usuários.</li>
+<li>Possível aumento da confiança na estabilidade do endpoint em cenários comuns.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li>Ausência de testes para autorização/autenticação, podendo deixar vulnerabilidades de segurança não detectadas.</li>
+<li>Falta de testes para inputs inválidos (ex: userId mal formatado).</li>
+<li>Não há verificação de efeitos colaterais em dados relacionados ao usuário (ex: posts, permissões).</li>
+<li>Não há testes para concorrência (deleção simultânea).</li>
+<li>Falta de validação do conteúdo do corpo da resposta, focando apenas no status HTTP.</li>
+<li>Dependência implícita de existência prévia do usuário no banco, sem detalhamento do setup, podendo gerar falsos positivos.</li>
+<li>Ausência de testes para falhas inesperadas (ex: exceções, falhas de banco).</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li>Deletar um usuário existente e verificar que ele não aparece mais em buscas.</li>
+<li>Tentar deletar um usuário inexistente e confirmar retorno 404.</li>
+<li>Tentar deletar com userId em formato inválido e verificar retorno 400.</li>
+<li>Tentar deletar sem autenticação ou com usuário sem permissão e verificar retorno 403.</li>
+<li>Deletar usuário com dados relacionados (ex: posts) e verificar integridade dos dados.</li>
+<li>Executar duas requisições DELETE simultâneas para o mesmo usuário e observar comportamento.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar métodos do serviço de usuário que realizam a deleção, incluindo tratamento de exceções.</li>
+<li>Validar comportamento do serviço ao receber userId inválido.</li>
+<li>Testar regras de autorização no serviço para deleção.</li>
+<li>Testar comportamento em caso de falha de banco simulada.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar deleção com autenticação e autorização, incluindo usuários sem permissão.</li>
+<li>Testar deleção com userId inválido no path.</li>
+<li>Testar deleção de usuário com dependências e validar integridade referencial.</li>
+<li>Testar concorrência com múltiplas requisições DELETE simultâneas.</li>
+<li>Validar corpo da resposta HTTP além do status.</li>
+<li>Confirmar limpeza e isolamento dos dados de teste para evitar interferência.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança é focada em testes funcionais de integração para deleção.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O endpoint DELETE /users/{userId} requer autenticação e autorização? Quais regras específicas?</li>
+<li>Como o sistema trata usuários com dados relacionados? Há deleção em cascata ou restrição?</li>
+<li>Qual o comportamento esperado para deleção concorrente ou múltiplas requisições?</li>
+<li>Existe algum tratamento especial para formatos inválidos de userId?</li>
+<li>Como é feito o setup dos dados para os testes? Há garantia de isolamento e consistência?</li>
+</ul>
+<h1 id="validacao-cooperativa_1">Validação cooperativa</h1>
+<p>As análises de risco e estratégia de testes foram conduzidas por especialistas dedicados, que identificaram os principais cenários cobertos e lacunas relevantes. O crítico de análise de QA revisou as conclusões, apontando omissões importantes e fragilidades, especialmente em segurança, integridade de dados e concorrência. A consolidação final reflete essas contribuições, equilibrando cobertura básica com recomendações para ampliar a robustez e segurança dos testes.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <div class="md-content" style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary_html || escapeHtml(a.review_result?.summary || 'Sem resumo disponível')}</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>
