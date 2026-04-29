@@ -214,6 +214,7 @@ def main() -> None:
     if args.auto_fix_tests and artifacts_needing_fix:
         print(f"\n🛠️ Iniciando correção automática para {len(artifacts_needing_fix)} arquivo(s)...")
         all_fixed_files = {}
+        actually_fixed_artifacts = []
         
         for artifact in artifacts_needing_fix:
             print(f"  🔧 Corrigindo testes para: {artifact.file_path}")
@@ -233,26 +234,50 @@ def main() -> None:
             for issue in artifact.generated_test_review_result.issues:
                 review_report += f"- [{issue.severity}] {issue.description} (Fix: {issue.suggested_fix or 'N/A'})\n"
 
-            t0 = time.perf_counter()
-            fixed_output = fixer_runner.run(
-                file_path=artifact.file_path,
-                code_content=code_content,
-                test_strategy=test_strategy,
-                failed_tests=failed_tests,
-                review_report=review_report
-            )
-            
-            fixed_files = parse_test_files_from_output(fixed_output)
-            if fixed_files:
-                artifact.generated_tests_raw = fixed_output
-                artifact.generated_test_files = fixed_files
-                artifact.record_duration("test_auto_fix", (time.perf_counter() - t0) * 1000)
-                artifact.mark_step_executed("test_auto_fix")
-                artifact.add_note("Testes corrigidos automaticamente após revisão crítica.")
-                all_fixed_files.update(fixed_files)
-                print(f"    ✅ {len(fixed_files)} arquivo(s) corrigido(s).")
-            else:
-                print(f"    ❌ Falha ao extrair testes corrigidos para {artifact.file_path}")
+            if artifact.generated_test_review_result.missing_scenarios:
+                review_report += "\nMISSING SCENARIOS:\n"
+                for s in artifact.generated_test_review_result.missing_scenarios:
+                    review_report += f"- {s}\n"
+
+            if artifact.generated_test_review_result.suggested_fixes:
+                review_report += "\nSUGGESTED FIXES:\n"
+                for f in artifact.generated_test_review_result.suggested_fixes:
+                    review_report += f"- {f}\n"
+
+            review_report += f"\nEXECUTION RECOMMENDED: {artifact.generated_test_review_result.execution_recommended}\n"
+            if artifact.generated_test_review_result.execution_reason:
+                review_report += f"EXECUTION REASON: {artifact.generated_test_review_result.execution_reason}\n"
+
+            if artifact.test_execution_result:
+                review_report += "\nREAL EXECUTION RESULT:\n"
+                review_report += _render_execution_result_for_prompt(artifact.test_execution_result)
+
+            try:
+                t0 = time.perf_counter()
+                fixed_output = fixer_runner.run(
+                    file_path=artifact.file_path,
+                    code_content=code_content,
+                    test_strategy=test_strategy,
+                    failed_tests=failed_tests,
+                    review_report=review_report
+                )
+                
+                fixed_files = parse_test_files_from_output(fixed_output)
+                if fixed_files:
+                    artifact.generated_tests_raw = fixed_output
+                    artifact.generated_test_files = fixed_files
+                    artifact.record_duration("test_auto_fix", (time.perf_counter() - t0) * 1000)
+                    artifact.mark_step_executed("test_auto_fix")
+                    artifact.add_note("Testes corrigidos automaticamente após revisão crítica.")
+                    all_fixed_files.update(fixed_files)
+                    actually_fixed_artifacts.append(artifact)
+                    print(f"    ✅ {len(fixed_files)} arquivo(s) corrigido(s).")
+                else:
+                    artifact.add_note("Auto-fix executado, mas não conseguiu extrair arquivos corrigidos válidos.")
+                    print(f"    ❌ Falha ao extrair testes corrigidos para {artifact.file_path}")
+            except Exception as e:
+                artifact.add_note(f"Falha técnica durante o auto-fix: {str(e)}")
+                print(f"    ❌ Erro técnico ao tentar auto-fix para {artifact.file_path}: {e}")
 
         if all_fixed_files:
             print("\n💾 Salvando arquivos corrigidos e enviando para o repositório...")
@@ -278,6 +303,94 @@ def main() -> None:
                 print(f"✅ {len(created_files)} arquivo(s) de teste atualizados na branch {branch_name}")
             except Exception as e:
                 print(f"❌ Erro ao enviar correções para o git: {e}")
+
+        if actually_fixed_artifacts:
+            print("\n🔄 Revalidando testes corrigidos...")
+            if args.execute_tests:
+                print("\n🧪 Re-executando testes reais após auto-fix...")
+                t0 = time.perf_counter()
+                execution_result = TestExecutionRunner(repo_path=str(repo_path)).run()
+                execution_duration_ms = (time.perf_counter() - t0) * 1000
+                execution_failed = not execution_result.success
+
+                status_icon = "✅" if execution_result.success else "❌"
+                print(
+                    f"{status_icon} Re-execução finalizada com exit_code={execution_result.exit_code} "
+                    f"em {execution_result.duration_seconds:.2f}s"
+                )
+                
+                for artifact in actually_fixed_artifacts:
+                    artifact.test_execution_result = execution_result
+                    artifact.record_duration("test_re_execution_after_fix", execution_duration_ms)
+                    artifact.mark_step_executed("test_re_execution_after_fix")
+                    artifact.add_note(
+                        "Re-execução real dos testes concluída após auto-fix."
+                        if execution_result.success
+                        else "Re-execução real dos testes falhou após auto-fix."
+                    )
+                    
+            for artifact in actually_fixed_artifacts:
+                print(f"\n🔍 Re-revisando criticamente: {artifact.file_path}")
+                try:
+                    code_path = repo_path / artifact.file_path
+                    code_content = code_path.read_text(encoding="utf-8")
+                    
+                    qa_report = artifact.raw_review_markdown or ""
+                    if artifact.test_execution_result:
+                        qa_report = (
+                            qa_report
+                            + "\n\n---\n\n"
+                            + "## Resultado real da execução dos testes (Após Auto-Fix)\n\n"
+                            + _render_execution_result_for_prompt(artifact.test_execution_result)
+                        )
+                        
+                    generated_tests = artifact.generated_tests_raw or _render_generated_test_files(
+                        artifact.generated_test_files
+                    )
+                    
+                    file_diff = get_file_diff(
+                        file_path=artifact.file_path,
+                        repo_path=repo_path,
+                        base_sha=args.base_sha,
+                        head_sha=args.head_sha,
+                    )
+                    if artifact.test_strategy_result:
+                        test_strategy = render_test_strategy_result_for_prompt(artifact.test_strategy_result)
+                    else:
+                        test_strategy = "Nenhuma recomendação de teste disponível na estratégia."
+                        
+                    t0 = time.perf_counter()
+                    review_result = reviewer_runner.run(
+                        file_path=artifact.file_path,
+                        code_content=code_content,
+                        qa_report=qa_report,
+                        test_strategy=test_strategy,
+                        generated_tests=generated_tests,
+                        file_diff=file_diff,
+                    )
+                    
+                    artifact.generated_test_review_result = review_result
+                    artifact.record_duration("test_re_review_after_fix", (time.perf_counter() - t0) * 1000)
+                    artifact.mark_step_executed("test_re_review_after_fix")
+                    
+                    print(f"  📝 Status da Re-Revisão: {review_result.status}")
+                    
+                    if review_result.status in ["APPROVED"]:
+                        artifact.add_note("Auto-fix resolveu os problemas encontrados.")
+                    else:
+                        artifact.add_note("Auto-fix executado, mas ainda restam problemas na re-revisão.")
+                        
+                except Exception as e:
+                    print(f"  ⚠️ Erro técnico ao re-revisar: {e}. Mantendo o resultado da revisão original.")
+                    artifact.add_note("Falha técnica ao re-revisar testes corrigidos. Mantendo resultado anterior como fallback.")
+                    
+            print("\n🔄 Reconstruindo findings baseados no estado final...")
+            all_findings = []
+            for artifact in test_artifacts:
+                if artifact.generated_test_review_result:
+                    finding = review_result_to_finding(artifact.file_path, artifact.generated_test_review_result)
+                    if finding:
+                        all_findings.append(finding)
 
     _save_artifacts(artifacts_path, artifacts)
     print(f"\n💾 Artefatos atualizados em: {artifacts_path}")

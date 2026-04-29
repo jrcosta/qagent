@@ -1,0 +1,6 @@
+---
+trigger: always_on
+---
+
+# REGRA
+1. SEMPRE RODE OS TESTES ANTES DE COMMITAR E ENVIAR UM PUSH.
