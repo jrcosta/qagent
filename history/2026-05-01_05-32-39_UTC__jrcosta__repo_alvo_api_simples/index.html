@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 01 May 2026 – 05:32:39 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+.md-content p { margin: 8px 0; }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 8px 0; }
+.md-content li { margin: 4px 0; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-05-01_05-32-39_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>01 May 2026 – 05:32:39 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-javascript-apisrcroutesproductsjs">Arquivo analisado: javascript-api/src/routes/products.js</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Adição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>Inclusão dos endpoints GET /products (com filtros), GET /products/categories, GET /products/low-stock, POST /products/:id/discount, DELETE /products/:id/discount e POST /products/:id/reserve.</li>
+<li>Uso de blocos try/catch em POST /products, PUT /products/:id, POST /products/:id/discount e POST /products/:id/reserve para captura de erros e retorno de status 422.</li>
+<li>Validação de parâmetros de query (minPrice, maxPrice, inStock) e do corpo da requisição (quantity para reserva) é mais flexível, delegando parte da validação para o productService.</li>
+<li>Ordem das rotas evita conflito entre rotas estáticas (/products/categories, /products/low-stock) e dinâmica (/products/:id).</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.</li>
+<li>Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.</li>
+<li>Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li>Falta de validação explícita e robusta dos parâmetros de query pode permitir valores inválidos, causando erros ou resultados inesperados.</li>
+<li>Ausência de validação rigorosa do parâmetro quantity na reserva pode levar a comportamentos incorretos ou falhas.</li>
+<li>Dependência do productService para lógica de negócio crítica (descontos, reservas, listagens) pode causar falhas se houver exceções não tratadas.</li>
+<li>Possibilidade de condições de concorrência na aplicação e remoção de descontos e reservas, embora não haja evidência de mecanismos específicos para isso no código atual.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ul>
+<li>Testar GET /products com combinações variadas de filtros válidos e inválidos (ex: minPrice="abc", inStock="yes").</li>
+<li>Testar GET /products/categories para garantir retorno correto de categorias únicas.</li>
+<li>Testar GET /products/low-stock com e sem parâmetro threshold, incluindo valores inválidos (ex: threshold="-1", threshold="abc").</li>
+<li>Testar POST /products com payloads válidos e inválidos, verificando tratamento de erros.</li>
+<li>Testar PUT /products/:id com dados válidos, inválidos e id inexistente, observando respostas 400, 404 e 422.</li>
+<li>Testar DELETE /products/:id com id válido, inválido e inexistente.</li>
+<li>Testar POST /products/:id/discount com percent válido, ausente e inválido, além de id inválido e inexistente.</li>
+<li>Testar DELETE /products/:id/discount para casos com e sem desconto ativo, e produto inexistente.</li>
+<li>Testar POST /products/:id/reserve com quantity válido, ausente e inválido, além de id inválido e inexistente.</li>
+<li>Testar concorrência na aplicação e remoção de descontos e reservas, se possível.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>testGetProducts_withValidFilters_shouldReturnFilteredProducts</li>
+<li>testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty</li>
+<li>testPostProducts_withValidPayload_shouldCreateProduct</li>
+<li>testPostProducts_withInvalidPayload_shouldReturn422</li>
+<li>testPutProduct_withValidData_shouldUpdateProduct</li>
+<li>testPutProduct_withInvalidData_shouldReturn422</li>
+<li>testPutProduct_withNonExistentId_shouldReturn404</li>
+<li>testDeleteProduct_withValidId_shouldDeleteProduct</li>
+<li>testDeleteProduct_withInvalidId_shouldReturn400</li>
+<li>testDeleteProduct_withNonExistentId_shouldReturn404</li>
+<li>testPostDiscount_withValidPercent_shouldApplyDiscount</li>
+<li>testPostDiscount_withInvalidPercent_shouldReturn422</li>
+<li>testPostDiscount_withMissingPercent_shouldReturn422</li>
+<li>testPostDiscount_withInvalidId_shouldReturn400</li>
+<li>testPostDiscount_withNonExistentId_shouldReturn404</li>
+<li>testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount</li>
+<li>testDeleteDiscount_withoutDiscount_shouldReturn404</li>
+<li>testDeleteDiscount_withNonExistentId_shouldReturn404</li>
+<li>testPostReserve_withValidQuantity_shouldReserveStock</li>
+<li>testPostReserve_withInvalidQuantity_shouldReturn422</li>
+<li>testPostReserve_withMissingQuantity_shouldReturn422</li>
+<li>testPostReserve_withInvalidId_shouldReturn400</li>
+<li>testPostReserve_withNonExistentId_shouldReturn404</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>integrationTestGetProducts_withFilters</li>
+<li>integrationTestDiscountEndpoints (POST e DELETE /products/:id/discount)</li>
+<li>integrationTestReserveStockEndpoint (POST /products/:id/reserve)</li>
+<li>Testes de regressão para filtros, tratamento de erros e lógica de desconto e reserva</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência clara na mudança que justifique testes específicos de carga ou desempenho, mas pode ser considerado para endpoints com filtros complexos e alta concorrência.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Se a delegação da validação para o productService é intencional e se há mecanismos para evitar falhas por parâmetros inválidos.</li>
+<li>Se há planos para implementar controle de concorrência explícito na aplicação e remoção de descontos e reservas.</li>
+<li>Necessidade de testes para exceções não tratadas no productService.</li>
+<li>Avaliação da necessidade de testes de performance para garantir robustez em produção.</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<p>As conclusões foram revisadas pelos especialistas de QA e estratégia de testes, que concordaram com os principais achados e riscos. O crítico validou a identificação dos novos endpoints, tratamento de erros e riscos de validação, destacando a cobertura abrangente da estratégia de testes. Conflitos foram resolvidos esclarecendo que a recomendação de testes de concorrência é válida, porém genérica, e que a análise poderia detalhar melhor a validação e tratamento de erros específicos. A ausência de testes para exceções não tratadas e performance foi destacada como lacuna a ser considerada.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcservicesproductservicejs">Arquivo analisado: javascript-api/src/services/productService.js</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Melhoria funcional com introdução de novos campos e funcionalidades (categoria, descontos, reserva de estoque) e reforço de validações.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>Inclusão do campo <code>category</code> em produtos e filtros na função <code>listProducts</code>.</li>
+<li>Validações em <code>createProduct</code> e <code>updateProduct</code> para preço não negativo e tipo numérico.</li>
+<li>Novas funções <code>applyDiscount</code>, <code>removeDiscount</code> e cálculo do preço efetivo em <code>_serialize</code>.</li>
+<li>Método <code>reserveStock</code> que altera diretamente o estoque e lança erros para quantidades inválidas ou insuficientes.</li>
+<li>Exclusão de produto removendo descontos associados.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.</li>
+<li>Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.</li>
+<li>Complexidade aumentada no cálculo do preço final devido a descontos.</li>
+<li>Impacto nos fluxos de reserva e venda pelo controle direto do estoque.</li>
+<li>Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li>Filtro incorreto ou inconsistência na busca por categoria se não houver normalização adequada.</li>
+<li>Erros não tratados em payloads inválidos para preço.</li>
+<li>Cálculo incorreto do preço efetivo com desconto.</li>
+<li>Condições de corrida potenciais na manipulação direta do estoque (risco futuro, não imediato).</li>
+<li>Inconsistência na remoção de descontos associados ao excluir produtos se não sincronizado com outros módulos.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li>Listar produtos com filtros combinados (categoria com variações de caixa, busca case insensitive, faixa de preço, estoque disponível).</li>
+<li>Criar produto com e sem categoria, com preços válidos e inválidos.</li>
+<li>Atualizar produto alterando categoria e preço, incluindo casos inválidos.</li>
+<li>Aplicar e remover descontos, verificando o preço final exibido.</li>
+<li>Reservar estoque com quantidades válidas, zero, negativas e maiores que o estoque disponível, observando erros.</li>
+<li>Excluir produto e verificar remoção dos descontos associados.</li>
+<li>Listar categorias garantindo unicidade e ordenação.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar filtros de listagem por categoria (case insensitive) e filtros combinados.</li>
+<li>Validar criação e atualização de produtos com preços válidos e inválidos.</li>
+<li>Testar aplicação e remoção de descontos e cálculo correto do preço efetivo em <code>_serialize</code>.</li>
+<li>Testar reserva de estoque com quantidades válidas e inválidas, verificando erros.</li>
+<li>Testar exclusão de produto removendo descontos associados.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Fluxo completo de criação, atualização (categoria e preço), aplicação de desconto, reserva de estoque e exclusão, garantindo integridade e sincronização dos dados.</li>
+<li>Testes de regressão para filtros antigos, validação de preço e reserva de estoque.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável, pois não há evidências no diff que justifiquem testes de performance.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Necessidade de estratégias para evitar condições de corrida na manipulação do estoque em ambientes concorrentes.</li>
+<li>Garantia de sincronização da remoção de descontos com outros módulos do sistema além do serviço analisado.</li>
+<li>Como o consumidor da API deve tratar os erros lançados pelas validações para evitar falhas inesperadas.</li>
+</ul>
+<h1 id="validacao-cooperativa_1">Validação cooperativa</h1>
+<p>As conclusões foram revisadas e validadas pelos agentes especialistas em QA e estratégia de testes, bem como pelo crítico de análise. Conflitos foram resolvidos com base em evidências claras do diff, especialmente quanto à validade dos riscos e cobertura da estratégia de testes. Recomendações genéricas foram descartadas ou qualificadas, mantendo foco em riscos reais e testáveis.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderAgentMessages = (artifact) => {
+    const msgs = artifact.agent_messages || {};
+    const topics = Object.keys(msgs);
+    if (!topics.length) return '';
+
+    const topicOrder = ['qa_findings', 'test_strategy', 'critique', 'consolidation'];
+    const sorted = topicOrder.filter(t => msgs[t]).concat(topics.filter(t => !topicOrder.includes(t)));
+
+    return `
+      <div class="sub-section">
+        <div class="sub-section-title">🔗 Comunicação Inter-Agente</div>
+        ${sorted.map(topic => `
+          <div style="margin-bottom:12px">
+            <div style="font-size:.8rem;font-weight:600;color:var(--purple);margin-bottom:6px">${escapeHtml(topic)}</div>
+            ${msgs[topic].map(m => `
+              <div class="data-item" style="margin-bottom:6px">
+                <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted)">
+                  <span>${escapeHtml(m.sender || '—')}</span>
+                  <span>${escapeHtml(m.timestamp || '')}</span>
+                </div>
+                <div style="font-size:.82rem;margin-top:4px;white-space:pre-wrap">${escapeHtml((m.message||'').slice(0,300))}${(m.message||'').length > 300 ? '…' : ''}</div>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <div class="md-content" style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary_html || escapeHtml(a.review_result?.summary || 'Sem resumo disponível')}</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              ${renderAgentMessages(a)}
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1110 @@
+[
+  {
+    "file_path": "javascript-api/src/routes/products.js",
+    "context_result": {
+      "file_path": "javascript-api/src/routes/products.js",
+      "summary": "# Arquivo alterado\njavascript-api/src/routes/products.js\n\n# Nome base pesquisado\nproducts\n\n# Arquivos que parecem relacionados ao nome/base\noutputs/artifacts.json\noutputs/analysis.md\njavascript-api/src/app.js\njavascript-api/src/routes/products.js\njavascript-api/src/services/productService.js\n\n# Testes existentes identificados\ntests/test_qagent_context_validation.py\ndocs/testes.md\njavascript-api/.env.test\njavascript-api/tests/users.test.js\n\n# Conteúdo de código relacionado (amostra)\n### outputs/artifacts.json\n```\n[\n  {\n    \"file_path\": \"javascript-api/src/routes/products.js\",\n    \"context_result\": {\n      \"file_path\": \"javascript-api/src/routes/products.js\",\n      \"summary\": \"# Arquivo alterado\\njavascript-api/src/routes/products.js\\n\\n# Nome base pesquisado\\nproducts\\n\\n# Arquivos que parecem relacionados ao nome/base\\njavascript-api/src/app.js\\njavascript-api/src/routes/products.js\\njavascript-api/src/services/productService.js\\n\\n# Testes existentes identificados\\ntests/test_qagent_context_validation.py\\ndocs/testes.md\\njavascript-api/.env.test\\njavascript-api/tests/users.test.js\\njavascript-api/tests/ping.test.js\\njavascript-api/tests/app.test.js\\n\\n# Conteúdo de código relacionado (amostra)\\n### javascript-api/src/app.js\\n```\\nconst express = require('express');\\nconst cors = require('cors');\\nconst userRoutes = require('./routes/users');\\nconst pingRoutes = require('./routes/ping');\\nconst productRoutes = require('./routes/products');\\n\\nconst app = express();\\n\\napp.use(cors());\\napp.use(express.json());\\n\\napp.get('/health', (req, res) => {\\n  res.json({ status: 'ok' });\\n});\\n\\napp.use('/users', userRoutes);\\napp.use('/ping', pingRoutes);\\napp.use('/products', productRoutes);\\n\\nmo\n... [TRUNCADO]\n```\n\n# Conteúdo de testes existentes (amostra)\nSnippets de testes omitidos pelo orçamento de contexto.",
+      "related_files": [
+        "outputs/artifacts.json",
+        "outputs/analysis.md",
+        "javascript-api/src/app.js",
+        "javascript-api/src/routes/products.js",
+        "javascript-api/src/services/productService.js"
+      ],
+      "existing_tests": [
+        "tests/test_qagent_context_validation.py",
+        "docs/testes.md",
+        "javascript-api/.env.test",
+        "javascript-api/tests/users.test.js"
+      ],
+      "risks_from_context": []
+    },
+    "token_budget_plan": {
+      "file_path": "javascript-api/src/routes/products.js",
+      "change_size": "small",
+      "risk_hint": "low",
+      "analysis_mode": "standard",
+      "context_level": "compact",
+      "include_full_file": true,
+      "include_memory": false,
+      "max_context_chars": 4000,
+      "reason": "QA padrão escolhido pelo orçamento determinístico."
+    },
+    "raw_review_markdown": "# Tipo da mudança\nAdição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.\n\n# Evidências observadas\n- Inclusão dos endpoints GET /products (com filtros), GET /products/categories, GET /products/low-stock, POST /products/:id/discount, DELETE /products/:id/discount e POST /products/:id/reserve.\n- Uso de blocos try/catch em POST /products, PUT /products/:id, POST /products/:id/discount e POST /products/:id/reserve para captura de erros e retorno de status 422.\n- Validação de parâmetros de query (minPrice, maxPrice, inStock) e do corpo da requisição (quantity para reserva) é mais flexível, delegando parte da validação para o productService.\n- Ordem das rotas evita conflito entre rotas estáticas (/products/categories, /products/low-stock) e dinâmica (/products/:id).\n\n# Impacto provável\n- Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.\n- Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.\n- Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.\n\n# Riscos identificados\n- Falta de validação explícita e robusta dos parâmetros de query pode permitir valores inválidos, causando erros ou resultados inesperados.\n- Ausência de validação rigorosa do parâmetro quantity na reserva pode levar a comportamentos incorretos ou falhas.\n- Dependência do productService para lógica de negócio crítica (descontos, reservas, listagens) pode causar falhas se houver exceções não tratadas.\n- Possibilidade de condições de concorrência na aplicação e remoção de descontos e reservas, embora não haja evidência de mecanismos específicos para isso no código atual.\n\n# Cenários de testes manuais\n- Testar GET /products com combinações variadas de filtros válidos e inválidos (ex: minPrice=\"abc\", inStock=\"yes\").\n- Testar GET /products/categories para garantir retorno correto de categorias únicas.\n- Testar GET /products/low-stock com e sem parâmetro threshold, incluindo valores inválidos (ex: threshold=\"-1\", threshold=\"abc\").\n- Testar POST /products com payloads válidos e inválidos, verificando tratamento de erros.\n- Testar PUT /products/:id com dados válidos, inválidos e id inexistente, observando respostas 400, 404 e 422.\n- Testar DELETE /products/:id com id válido, inválido e inexistente.\n- Testar POST /products/:id/discount com percent válido, ausente e inválido, além de id inválido e inexistente.\n- Testar DELETE /products/:id/discount para casos com e sem desconto ativo, e produto inexistente.\n- Testar POST /products/:id/reserve com quantity válido, ausente e inválido, além de id inválido e inexistente.\n- Testar concorrência na aplicação e remoção de descontos e reservas, se possível.\n\n# Sugestões de testes unitários\n- testGetProducts_withValidFilters_shouldReturnFilteredProducts\n- testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty\n- testPostProducts_withValidPayload_shouldCreateProduct\n- testPostProducts_withInvalidPayload_shouldReturn422\n- testPutProduct_withValidData_shouldUpdateProduct\n- testPutProduct_withInvalidData_shouldReturn422\n- testPutProduct_withNonExistentId_shouldReturn404\n- testDeleteProduct_withValidId_shouldDeleteProduct\n- testDeleteProduct_withInvalidId_shouldReturn400\n- testDeleteProduct_withNonExistentId_shouldReturn404\n- testPostDiscount_withValidPercent_shouldApplyDiscount\n- testPostDiscount_withInvalidPercent_shouldReturn422\n- testPostDiscount_withMissingPercent_shouldReturn422\n- testPostDiscount_withInvalidId_shouldReturn400\n- testPostDiscount_withNonExistentId_shouldReturn404\n- testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount\n- testDeleteDiscount_withoutDiscount_shouldReturn404\n- testDeleteDiscount_withNonExistentId_shouldReturn404\n- testPostReserve_withValidQuantity_shouldReserveStock\n- testPostReserve_withInvalidQuantity_shouldReturn422\n- testPostReserve_withMissingQuantity_shouldReturn422\n- testPostReserve_withInvalidId_shouldReturn400\n- testPostReserve_withNonExistentId_shouldReturn404\n\n# Sugestões de testes de integração\n- integrationTestGetProducts_withFilters\n- integrationTestDiscountEndpoints (POST e DELETE /products/:id/discount)\n- integrationTestReserveStockEndpoint (POST /products/:id/reserve)\n- Testes de regressão para filtros, tratamento de erros e lógica de desconto e reserva\n\n# Sugestões de testes de carga ou desempenho\n- Não há evidência clara na mudança que justifique testes específicos de carga ou desempenho, mas pode ser considerado para endpoints com filtros complexos e alta concorrência.\n\n# Pontos que precisam de esclarecimento\n- Se a delegação da validação para o productService é intencional e se há mecanismos para evitar falhas por parâmetros inválidos.\n- Se há planos para implementar controle de concorrência explícito na aplicação e remoção de descontos e reservas.\n- Necessidade de testes para exceções não tratadas no productService.\n- Avaliação da necessidade de testes de performance para garantir robustez em produção.\n\n# Validação cooperativa\nAs conclusões foram revisadas pelos especialistas de QA e estratégia de testes, que concordaram com os principais achados e riscos. O crítico validou a identificação dos novos endpoints, tratamento de erros e riscos de validação, destacando a cobertura abrangente da estratégia de testes. Conflitos foram resolvidos esclarecendo que a recomendação de testes de concorrência é válida, porém genérica, e que a análise poderia detalhar melhor a validação e tratamento de erros específicos. A ausência de testes para exceções não tratadas e performance foi destacada como lacuna a ser considerada.\n\n---",
+    "review_result": {
+      "summary": "Adição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.\n\n- Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.\n- Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.\n- Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.",
+      "findings": [
+        {
+          "description": "Falta de validação explícita e robusta dos parâmetros de query pode permitir valores inválidos, causando erros ou resultados inesperados.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Ausência de validação rigorosa do parâmetro quantity na reserva pode levar a comportamentos incorretos ou falhas.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Dependência do productService para lógica de negócio crítica (descontos, reservas, listagens) pode causar falhas se houver exceções não tratadas.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Possibilidade de condições de concorrência na aplicação e remoção de descontos e reservas, embora não haja evidência de mecanismos específicos para isso no código atual.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Inclusão dos endpoints GET /products (com filtros), GET /products/categories, GET /products/low-stock, POST /products/:id/discount, DELETE /products/:id/discount e POST /products/:id/reserve.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Uso de blocos try/catch em POST /products, PUT /products/:id, POST /products/:id/discount e POST /products/:id/reserve para captura de erros e retorno de status 422.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Validação de parâmetros de query (minPrice, maxPrice, inStock) e do corpo da requisição (quantity para reserva) é mais flexível, delegando parte da validação para o productService.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Ordem das rotas evita conflito entre rotas estáticas (/products/categories, /products/low-stock) e dinâmica (/products/:id).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Se a delegação da validação para o productService é intencional e se há mecanismos para evitar falhas por parâmetros inválidos.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Se há planos para implementar controle de concorrência explícito na aplicação e remoção de descontos e reservas.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Necessidade de testes para exceções não tratadas no productService.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Avaliação da necessidade de testes de performance para garantir robustez em produção.",
+          "severity": "INFO",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "Testar GET /products com combinações variadas de filtros válidos e inválidos (ex: minPrice=\"abc\", inStock=\"yes\").",
+        "Testar GET /products/categories para garantir retorno correto de categorias únicas.",
+        "Testar GET /products/low-stock com e sem parâmetro threshold, incluindo valores inválidos (ex: threshold=\"-1\", threshold=\"abc\").",
+        "Testar POST /products com payloads válidos e inválidos, verificando tratamento de erros.",
+        "Testar PUT /products/:id com dados válidos, inválidos e id inexistente, observando respostas 400, 404 e 422.",
+        "Testar DELETE /products/:id com id válido, inválido e inexistente.",
+        "Testar POST /products/:id/discount com percent válido, ausente e inválido, além de id inválido e inexistente.",
+        "Testar DELETE /products/:id/discount para casos com e sem desconto ativo, e produto inexistente.",
+        "Testar POST /products/:id/reserve com quantity válido, ausente e inválido, além de id inválido e inexistente.",
+        "Testar concorrência na aplicação e remoção de descontos e reservas, se possível.",
+        "testGetProducts_withValidFilters_shouldReturnFilteredProducts",
+        "testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty",
+        "testPostProducts_withValidPayload_shouldCreateProduct",
+        "testPostProducts_withInvalidPayload_shouldReturn422",
+        "testPutProduct_withValidData_shouldUpdateProduct",
+        "testPutProduct_withInvalidData_shouldReturn422",
+        "testPutProduct_withNonExistentId_shouldReturn404",
+        "testDeleteProduct_withValidId_shouldDeleteProduct",
+        "testDeleteProduct_withInvalidId_shouldReturn400",
+        "testDeleteProduct_withNonExistentId_shouldReturn404",
+        "testPostDiscount_withValidPercent_shouldApplyDiscount",
+        "testPostDiscount_withInvalidPercent_shouldReturn422",
+        "testPostDiscount_withMissingPercent_shouldReturn422",
+        "testPostDiscount_withInvalidId_shouldReturn400",
+        "testPostDiscount_withNonExistentId_shouldReturn404",
+        "testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount",
+        "testDeleteDiscount_withoutDiscount_shouldReturn404",
+        "testDeleteDiscount_withNonExistentId_shouldReturn404",
+        "testPostReserve_withValidQuantity_shouldReserveStock",
+        "testPostReserve_withInvalidQuantity_shouldReturn422",
+        "testPostReserve_withMissingQuantity_shouldReturn422",
+        "testPostReserve_withInvalidId_shouldReturn400",
+        "testPostReserve_withNonExistentId_shouldReturn404",
+        "integrationTestGetProducts_withFilters",
+        "integrationTestDiscountEndpoints (POST e DELETE /products/:id/discount)",
+        "integrationTestReserveStockEndpoint (POST /products/:id/reserve)",
+        "Testes de regressão para filtros, tratamento de erros e lógica de desconto e reserva",
+        "Não há evidência clara na mudança que justifique testes específicos de carga ou desempenho, mas pode ser considerado para endpoints com filtros complexos e alta concorrência."
+      ],
+      "summary_html": "<p>Adição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.</p>\n<ul>\n<li>Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.</li>\n<li>Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.</li>\n<li>Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.</li>\n</ul>"
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "Testar GET /products com combinações variadas de filtros válidos e inválidos (ex: minPrice=\"abc\", inStock=\"yes\").",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar GET /products/categories para garantir retorno correto de categorias únicas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar GET /products/low-stock com e sem parâmetro threshold, incluindo valores inválidos (ex: threshold=\"-1\", threshold=\"abc\").",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar POST /products com payloads válidos e inválidos, verificando tratamento de erros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar PUT /products/:id com dados válidos, inválidos e id inexistente, observando respostas 400, 404 e 422.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar DELETE /products/:id com id válido, inválido e inexistente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar POST /products/:id/discount com percent válido, ausente e inválido, além de id inválido e inexistente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar DELETE /products/:id/discount para casos com e sem desconto ativo, e produto inexistente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar POST /products/:id/reserve com quantity válido, ausente e inválido, além de id inválido e inexistente.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência na aplicação e remoção de descontos e reservas, se possível.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testGetProducts_withValidFilters_shouldReturnFilteredProducts",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostProducts_withValidPayload_shouldCreateProduct",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostProducts_withInvalidPayload_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPutProduct_withValidData_shouldUpdateProduct",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPutProduct_withInvalidData_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPutProduct_withNonExistentId_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteProduct_withValidId_shouldDeleteProduct",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteProduct_withInvalidId_shouldReturn400",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteProduct_withNonExistentId_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostDiscount_withValidPercent_shouldApplyDiscount",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostDiscount_withInvalidPercent_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostDiscount_withMissingPercent_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostDiscount_withInvalidId_shouldReturn400",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostDiscount_withNonExistentId_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteDiscount_withoutDiscount_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testDeleteDiscount_withNonExistentId_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostReserve_withValidQuantity_shouldReserveStock",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostReserve_withInvalidQuantity_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostReserve_withMissingQuantity_shouldReturn422",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostReserve_withInvalidId_shouldReturn400",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "testPostReserve_withNonExistentId_shouldReturn404",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "integrationTestGetProducts_withFilters",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "integrationTestDiscountEndpoints (POST e DELETE /products/:id/discount)",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "integrationTestReserveStockEndpoint (POST /products/:id/reserve)",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testes de regressão para filtros, tratamento de erros e lógica de desconto e reserva",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não há evidência clara na mudança que justifique testes específicos de carga ou desempenho, mas pode ser considerado para endpoints com filtros complexos e alta concorrência.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Falta de validação explícita e robusta dos parâmetros de query pode permitir valores inválidos, causando erros ou resultados inesperados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Ausência de validação rigorosa do parâmetro quantity na reserva pode levar a comportamentos incorretos ou falhas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Dependência do productService para lógica de negócio crítica (descontos, reservas, listagens) pode causar falhas se houver exceções não tratadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possibilidade de condições de concorrência na aplicação e remoção de descontos e reservas, embora não haja evidência de mecanismos específicos para isso no código atual.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Inclusão dos endpoints GET /products (com filtros), GET /products/categories, GET /products/low-stock, POST /products/:id/discount, DELETE /products/:id/discount e POST /products/:id/reserve.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Uso de blocos try/catch em POST /products, PUT /products/:id, POST /products/:id/discount e POST /products/:id/reserve para captura de erros e retorno de status 422.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Validação de parâmetros de query (minPrice, maxPrice, inStock) e do corpo da requisição (quantity para reserva) é mais flexível, delegando parte da validação para o productService.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Ordem das rotas evita conflito entre rotas estáticas (/products/categories, /products/low-stock) e dinâmica (/products/:id).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se a delegação da validação para o productService é intencional e se há mecanismos para evitar falhas por parâmetros inválidos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Se há planos para implementar controle de concorrência explícito na aplicação e remoção de descontos e reservas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Necessidade de testes para exceções não tratadas no productService.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Avaliação da necessidade de testes de performance para garantir robustez em produção.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'javascript-api/src/routes/products.js'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar tratamento de erros genéricos e específicos lançados pelo productService em todos os endpoints, garantindo respostas padronizadas e consistentes.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar validação de parâmetros de query avançados em GET /products, incluindo combinações complexas de filtros (ex: minPrice > maxPrice, filtros combinados com inStock e categorias múltiplas).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar limites e valores extremos para parâmetros numéricos (ex: quantity muito grande na reserva, percent de desconto 0 e 100).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint POST /products/:id/reserve quando o estoque disponível é insuficiente para a reserva solicitada.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar concorrência simulada para múltiplas requisições simultâneas de reserva e desconto no mesmo produto, verificando integridade dos dados e respostas adequadas.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração completa do fluxo de criação, aplicação de desconto, reserva de estoque e exclusão do produto, garantindo consistência entre endpoints e productService.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar falhas e exceções não tratadas no productService, simulando erros inesperados para verificar se o tratamento de erros da API mantém a estabilidade e retorna status apropriados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar a ordem e prioridade das rotas para garantir que rotas estáticas não sejam sobrescritas por rotas dinâmicas, especialmente em casos de parâmetros ambíguos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar cenário completo de uso da API de produtos com filtros avançados, aplicação e remoção de descontos, reserva e liberação de estoque, incluindo validação de mensagens de erro e status HTTP.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento da API sob carga moderada com múltiplas requisições concorrentes para endpoints de desconto e reserva, avaliando possíveis condições de corrida e falhas.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar validação e tratamento de parâmetros ausentes ou nulos em todos os endpoints que recebem dados no corpo da requisição.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar resposta da API para IDs com formatos inválidos (ex: strings com caracteres especiais, UUIDs malformados) em todos os endpoints que recebem :id.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se a delegação da validação para o productService não permite passagem de dados inválidos que possam comprometer a integridade do sistema.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar se o tratamento de erros padronizado cobre todos os tipos de exceções esperadas e inesperadas, incluindo erros de banco de dados e timeouts.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint POST /products/:id/discount quando já existe um desconto ativo, verificando se a aplicação é cumulativa, substitui ou retorna erro.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento do endpoint DELETE /products/:id/discount quando múltiplas requisições são feitas simultaneamente para remoção do mesmo desconto.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar limites e validações para campos adicionais que possam ter sido incluídos na ampliação da API, como categorias múltiplas, descrições longas, ou campos opcionais.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar rollback ou consistência transacional em casos onde operações compostas falham parcialmente (ex: aplicar desconto e reservar estoque em sequência, com falha no segundo passo).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo de atualização de produto (PUT /products/:id) seguido de aplicação de desconto e reserva, garantindo que todas as alterações sejam refletidas corretamente e que erros sejam tratados.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar endpoints com headers HTTP inválidos ou ausentes, verificando se a API responde adequadamente (ex: Content-Type incorreto, autenticação se aplicável).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'javascript-api/src/routes/products.js'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Adição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.\n\n- Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão ...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base já cobre amplamente os testes unitários e de integração para os principais endpoints e cenários de erro, porém a inclusão de testes focados em concorrência, limites extremos e falhas inesperadas no productService é essencial para um arquivo de alto risco.\n- Testes E2E adicionais foram sugeridos para validar o comportamento integrado da API em cenários reais de uso, especialmente considerando a ampliação das funcionalidades e a complexidade crescente.\n- A validação rigorosa dos parâmetros, incluindo casos de borda e formatos inválidos, reforça a robustez da API e previne falhas silenciosas.\n- A estratégia reforça a necessidade de garantir que o tratamento de erros padronizado cubra todas as exceções possíveis, incluindo aquelas não previstas inicialmente.\n- Recomenda-se atenção especial à concorrência em endpoints que alteram estado crítico (descontos e reservas), pois a ausência de controle explícito pode gerar inconsistências.\n- A estratégia mantém a priorização HIGH para todos os novos testes, dada a criticidade do arquivo e o impacto potencial das funcionalidades implementadas."
+    },
+    "generated_test_review_result": {
+      "status": "NEEDS_CHANGES",
+      "summary": "Os testes gerados apresentam boa cobertura dos endpoints e cenários críticos, incluindo validações de parâmetros, tratamento de erros e casos de uso normais e extremos. Contudo, a execução dos testes falhou devido a um erro de importação relacionado à dependência 'email-validator' não instalada, que não está diretamente ligada aos testes gerados, mas impede a execução do CI. Além disso, alguns pontos importantes da estratégia de testes, como testes de concorrência mais robustos e validação rigorosa de parâmetros complexos, poderiam ser melhor explorados. Recomenda-se corrigir o ambiente de testes para resolver a dependência faltante e revisar os testes para incluir cenários adicionais de validação e concorrência conforme a estratégia definida.",
+      "issues": [
+        {
+          "severity": "ERROR",
+          "description": "Falha na execução dos testes devido à ausência do módulo 'email_validator', necessário para a execução do ambiente de testes. Este erro não está relacionado diretamente aos testes gerados, mas impede a execução do CI e validação dos testes.",
+          "related_test": null,
+          "suggested_fix": "Instalar a dependência 'email-validator' executando 'pip install pydantic[email]' para corrigir o ambiente de testes e permitir a execução dos testes."
+        },
+        {
+          "severity": "WARN",
+          "description": "O teste 'testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty' espera que filtros inválidos como 'minPrice=abc' resultem em NaN passado para o service, o que pode não ser o comportamento ideal. A API atual não valida explicitamente esses parâmetros, o que pode levar a comportamentos inesperados.",
+          "related_test": "testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty",
+          "suggested_fix": "Adicionar validação mais rigorosa para parâmetros de query inválidos no código ou ajustar os testes para refletir o comportamento esperado real."
+        },
+        {
+          "severity": "WARN",
+          "description": "Embora haja um teste básico de concorrência simulada para desconto e reserva, ele é muito simplificado e não cobre condições reais de corrida ou integridade em múltiplas requisições simultâneas.",
+          "related_test": "testConcurrentDiscountAndReserve_shouldMaintainDataIntegrity",
+          "suggested_fix": "Implementar testes de concorrência mais robustos, possivelmente com ferramentas específicas ou mocks que simulem acessos simultâneos para validar integridade dos dados."
+        }
+      ],
+      "missing_scenarios": [
+        "Testes unitários para validação rigorosa de parâmetros de query complexos, incluindo casos de minPrice > maxPrice e formatos inválidos além de NaN.",
+        "Testes para comportamento do endpoint POST /products/:id/discount quando já existe um desconto ativo, verificando se a aplicação é cumulativa, substitui ou retorna erro.",
+        "Testes para múltiplas requisições simultâneas de remoção de desconto e reserva para avaliar condições de corrida.",
+        "Testes para validação e tratamento de parâmetros ausentes ou nulos em todos os endpoints que recebem dados no corpo da requisição além dos já cobertos.",
+        "Testes para resposta da API para IDs com formatos inválidos mais variados (ex: strings com caracteres especiais, UUIDs malformados).",
+        "Testes para falhas e exceções não tratadas no productService simulando erros inesperados para verificar estabilidade da API.",
+        "Testes de integração e E2E para validar fluxo completo e consistência entre endpoints e productService, incluindo rollback em falhas parciais."
+      ],
+      "execution_recommended": false,
+      "execution_reason": "Os testes não puderam ser executados com sucesso no ambiente CI devido a erro de importação de dependência externa, impedindo a validação automática. Recomenda-se corrigir o ambiente antes de executar os testes.",
+      "suggested_fixes": [
+        "Corrigir o ambiente de testes instalando a dependência 'email-validator' para permitir a execução do CI.",
+        "Revisar e fortalecer a validação de parâmetros de query inválidos nos testes e no código da API.",
+        "Expandir os testes de concorrência para cobrir cenários reais de múltiplas requisições simultâneas.",
+        "Adicionar testes para cenários ausentes conforme a estratégia de testes definida, especialmente para casos de borda e falhas inesperadas.",
+        "Garantir que os testes reflitam o comportamento real da API e do productService, ajustando mocks e expectativas conforme necessário."
+      ]
+    },
+    "test_execution_result": {
+      "success": false,
+      "exit_code": 2,
+      "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.13.13, pytest-9.0.3, pluggy-1.6.0\nrootdir: /home/runner/work/qagent/qagent/target\nplugins: anyio-4.13.0\ncollected 13 items / 1 error\n\n==================================== ERRORS ====================================\n______________________ ERROR collecting python-api/tests _______________________\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:946: in import_email_validator\n    import email_validator\nE   ModuleNotFoundError: No module named 'email_validator'\n\nThe above exception was the direct cause of the following exception:\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1395: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:197: in exec_module\n    exec(co, module.__dict__)\npython-api/tests/conftest.py:3: in <module>\n    from app.api import routes\npython-api/app/api/routes.py:3: in <module>\n    from app.services.external_service import ExternalService\npython-api/app/services/external_service.py:3: in <module>\n    from app.schemas import AgeEstimateResponse\npython-api/app/schemas.py:9: in <module>\n    class UserCreate(BaseModel):\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py:237: in __new__\n    complete_model_class(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py:597: in complete_model_class\n    schema = gen_schema.generate_schema(cls)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:711: in generate_schema\n    schema = self._generate_schema_inner(obj)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1004: in _generate_schema_inner\n    return self._model_schema(obj)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:837: in _model_schema\n    {k: self._generate_md_field_schema(k, v, decorators) for k, v in fields.items()},\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1206: in _generate_md_field_schema\n    common_field = self._common_field_schema(name, field_info, decorators)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1372: in _common_field_schema\n    schema = self._apply_annotations(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:2297: in _apply_annotations\n    schema = get_inner_schema(source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_schema_generation_shared.py:83: in __call__\n    schema = self._handler(source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:2276: in inner_handler\n    schema = self._generate_schema_from_get_schema_method(obj, source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:900: in _generate_schema_from_get_schema_method\n    schema = get_schema(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:986: in __get_pydantic_core_schema__\n    import_email_validator()\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:948: in import_email_validator\n    raise ImportError('email-validator is not installed, run `pip install pydantic[email]`') from e\nE   ImportError: email-validator is not installed, run `pip install pydantic[email]`\n=========================== short test summary info ============================\nERROR python-api/tests - ImportError: email-validator is not installed, run `pip install pydantic[email]`\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.64s ===============================\n",
+      "stderr": "",
+      "duration_seconds": 1.0095086097717285,
+      "command": "pytest"
+    },
+    "generated_tests_raw": "### FILE: javascript-api/tests/products.test.js\n```javascript\nconst request = require('supertest');\nconst express = require('express');\nconst productRoutes = require('../src/routes/products');\nconst productService = require('../src/services/productService');\n\njest.mock('../src/services/productService');\n\nconst app = express();\napp.use(express.json());\napp.use('/products', productRoutes);\n\ndescribe('Products API Routes', () => {\n  afterEach(() => {\n    jest.clearAllMocks();\n  });\n\n  // GET /products with valid filters\n  test('testGetProducts_withValidFilters_shouldReturnFilteredProducts', async () => {\n    const mockProducts = [{ id: 1, name: 'Product A' }];\n    productService.listProducts.mockReturnValue(mockProducts);\n\n    const res = await request(app).get('/products')\n      .query({ category: 'electronics', search: 'phone', minPrice: '100', maxPrice: '1000', inStock: 'true' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: 'electronics',\n      search: 'phone',\n      minPrice: 100,\n      maxPrice: 1000,\n      inStock: true,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(mockProducts);\n  });\n\n  // GET /products with invalid filters\n  test('testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ minPrice: 'abc', inStock: 'yes' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: undefined,\n      search: undefined,\n      minPrice: NaN,\n      maxPrice: undefined,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // GET /products/categories returns unique categories\n  test('testGetProductsCategories_shouldReturnUniqueCategories', async () => {\n    const categories = ['electronics', 'books', 'clothing'];\n    productService.listCategories.mockReturnValue(categories);\n\n    const res = await request(app).get('/products/categories');\n\n    expect(productService.listCategories).toHaveBeenCalled();\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(categories);\n  });\n\n  // GET /products/low-stock with valid threshold\n  test('testGetProductsLowStock_withValidThreshold_shouldReturnLowStockProducts', async () => {\n    const lowStockProducts = [{ id: 2, name: 'Product B', stock: 3 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock').query({ threshold: '3' });\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(3);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // GET /products/low-stock with invalid threshold\n  test('testGetProductsLowStock_withInvalidThreshold_shouldUseDefault', async () => {\n    const lowStockProducts = [{ id: 3, name: 'Product C', stock: 2 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock').query({ threshold: '-1' });\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(-1);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // GET /products/low-stock with no threshold (default)\n  test('testGetProductsLowStock_withoutThreshold_shouldUseDefault', async () => {\n    const lowStockProducts = [{ id: 4, name: 'Product D', stock: 1 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock');\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(5);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // POST /products with valid payload\n  test('testPostProducts_withValidPayload_shouldCreateProduct', async () => {\n    const newProduct = { id: 10, name: 'New Product' };\n    productService.createProduct.mockReturnValue(newProduct);\n\n    const res = await request(app).post('/products').send({ name: 'New Product' });\n\n    expect(productService.createProduct).toHaveBeenCalledWith({ name: 'New Product' });\n    expect(res.statusCode).toBe(201);\n    expect(res.body).toEqual(newProduct);\n  });\n\n  // POST /products with invalid payload (throws error)\n  test('testPostProducts_withInvalidPayload_shouldReturn422', async () => {\n    productService.createProduct.mockImplementation(() => {\n      throw new Error('Invalid product data');\n    });\n\n    const res = await request(app).post('/products').send({});\n\n    expect(productService.createProduct).toHaveBeenCalledWith({});\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Invalid product data' });\n  });\n\n  // PUT /products/:id with valid data\n  test('testPutProduct_withValidData_shouldUpdateProduct', async () => {\n    const updatedProduct = { id: 1, name: 'Updated Product' };\n    productService.updateProduct.mockReturnValue(updatedProduct);\n\n    const res = await request(app).put('/products/1').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(1, { name: 'Updated Product' });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(updatedProduct);\n  });\n\n  // PUT /products/:id with invalid id\n  test('testPutProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).put('/products/abc').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // PUT /products/:id with non-existent id\n  test('testPutProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.updateProduct.mockReturnValue(null);\n\n    const res = await request(app).put('/products/999').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(999, { name: 'Updated Product' });\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // PUT /products/:id with invalid data (throws error)\n  test('testPutProduct_withInvalidData_shouldReturn422', async () => {\n    productService.updateProduct.mockImplementation(() => {\n      throw new Error('Invalid update data');\n    });\n\n    const res = await request(app).put('/products/1').send({ name: '' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(1, { name: '' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Invalid update data' });\n  });\n\n  // DELETE /products/:id with valid id\n  test('testDeleteProduct_withValidId_shouldDeleteProduct', async () => {\n    productService.deleteProduct.mockReturnValue(true);\n\n    const res = await request(app).delete('/products/1');\n\n    expect(productService.deleteProduct).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(204);\n    expect(res.body).toEqual({});\n  });\n\n  // DELETE /products/:id with invalid id\n  test('testDeleteProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).delete('/products/abc');\n\n    expect(productService.deleteProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // DELETE /products/:id with non-existent id\n  test('testDeleteProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.deleteProduct.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/999');\n\n    expect(productService.deleteProduct).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // POST /products/:id/discount with valid percent\n  test('testPostDiscount_withValidPercent_shouldApplyDiscount', async () => {\n    const discountedProduct = { id: 1, discount: 20 };\n    productService.applyDiscount.mockReturnValue(discountedProduct);\n\n    const res = await request(app).post('/products/1/discount').send({ percent: 20 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(1, 20);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(discountedProduct);\n  });\n\n  // POST /products/:id/discount with missing percent\n  test('testPostDiscount_withMissingPercent_shouldReturn422', async () => {\n    const res = await request(app).post('/products/1/discount').send({});\n\n    expect(productService.applyDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: \"Campo 'percent' é obrigatório\" });\n  });\n\n  // POST /products/:id/discount with invalid percent (throws error)\n  test('testPostDiscount_withInvalidPercent_shouldReturn422', async () => {\n    productService.applyDiscount.mockImplementation(() => {\n      throw new Error('Percent must be between 0 and 100');\n    });\n\n    const res = await request(app).post('/products/1/discount').send({ percent: 150 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(1, 150);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Percent must be between 0 and 100' });\n  });\n\n  // POST /products/:id/discount with invalid id\n  test('testPostDiscount_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).post('/products/abc/discount').send({ percent: 10 });\n\n    expect(productService.applyDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/discount with non-existent id\n  test('testPostDiscount_withNonExistentId_shouldReturn404', async () => {\n    productService.applyDiscount.mockReturnValue(null);\n\n    const res = await request(app).post('/products/999/discount').send({ percent: 10 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(999, 10);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // DELETE /products/:id/discount with active discount\n  test('testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount', async () => {\n    productService.removeDiscount.mockReturnValue(true);\n\n    const res = await request(app).delete('/products/1/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(204);\n    expect(res.body).toEqual({});\n  });\n\n  // DELETE /products/:id/discount without discount active\n  test('testDeleteDiscount_withoutDiscount_shouldReturn404', async () => {\n    productService.removeDiscount.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/1/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado ou sem desconto ativo' });\n  });\n\n  // DELETE /products/:id/discount with non-existent id\n  test('testDeleteDiscount_withNonExistentId_shouldReturn404', async () => {\n    productService.removeDiscount.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/999/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado ou sem desconto ativo' });\n  });\n\n  // DELETE /products/:id/discount with invalid id format\n  test('testDeleteDiscount_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).delete('/products/abc/discount');\n\n    expect(productService.removeDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/reserve with valid quantity\n  test('testPostReserve_withValidQuantity_shouldReserveStock', async () => {\n    const reservedProduct = { id: 1, reserved: 5 };\n    productService.reserveStock.mockReturnValue(reservedProduct);\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 5);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(reservedProduct);\n  });\n\n  // POST /products/:id/reserve with missing quantity\n  test('testPostReserve_withMissingQuantity_shouldReturn422', async () => {\n    const res = await request(app).post('/products/1/reserve').send({});\n\n    expect(productService.reserveStock).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: \"Campo 'quantity' é obrigatório\" });\n  });\n\n  // POST /products/:id/reserve with invalid quantity (throws error)\n  test('testPostReserve_withInvalidQuantity_shouldReturn422', async () => {\n    productService.reserveStock.mockImplementation(() => {\n      throw new Error('Quantity must be positive integer');\n    });\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: -10 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, -10);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Quantity must be positive integer' });\n  });\n\n  // POST /products/:id/reserve with invalid id\n  test('testPostReserve_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).post('/products/abc/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/reserve with non-existent id\n  test('testPostReserve_withNonExistentId_shouldReturn404', async () => {\n    productService.reserveStock.mockReturnValue(null);\n\n    const res = await request(app).post('/products/999/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(999, 5);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // GET /products/:id with valid id\n  test('testGetProduct_withValidId_shouldReturnProduct', async () => {\n    const product = { id: 1, name: 'Product A' };\n    productService.getProduct.mockReturnValue(product);\n\n    const res = await request(app).get('/products/1');\n\n    expect(productService.getProduct).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(product);\n  });\n\n  // GET /products/:id with invalid id\n  test('testGetProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).get('/products/abc');\n\n    expect(productService.getProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // GET /products/:id with non-existent id\n  test('testGetProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.getProduct.mockReturnValue(null);\n\n    const res = await request(app).get('/products/999');\n\n    expect(productService.getProduct).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // Test concurrency simulation for discount and reserve (basic simulation)\n  test('testConcurrentDiscountAndReserve_shouldMaintainDataIntegrity', async () => {\n    // Setup mocks to simulate concurrency\n    const productBefore = { id: 1, stock: 10, discount: 0 };\n    const productAfterDiscount = { id: 1, stock: 10, discount: 20 };\n    const productAfterReserve = { id: 1, stock: 5, discount: 20 };\n\n    let discountApplied = false;\n    let stockReserved = false;\n\n    productService.applyDiscount.mockImplementation((id, percent) => {\n      discountApplied = true;\n      return productAfterDiscount;\n    });\n\n    productService.reserveStock.mockImplementation((id, quantity) => {\n      if (!discountApplied) throw new Error('Discount must be applied first');\n      stockReserved = true;\n      return productAfterReserve;\n    });\n\n    // Apply discount\n    const discountRes = await request(app).post('/products/1/discount').send({ percent: 20 });\n    expect(discountRes.statusCode).toBe(200);\n    expect(discountRes.body).toEqual(productAfterDiscount);\n\n    // Reserve stock\n    const reserveRes = await request(app).post('/products/1/reserve').send({ quantity: 5 });\n    expect(reserveRes.statusCode).toBe(200);\n    expect(reserveRes.body).toEqual(productAfterReserve);\n\n    expect(discountApplied).toBe(true);\n    expect(stockReserved).toBe(true);\n  });\n\n  // Test invalid Content-Type header handling (should still work as no explicit check)\n  test('testEndpoints_withInvalidContentType_shouldProcessNormally', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .set('Content-Type', 'text/plain');\n\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // Test extreme values for quantity and percent\n  test('testPostReserve_withVeryLargeQuantity_shouldCallService', async () => {\n    const product = { id: 1, reserved: 1000000 };\n    productService.reserveStock.mockReturnValue(product);\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 1000000 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 1000000);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(product);\n  });\n\n  test('testPostDiscount_withPercentZeroAndHundred_shouldApplyDiscount', async () => {\n    const productZero = { id: 1, discount: 0 };\n    const productHundred = { id: 1, discount: 100 };\n\n    productService.applyDiscount.mockReturnValueOnce(productZero).mockReturnValueOnce(productHundred);\n\n    const resZero = await request(app).post('/products/1/discount').send({ percent: 0 });\n    expect(resZero.statusCode).toBe(200);\n    expect(resZero.body).toEqual(productZero);\n\n    const resHundred = await request(app).post('/products/1/discount').send({ percent: 100 });\n    expect(resHundred.statusCode).toBe(200);\n    expect(resHundred.body).toEqual(productHundred);\n  });\n\n  // Test behavior when stock is insufficient for reservation\n  test('testPostReserve_withInsufficientStock_shouldReturn422', async () => {\n    productService.reserveStock.mockImplementation(() => {\n      throw new Error('Insufficient stock');\n    });\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 1000 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 1000);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Insufficient stock' });\n  });\n\n  // Test error handling for unexpected exceptions in productService\n  test('testErrorHandling_inAllEndpoints_shouldReturn422', async () => {\n    productService.listProducts.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.listCategories.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.listLowStock.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.getProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.createProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.updateProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.deleteProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.applyDiscount.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.removeDiscount.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.reserveStock.mockImplementation(() => { throw new Error('Unexpected error'); });\n\n    // POST /products\n    let res = await request(app).post('/products').send({ name: 'fail' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // PUT /products/:id\n    res = await request(app).put('/products/1').send({ name: 'fail' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // POST /products/:id/discount\n    res = await request(app).post('/products/1/discount').send({ percent: 10 });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // POST /products/:id/reserve\n    res = await request(app).post('/products/1/reserve').send({ quantity: 1 });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n  });\n\n  // Test validation of minPrice > maxPrice in GET /products\n  test('testGetProducts_withMinPriceGreaterThanMaxPrice_shouldReturnEmpty', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ minPrice: '1000', maxPrice: '100' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: undefined,\n      search: undefined,\n      minPrice: 1000,\n      maxPrice: 100,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // Test multiple categories filter (assuming productService supports it)\n  test('testGetProducts_withMultipleCategories_shouldCallServiceCorrectly', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ category: 'electronics,books' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: 'electronics,books',\n      search: undefined,\n      minPrice: undefined,\n      maxPrice: undefined,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n});\n```",
+    "generated_test_files": {
+      "javascript-api/tests/products.test.js": "const request = require('supertest');\nconst express = require('express');\nconst productRoutes = require('../src/routes/products');\nconst productService = require('../src/services/productService');\n\njest.mock('../src/services/productService');\n\nconst app = express();\napp.use(express.json());\napp.use('/products', productRoutes);\n\ndescribe('Products API Routes', () => {\n  afterEach(() => {\n    jest.clearAllMocks();\n  });\n\n  // GET /products with valid filters\n  test('testGetProducts_withValidFilters_shouldReturnFilteredProducts', async () => {\n    const mockProducts = [{ id: 1, name: 'Product A' }];\n    productService.listProducts.mockReturnValue(mockProducts);\n\n    const res = await request(app).get('/products')\n      .query({ category: 'electronics', search: 'phone', minPrice: '100', maxPrice: '1000', inStock: 'true' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: 'electronics',\n      search: 'phone',\n      minPrice: 100,\n      maxPrice: 1000,\n      inStock: true,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(mockProducts);\n  });\n\n  // GET /products with invalid filters\n  test('testGetProducts_withInvalidFilters_shouldReturnErrorOrEmpty', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ minPrice: 'abc', inStock: 'yes' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: undefined,\n      search: undefined,\n      minPrice: NaN,\n      maxPrice: undefined,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // GET /products/categories returns unique categories\n  test('testGetProductsCategories_shouldReturnUniqueCategories', async () => {\n    const categories = ['electronics', 'books', 'clothing'];\n    productService.listCategories.mockReturnValue(categories);\n\n    const res = await request(app).get('/products/categories');\n\n    expect(productService.listCategories).toHaveBeenCalled();\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(categories);\n  });\n\n  // GET /products/low-stock with valid threshold\n  test('testGetProductsLowStock_withValidThreshold_shouldReturnLowStockProducts', async () => {\n    const lowStockProducts = [{ id: 2, name: 'Product B', stock: 3 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock').query({ threshold: '3' });\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(3);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // GET /products/low-stock with invalid threshold\n  test('testGetProductsLowStock_withInvalidThreshold_shouldUseDefault', async () => {\n    const lowStockProducts = [{ id: 3, name: 'Product C', stock: 2 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock').query({ threshold: '-1' });\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(-1);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // GET /products/low-stock with no threshold (default)\n  test('testGetProductsLowStock_withoutThreshold_shouldUseDefault', async () => {\n    const lowStockProducts = [{ id: 4, name: 'Product D', stock: 1 }];\n    productService.listLowStock.mockReturnValue(lowStockProducts);\n\n    const res = await request(app).get('/products/low-stock');\n\n    expect(productService.listLowStock).toHaveBeenCalledWith(5);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(lowStockProducts);\n  });\n\n  // POST /products with valid payload\n  test('testPostProducts_withValidPayload_shouldCreateProduct', async () => {\n    const newProduct = { id: 10, name: 'New Product' };\n    productService.createProduct.mockReturnValue(newProduct);\n\n    const res = await request(app).post('/products').send({ name: 'New Product' });\n\n    expect(productService.createProduct).toHaveBeenCalledWith({ name: 'New Product' });\n    expect(res.statusCode).toBe(201);\n    expect(res.body).toEqual(newProduct);\n  });\n\n  // POST /products with invalid payload (throws error)\n  test('testPostProducts_withInvalidPayload_shouldReturn422', async () => {\n    productService.createProduct.mockImplementation(() => {\n      throw new Error('Invalid product data');\n    });\n\n    const res = await request(app).post('/products').send({});\n\n    expect(productService.createProduct).toHaveBeenCalledWith({});\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Invalid product data' });\n  });\n\n  // PUT /products/:id with valid data\n  test('testPutProduct_withValidData_shouldUpdateProduct', async () => {\n    const updatedProduct = { id: 1, name: 'Updated Product' };\n    productService.updateProduct.mockReturnValue(updatedProduct);\n\n    const res = await request(app).put('/products/1').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(1, { name: 'Updated Product' });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(updatedProduct);\n  });\n\n  // PUT /products/:id with invalid id\n  test('testPutProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).put('/products/abc').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // PUT /products/:id with non-existent id\n  test('testPutProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.updateProduct.mockReturnValue(null);\n\n    const res = await request(app).put('/products/999').send({ name: 'Updated Product' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(999, { name: 'Updated Product' });\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // PUT /products/:id with invalid data (throws error)\n  test('testPutProduct_withInvalidData_shouldReturn422', async () => {\n    productService.updateProduct.mockImplementation(() => {\n      throw new Error('Invalid update data');\n    });\n\n    const res = await request(app).put('/products/1').send({ name: '' });\n\n    expect(productService.updateProduct).toHaveBeenCalledWith(1, { name: '' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Invalid update data' });\n  });\n\n  // DELETE /products/:id with valid id\n  test('testDeleteProduct_withValidId_shouldDeleteProduct', async () => {\n    productService.deleteProduct.mockReturnValue(true);\n\n    const res = await request(app).delete('/products/1');\n\n    expect(productService.deleteProduct).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(204);\n    expect(res.body).toEqual({});\n  });\n\n  // DELETE /products/:id with invalid id\n  test('testDeleteProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).delete('/products/abc');\n\n    expect(productService.deleteProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // DELETE /products/:id with non-existent id\n  test('testDeleteProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.deleteProduct.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/999');\n\n    expect(productService.deleteProduct).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // POST /products/:id/discount with valid percent\n  test('testPostDiscount_withValidPercent_shouldApplyDiscount', async () => {\n    const discountedProduct = { id: 1, discount: 20 };\n    productService.applyDiscount.mockReturnValue(discountedProduct);\n\n    const res = await request(app).post('/products/1/discount').send({ percent: 20 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(1, 20);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(discountedProduct);\n  });\n\n  // POST /products/:id/discount with missing percent\n  test('testPostDiscount_withMissingPercent_shouldReturn422', async () => {\n    const res = await request(app).post('/products/1/discount').send({});\n\n    expect(productService.applyDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: \"Campo 'percent' é obrigatório\" });\n  });\n\n  // POST /products/:id/discount with invalid percent (throws error)\n  test('testPostDiscount_withInvalidPercent_shouldReturn422', async () => {\n    productService.applyDiscount.mockImplementation(() => {\n      throw new Error('Percent must be between 0 and 100');\n    });\n\n    const res = await request(app).post('/products/1/discount').send({ percent: 150 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(1, 150);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Percent must be between 0 and 100' });\n  });\n\n  // POST /products/:id/discount with invalid id\n  test('testPostDiscount_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).post('/products/abc/discount').send({ percent: 10 });\n\n    expect(productService.applyDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/discount with non-existent id\n  test('testPostDiscount_withNonExistentId_shouldReturn404', async () => {\n    productService.applyDiscount.mockReturnValue(null);\n\n    const res = await request(app).post('/products/999/discount').send({ percent: 10 });\n\n    expect(productService.applyDiscount).toHaveBeenCalledWith(999, 10);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // DELETE /products/:id/discount with active discount\n  test('testDeleteDiscount_withActiveDiscount_shouldRemoveDiscount', async () => {\n    productService.removeDiscount.mockReturnValue(true);\n\n    const res = await request(app).delete('/products/1/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(204);\n    expect(res.body).toEqual({});\n  });\n\n  // DELETE /products/:id/discount without discount active\n  test('testDeleteDiscount_withoutDiscount_shouldReturn404', async () => {\n    productService.removeDiscount.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/1/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado ou sem desconto ativo' });\n  });\n\n  // DELETE /products/:id/discount with non-existent id\n  test('testDeleteDiscount_withNonExistentId_shouldReturn404', async () => {\n    productService.removeDiscount.mockReturnValue(false);\n\n    const res = await request(app).delete('/products/999/discount');\n\n    expect(productService.removeDiscount).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado ou sem desconto ativo' });\n  });\n\n  // DELETE /products/:id/discount with invalid id format\n  test('testDeleteDiscount_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).delete('/products/abc/discount');\n\n    expect(productService.removeDiscount).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/reserve with valid quantity\n  test('testPostReserve_withValidQuantity_shouldReserveStock', async () => {\n    const reservedProduct = { id: 1, reserved: 5 };\n    productService.reserveStock.mockReturnValue(reservedProduct);\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 5);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(reservedProduct);\n  });\n\n  // POST /products/:id/reserve with missing quantity\n  test('testPostReserve_withMissingQuantity_shouldReturn422', async () => {\n    const res = await request(app).post('/products/1/reserve').send({});\n\n    expect(productService.reserveStock).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: \"Campo 'quantity' é obrigatório\" });\n  });\n\n  // POST /products/:id/reserve with invalid quantity (throws error)\n  test('testPostReserve_withInvalidQuantity_shouldReturn422', async () => {\n    productService.reserveStock.mockImplementation(() => {\n      throw new Error('Quantity must be positive integer');\n    });\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: -10 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, -10);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Quantity must be positive integer' });\n  });\n\n  // POST /products/:id/reserve with invalid id\n  test('testPostReserve_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).post('/products/abc/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // POST /products/:id/reserve with non-existent id\n  test('testPostReserve_withNonExistentId_shouldReturn404', async () => {\n    productService.reserveStock.mockReturnValue(null);\n\n    const res = await request(app).post('/products/999/reserve').send({ quantity: 5 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(999, 5);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // GET /products/:id with valid id\n  test('testGetProduct_withValidId_shouldReturnProduct', async () => {\n    const product = { id: 1, name: 'Product A' };\n    productService.getProduct.mockReturnValue(product);\n\n    const res = await request(app).get('/products/1');\n\n    expect(productService.getProduct).toHaveBeenCalledWith(1);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(product);\n  });\n\n  // GET /products/:id with invalid id\n  test('testGetProduct_withInvalidId_shouldReturn400', async () => {\n    const res = await request(app).get('/products/abc');\n\n    expect(productService.getProduct).not.toHaveBeenCalled();\n    expect(res.statusCode).toBe(400);\n    expect(res.body).toEqual({ detail: 'ID inválido' });\n  });\n\n  // GET /products/:id with non-existent id\n  test('testGetProduct_withNonExistentId_shouldReturn404', async () => {\n    productService.getProduct.mockReturnValue(null);\n\n    const res = await request(app).get('/products/999');\n\n    expect(productService.getProduct).toHaveBeenCalledWith(999);\n    expect(res.statusCode).toBe(404);\n    expect(res.body).toEqual({ detail: 'Produto não encontrado' });\n  });\n\n  // Test concurrency simulation for discount and reserve (basic simulation)\n  test('testConcurrentDiscountAndReserve_shouldMaintainDataIntegrity', async () => {\n    // Setup mocks to simulate concurrency\n    const productBefore = { id: 1, stock: 10, discount: 0 };\n    const productAfterDiscount = { id: 1, stock: 10, discount: 20 };\n    const productAfterReserve = { id: 1, stock: 5, discount: 20 };\n\n    let discountApplied = false;\n    let stockReserved = false;\n\n    productService.applyDiscount.mockImplementation((id, percent) => {\n      discountApplied = true;\n      return productAfterDiscount;\n    });\n\n    productService.reserveStock.mockImplementation((id, quantity) => {\n      if (!discountApplied) throw new Error('Discount must be applied first');\n      stockReserved = true;\n      return productAfterReserve;\n    });\n\n    // Apply discount\n    const discountRes = await request(app).post('/products/1/discount').send({ percent: 20 });\n    expect(discountRes.statusCode).toBe(200);\n    expect(discountRes.body).toEqual(productAfterDiscount);\n\n    // Reserve stock\n    const reserveRes = await request(app).post('/products/1/reserve').send({ quantity: 5 });\n    expect(reserveRes.statusCode).toBe(200);\n    expect(reserveRes.body).toEqual(productAfterReserve);\n\n    expect(discountApplied).toBe(true);\n    expect(stockReserved).toBe(true);\n  });\n\n  // Test invalid Content-Type header handling (should still work as no explicit check)\n  test('testEndpoints_withInvalidContentType_shouldProcessNormally', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .set('Content-Type', 'text/plain');\n\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // Test extreme values for quantity and percent\n  test('testPostReserve_withVeryLargeQuantity_shouldCallService', async () => {\n    const product = { id: 1, reserved: 1000000 };\n    productService.reserveStock.mockReturnValue(product);\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 1000000 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 1000000);\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual(product);\n  });\n\n  test('testPostDiscount_withPercentZeroAndHundred_shouldApplyDiscount', async () => {\n    const productZero = { id: 1, discount: 0 };\n    const productHundred = { id: 1, discount: 100 };\n\n    productService.applyDiscount.mockReturnValueOnce(productZero).mockReturnValueOnce(productHundred);\n\n    const resZero = await request(app).post('/products/1/discount').send({ percent: 0 });\n    expect(resZero.statusCode).toBe(200);\n    expect(resZero.body).toEqual(productZero);\n\n    const resHundred = await request(app).post('/products/1/discount').send({ percent: 100 });\n    expect(resHundred.statusCode).toBe(200);\n    expect(resHundred.body).toEqual(productHundred);\n  });\n\n  // Test behavior when stock is insufficient for reservation\n  test('testPostReserve_withInsufficientStock_shouldReturn422', async () => {\n    productService.reserveStock.mockImplementation(() => {\n      throw new Error('Insufficient stock');\n    });\n\n    const res = await request(app).post('/products/1/reserve').send({ quantity: 1000 });\n\n    expect(productService.reserveStock).toHaveBeenCalledWith(1, 1000);\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Insufficient stock' });\n  });\n\n  // Test error handling for unexpected exceptions in productService\n  test('testErrorHandling_inAllEndpoints_shouldReturn422', async () => {\n    productService.listProducts.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.listCategories.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.listLowStock.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.getProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.createProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.updateProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.deleteProduct.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.applyDiscount.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.removeDiscount.mockImplementation(() => { throw new Error('Unexpected error'); });\n    productService.reserveStock.mockImplementation(() => { throw new Error('Unexpected error'); });\n\n    // POST /products\n    let res = await request(app).post('/products').send({ name: 'fail' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // PUT /products/:id\n    res = await request(app).put('/products/1').send({ name: 'fail' });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // POST /products/:id/discount\n    res = await request(app).post('/products/1/discount').send({ percent: 10 });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n\n    // POST /products/:id/reserve\n    res = await request(app).post('/products/1/reserve').send({ quantity: 1 });\n    expect(res.statusCode).toBe(422);\n    expect(res.body).toEqual({ detail: 'Unexpected error' });\n  });\n\n  // Test validation of minPrice > maxPrice in GET /products\n  test('testGetProducts_withMinPriceGreaterThanMaxPrice_shouldReturnEmpty', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ minPrice: '1000', maxPrice: '100' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: undefined,\n      search: undefined,\n      minPrice: 1000,\n      maxPrice: 100,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n\n  // Test multiple categories filter (assuming productService supports it)\n  test('testGetProducts_withMultipleCategories_shouldCallServiceCorrectly', async () => {\n    productService.listProducts.mockReturnValue([]);\n\n    const res = await request(app).get('/products')\n      .query({ category: 'electronics,books' });\n\n    expect(productService.listProducts).toHaveBeenCalledWith({\n      category: 'electronics,books',\n      search: undefined,\n      minPrice: undefined,\n      maxPrice: undefined,\n      inStock: false,\n    });\n    expect(res.statusCode).toBe(200);\n    expect(res.body).toEqual([]);\n  });\n});"
+    },
+    "memory_query": "",
+    "memories_used_raw": "",
+    "memories_used": [],
+    "agent_messages": {},
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation",
+      "test_execution",
+      "test_review",
+      "test_auto_fix",
+      "test_re_execution_after_fix",
+      "test_re_review_after_fix"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "token_budget_standard",
+      "context_compact",
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.03,
+      "build_strategy": 0.09,
+      "high_risk_enrichment": 13046.29,
+      "test_generation": 72507.59,
+      "test_execution": 1217.22,
+      "test_review": 5312.3,
+      "test_auto_fix": 79161.28,
+      "test_re_execution_after_fix": 1009.55,
+      "test_re_review_after_fix": 12613.35
+    },
+    "diagnostic_notes": [
+      "QA padrão escolhido pelo orçamento determinístico.",
+      "Execução real dos testes falhou; saída anexada ao contexto da revisão crítica.",
+      "Testes corrigidos automaticamente após revisão crítica.",
+      "Re-execução real dos testes falhou após auto-fix.",
+      "Auto-fix executado, mas ainda restam problemas na re-revisão."
+    ]
+  },
+  {
+    "file_path": "javascript-api/src/services/productService.js",
+    "context_result": {
+      "file_path": "javascript-api/src/services/productService.js",
+      "summary": "# Arquivo alterado\njavascript-api/src/services/productService.js\n\n# Nome base pesquisado\nproductService\n\n# Arquivos que parecem relacionados ao nome/base\noutputs/artifacts.json\noutputs/analysis.md\njavascript-api/src/routes/products.js\n\n# Testes existentes identificados\ntests/test_qagent_context_validation.py\ndocs/testes.md\njavascript-api/.env.test\njavascript-api/tests/users.test.js\njavascript-api/tests/ping.test.js\njavascript-api/tests/app.test.js\njavascript-api/tests/server.test.js\njavascript-api/tests/basicApi.test.js\n\n# Conteúdo de código relacionado (amostra)\n### outputs/artifacts.json\n```\n[\n  {\n    \"file_path\": \"javascript-api/src/routes/products.js\",\n    \"context_result\": {\n      \"file_path\": \"javascript-api/src/routes/products.js\",\n      \"summary\": \"# Arquivo alterado\\njavascript-api/src/routes/products.js\\n\\n# Nome base pesquisado\\nproducts\\n\\n# Arquivos que parecem relacionados ao nome/base\\njavascript-api/src/app.js\\njavascript-api/src/routes/products.js\\njavascript-api/src/services/productService.js\\n\\n# Testes existentes identificados\\ntests/test_qagent_context_validation.py\\ndocs/testes.md\\njavascript-api/.env.test\\njavascript-api/tests/users.test.js\\njavascript-api/tests/ping.test.js\\njavascript-api/tests/app.test.js\\n\\n# Conteúdo de código relacionado (amostra)\\n### javascript-api/src/app.js\\n```\\nconst express = require('express');\\nconst cors = require('cors');\\nconst userRoutes = require('./routes/users');\\nconst pingRoutes = require('./routes/ping');\\nconst productRoutes = require('./routes/products');\\n\\nconst app = express();\\n\\napp.use(cors());\\napp.use(express.json());\\n\\napp.get('/health', (req, res) => {\\n  res.json({ status: 'ok' });\\n});\\n\\napp.use('/users', userRoutes);\\napp.use('/ping', pingRoutes);\\napp.use('/products', productRoutes);\\n\\nmodule.exports = app;\\n\\n```\\n\\n### javascript-api/src/services/productService.js\\n```\\nclass ProductService {\\n  constructor() {\\n    this.products = [\\n      { id: 1, name: \\\"Teclado Mecânico\\\", price: 299.90, stock: 10, category: \\\"perifericos\\\" },\\n      { id: 2, name: \\\"Mouse Sem Fio\\\", price: 149.90, stock: 25, category: \\\"perifericos\\\" },\\n      { id: 3, name: \\\"Monitor 24\\\\\\\"\\\", price: 1199.00, stock: 5, category: \\\"monitores\\\" },\\n      { id: 4, name: \\\"Headset USB\\\", price: 199.90, stock: 15, category: \\\"audio\\\" },\\n      { id: 5, name: \\\"Webcam HD\\\", price: 249.90, stock: 8, category: \\\"perifericos\\\" },\\n    ];\\n    this.nextId = 6;\\n    this.discounts = {};\\n  }\\n\\n  listProducts({ category, search, minPrice, maxPrice, inStock } = {}) {\\n    let results = [...this.products];\\n\\n    if (category) {\\n      results = results.filter(p => p.category === category.toLowerCase());\\n    }\\n    if (search) {\\n      const term = search.toLowerCase();\\n      results = results.filter(p => p.name.toLowerCase().includes(term));\\n    }\\n    if (minPrice !== undefined) {\\n      results = results.filter(p => p.effectivePrice() >= minPrice);\\n    }\\n    if (maxPrice !== undefined) {\\n      results = results.filter(p => p.effectivePrice() <= maxPrice);\\n    }\\n    if (inStock) {\\n      results = results.filter(p => p.stock > 0);\\n    }\\n\\n    return results.map(p => this._serialize(p));\\n  }\\n\\n  getProduct(id) {\\n    const product = this.products.find(p => p.id === id);\\n    return product ? this._serialize(product) : null;\\n  }\\n\\n  createProduct(payload) {\\n    if (!payload.name || payload.price === undefined) {\\n      throw new Error(\\\"name e price são obrigatórios\\\");\\n    }\\n    if (typeof payload.price !== \\\"number\\\" || payload.price < 0) {\\n      throw new Error(\\\"price d\n... [TRUNCADO]\n```\n\n### outputs/analysis.md\n```\n# Arquivo analisado: javascript-api/src/routes/products.js\n\n# Tipo da mudança\nAdição de novos endpoints e funcionalidades, com melhorias no tratamento de erros e validação de parâmetros.\n\n# Evidências observadas\n- Inclusão dos endpoints GET /products (com filtros), GET /products/categories, GET /products/low-stock, POST /products/:id/discount, DELETE /products/:id/discount e POST /products/:id/reserve.\n- Uso de blocos try/catch em POST /products, PUT /products/:id, POST /products/:id/discount e POST /products/:id/reserve para captura de erros e retorno de status 422.\n- Validação de parâmetros de query (minPrice, maxPrice, inStock) e do corpo da requisição (quantity para reserva) é mais flexível, delegando parte da validação para o productService.\n- Ordem das rotas evita conflito entre rotas estáticas (/products/categories, /products/low-stock) e dinâmica (/products/:id).\n\n# Impacto provável\n- Ampliação das funcionalidades da API de produtos, permitindo filtragem avançada, gestão de descontos e controle de estoque via reserva.\n- Maior robustez no tratamento de erros, com respostas padronizadas para exceções lançadas pelo service.\n- Dependência da correta implementação do productService para garantir integridade e funcionamento dos novos recursos.\n\n# Riscos identificados\n- Falta de validação explícita e robusta dos parâmetros de query pode permitir valores inválidos, causando erros ou resultados inesperados.\n- Ausência de validação rigorosa do parâmetro quantity na reserva pode levar a comportamentos incorretos ou falhas.\n- Dependência do productService para lógica de negócio crítica (descontos, reservas, listagens) pode causar falhas se houver exceções não tratadas.\n- Possibilidade de condições de concorrência na aplicação e remoção de descontos e reservas, embora não haja evidência de mecanismos específicos para isso no código atual.\n\n# Cenários de testes manuais\n- Testar GET /products com combinações variadas de filtros válidos e inválidos (ex: minPrice=\"abc\", inStock=\"yes\").\n- Testar GET /products/categories para garantir retorno correto de categorias únicas.\n- Testar GET /products/low-stock com e sem parâmetro threshold, incluindo valores inválidos (ex: threshold=\"-1\", threshold=\"abc\").\n- Testar POST /products com payloads válidos e inválidos, verificando tratamento de erros.\n- Testar PUT /products/:id com dados válidos, inválidos e id inexistente, observando respostas 400, 404 e 422.\n- Testar DELETE /products/:id com id válido, inválido e inexistente.\n- Testar POST /products/:id/discount com percent válido, ausente e inválido, além de id inválido e inexistente.\n- Testar DELETE /products/:id/discount para casos com e sem desconto ativo, e produto inexistente.\n- Testar POST /products/:id/reserve com quantity válido, ausente e inválido, além de id inválido e inexistente.\n- Testar concorrência na aplicação e remoção de descontos e reservas, se possível.\n\n# Sugestões de testes unitários\n- testGetProducts_withValidFilters_shouldReturnFilteredProduc\n... [TRUNCADO]\n```\n\n### javascript-api/src/routes/products.js\n```\nconst express = require('express');\nconst router = express.Router();\nconst productService = require('../services/productService');\n\n// GET /products — lista produtos com filtros opcionais\n// Query: category, search, minPrice, maxPrice, inStock\nrouter.get('/', (req, res) => {\n  const { category, search, inStock } = req.query;\n  const minPrice = req.query.minPrice !== undefined ? parseFloat(req.query.minPrice) : undefined;\n  const maxPrice = req.query.maxPrice !== undefined ? parseFloat(req.query.maxPrice) : undefined;\n  res.json(productService.listProducts({ category, search, minPrice, maxPrice, inStock: inStock === 'true' }));\n});\n\n// GET /products/categories — lista categorias únicas\nrouter.get('/categories', (req, res) => {\n  res.json(productService.listCategories());\n});\n\n// GET /products/low-stock — produtos com estoque baixo\n// Query: threshold (default 5)\nrouter.get('/low-stock', (req, res) => {\n  const threshold = req.query.threshold !== undefined ? parseInt(req.query.threshold, 10) : 5;\n  res.json(productService.listLowStock(threshold));\n});\n\n// GET /products/:id — busca produto por ID\nrouter.get('/:id', (req, res) => {\n  const id = parseInt(req.params.id, 10);\n  if (isNaN(id)) {\n    return res.status(400).json({ detail: \"ID inválido\" });\n  }\n  const product = productService.getProduct(id);\n  if (!product) {\n    return res.status(404).json({ detail: \"Produto não encontrado\" });\n  }\n  res.json(product);\n});\n\n// POST /products — cria um novo produto\nrouter.post('/', (req, res) => {\n  try {\n    const newProduct = productService.createProduct(req.body);\n    res.status(201).json(newProduct);\n  } catch (err) {\n    res.status(422).json({ detail: err.message });\n  }\n});\n\n// PUT /products/:id — atualiza um produto existente\nrouter.put('/:id', (req, res) => {\n  const id = parseInt(req.params.id, 10);\n  if (isNaN(id)) {\n    return res.status(400).json({ detail: \"ID inválido\" });\n  }\n  try {\n    const updated = productService.updateProduct(id, req.body);\n    if (!updated) {\n      return res.status(404).json({ detail: \"Produto não encontrado\" });\n    }\n    res.json(updated);\n  } catch (err) {\n    res.status(422).json({ detail: err.message });\n  }\n});\n\n// DELETE /products/:id — remove um produto\nrouter.delete('/:id', (req, res) => {\n  const id = parseInt(req.params.id, 10);\n  if (isNaN(id)) {\n    return res.status(400).json({ detail: \"ID inválido\" });\n  }\n  const deleted = productService.deleteProduct(id);\n  if (!deleted) {\n    return res.status(404).json({ detail: \"Produto não encontrado\" });\n  }\n  res.status(204).send();\n});\n\n// POST /products/:id/discount — aplica desconto percentual\nrouter.post('/:id/discount', (req, res) => {\n  const id = parseInt(req.params.id, 10);\n  if (isNaN(id)) {\n    return res.status(400).json({ detail: \"ID inválido\" });\n  }\n  const { percent } = req.body;\n  if (percent === undefined) {\n    return res.status(422).json({ detail: \"Campo 'percent' é obrigatório\" });\n  }\n  try {\n    const product = productService.applyDiscount(\n... [TRUNCADO]\n```\n\n# Conteúdo de testes existentes (amostra)\n### tests/test_qagent_context_validation.py\n```\nimport os\nimport pytest\n\nQAGENT_CONTEXT_PATH = \".qagent/knowledge/qagent-context.md\"\n\ndef test_qagent_context_file_exists():\n    assert os.path.isfile(QAGENT_CONTEXT_PATH), f\"Arquivo {QAGENT_CONTEXT_PATH} deve existir.\"\n\ndef test_qagent_context_file_not_empty():\n    with open(QAGENT_CONTEXT_PATH, \"r\", encoding=\"utf-8\") as f:\n        content = f.read()\n    assert len(content.strip()) > 0, \"Arquivo não deve estar vazio.\"\n\ndef test_qagent_context_has_required_sections():\n    with open(QAGENT_CONTEXT_PATH, \"r\", encoding=\"utf-8\") as f:\n        content = f.read()\n\n    required_sections = [\n        \"## 1. Visão Geral do Projeto\",\n        \"## 2. Stack Tecnológica\",\n        \"## 3. Estrutura do Projeto\",\n        \"## 4. Regras de Arquitetura\",\n        \"## 5. Regras de Teste\",\n        \"## 6. Regras de Review\",\n        \"## 7. Padrões de Código\",\n        \"## 8. Coisas que o Agente NÃO deve fazer\",\n        \"## 9. Exemplos Práticos\"\n    ]\n\n    for section in required_sections:\n        assert section in content, f\"Seção obrigatória '{section}' não encontrada no arquivo.\"\n\ndef test_qagent_context_formatting_is_valid_markdown():\n    # Basic validation: check for balanced headers and no broken lines\n    with open(QAGENT_CONTEXT_PATH, \"r\", encoding=\"utf-8\") as f:\n        lines = f.readlines()\n\n    header_counts = {\n        \"#\": 0,\n        \"##\": 0,\n        \"###\": 0\n    }\n    for line in lines:\n        line_strip = line.strip()\n        if line_strip.startswith(\"### \"):\n            header_counts[\"###\"] += 1\n        elif line_strip.startswith(\"## \"):\n            header_counts[\"##\"] += 1\n        elif line_strip.startswith(\"# \"):\n            header_counts[\"#\"] += 1\n\n    # Expect at least one top-level header and multiple second-level headers\n    assert header_counts[\"#\"] >= 1, \"Deve haver pelo menos um header nível 1 (#).\"\n    assert header_counts[\"##\"] >= 5, \"Deve haver múltiplos headers nível 2 (##).\"\n\ndef test_qagent_context_no_hardcoded_secrets():\n    with open(QAGENT_CONTEXT_PATH, \"r\", encoding=\"utf-8\") as f:\n        content = f.read().lower()\n    forbidden_keywords = [\"token\", \"senha\", \"password\", \"apikey\", \"secret\", \"chave\"]\n    for keyword in forbidden_keywords:\n        assert keyword not in content, f\"Arquivo não deve conter '{keyword}' hardcoded.\"\n\n@pytest.mark.parametrize(\"partial_content,expected_error\", [\n    (\"## 1. Visão Geral do Projeto\\n- Apenas uma linha\", False),\n    (\"## 1. Visão Geral do Projeto\\n- Linha incompleta sem quebra\", False),\n    (\"# Início sem seção\", True),\n    (\"\", True),\n])\ndef test_qagent_context_robustness_against_incomplete_formatting(tmp_path, partial_content, expected_error):\n    test_file = tmp_path / \"qagent-context.md\"\n    test_file.write_text(partial_content, encoding=\"utf-8\")\n\n    def load_and_validate(path):\n        with open(path, \"r\", encoding=\"utf-8\") as f:\n            content = f.read()\n        if not content.strip():\n            raise ValueError(\"Arquivo vazio\")\n        if not content.startswith(\"## 1. Visão Geral do Proje\n... [TRUNCADO]\n```\n\n### docs/testes.md\n```\n# Testes\n\nO projeto usa [pytest](https://docs.pytest.org/) como framework de testes. Todos os testes da API Python estão na pasta `python-api/tests/`.\n\n## Como Rodar\n\n```bash\n# Ativar o ambiente virtual\nsource .venv/bin/activate   # Linux/macOS\n.venv\\Scripts\\Activate.ps1  # Windows PowerShell\n\n# Rodar todos os testes\npytest -q\n\n# Rodar com saída detalhada\npytest -v\n\n# Rodar apenas um arquivo\npytest python-api/tests/test_api.py -v\n\n# Rodar um teste específico\npytest python-api/tests/test_api.py::test_healthcheck_returns_ok -v\n```\n\n## Estrutura dos Testes\n\n### `python-api/tests/test_api.py` — Testes Unitários\n\n| Teste | Endpoint | O que valida |\n|---|---|---|\n| `test_healthcheck_returns_ok` | `GET /health` | Retorna 200 com `{\"status\": \"ok\"}` |\n| `test_list_users_returns_seeded_users` | `GET /users` | Lista retorna ao menos 2 usuários |\n| `test_list_users_pagination_limit_offset` | `GET /users?limit=&offset=` | Paginação funciona corretamente |\n| `test_users_count_returns_number` | `GET /users/count` | Retorna inteiro ≥ 2 |\n| `test_users_count_route_not_captured_by_id` | `GET /users/count` | Rota estática não é c\n\n... [CONTEXTO TRUNCADO PELO TOKEN BUDGET]",
+      "related_files": [
+        "outputs/artifacts.json",
+        "outputs/analysis.md",
+        "javascript-api/src/routes/products.js"
+      ],
+      "existing_tests": [
+        "tests/test_qagent_context_validation.py",
+        "docs/testes.md",
+        "javascript-api/.env.test",
+        "javascript-api/tests/users.test.js",
+        "javascript-api/tests/ping.test.js",
+        "javascript-api/tests/app.test.js",
+        "javascript-api/tests/server.test.js",
+        "javascript-api/tests/basicApi.test.js"
+      ],
+      "risks_from_context": []
+    },
+    "token_budget_plan": {
+      "file_path": "javascript-api/src/services/productService.js",
+      "change_size": "small",
+      "risk_hint": "high",
+      "analysis_mode": "standard",
+      "context_level": "expanded",
+      "include_full_file": true,
+      "include_memory": true,
+      "max_context_chars": 14000,
+      "reason": "QA padrão escolhido pelo orçamento determinístico."
+    },
+    "raw_review_markdown": "# Tipo da mudança\nMelhoria funcional com introdução de novos campos e funcionalidades (categoria, descontos, reserva de estoque) e reforço de validações.\n\n# Evidências observadas\n- Inclusão do campo `category` em produtos e filtros na função `listProducts`.\n- Validações em `createProduct` e `updateProduct` para preço não negativo e tipo numérico.\n- Novas funções `applyDiscount`, `removeDiscount` e cálculo do preço efetivo em `_serialize`.\n- Método `reserveStock` que altera diretamente o estoque e lança erros para quantidades inválidas ou insuficientes.\n- Exclusão de produto removendo descontos associados.\n\n# Impacto provável\n- Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.\n- Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.\n- Complexidade aumentada no cálculo do preço final devido a descontos.\n- Impacto nos fluxos de reserva e venda pelo controle direto do estoque.\n- Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.\n\n# Riscos identificados\n- Filtro incorreto ou inconsistência na busca por categoria se não houver normalização adequada.\n- Erros não tratados em payloads inválidos para preço.\n- Cálculo incorreto do preço efetivo com desconto.\n- Condições de corrida potenciais na manipulação direta do estoque (risco futuro, não imediato).\n- Inconsistência na remoção de descontos associados ao excluir produtos se não sincronizado com outros módulos.\n\n# Cenários de testes manuais\n- Listar produtos com filtros combinados (categoria com variações de caixa, busca case insensitive, faixa de preço, estoque disponível).\n- Criar produto com e sem categoria, com preços válidos e inválidos.\n- Atualizar produto alterando categoria e preço, incluindo casos inválidos.\n- Aplicar e remover descontos, verificando o preço final exibido.\n- Reservar estoque com quantidades válidas, zero, negativas e maiores que o estoque disponível, observando erros.\n- Excluir produto e verificar remoção dos descontos associados.\n- Listar categorias garantindo unicidade e ordenação.\n\n# Sugestões de testes unitários\n- Testar filtros de listagem por categoria (case insensitive) e filtros combinados.\n- Validar criação e atualização de produtos com preços válidos e inválidos.\n- Testar aplicação e remoção de descontos e cálculo correto do preço efetivo em `_serialize`.\n- Testar reserva de estoque com quantidades válidas e inválidas, verificando erros.\n- Testar exclusão de produto removendo descontos associados.\n\n# Sugestões de testes de integração\n- Fluxo completo de criação, atualização (categoria e preço), aplicação de desconto, reserva de estoque e exclusão, garantindo integridade e sincronização dos dados.\n- Testes de regressão para filtros antigos, validação de preço e reserva de estoque.\n\n# Sugestões de testes de carga ou desempenho\n- Não aplicável, pois não há evidências no diff que justifiquem testes de performance.\n\n# Pontos que precisam de esclarecimento\n- Necessidade de estratégias para evitar condições de corrida na manipulação do estoque em ambientes concorrentes.\n- Garantia de sincronização da remoção de descontos com outros módulos do sistema além do serviço analisado.\n- Como o consumidor da API deve tratar os erros lançados pelas validações para evitar falhas inesperadas.\n\n# Validação cooperativa\nAs conclusões foram revisadas e validadas pelos agentes especialistas em QA e estratégia de testes, bem como pelo crítico de análise. Conflitos foram resolvidos com base em evidências claras do diff, especialmente quanto à validade dos riscos e cobertura da estratégia de testes. Recomendações genéricas foram descartadas ou qualificadas, mantendo foco em riscos reais e testáveis.",
+    "review_result": {
+      "summary": "Melhoria funcional com introdução de novos campos e funcionalidades (categoria, descontos, reserva de estoque) e reforço de validações.\n\n- Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.\n- Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.\n- Complexidade aumentada no cálculo do preço final devido a descontos.\n- Impacto nos fluxos de reserva e venda pelo controle direto do estoque.\n- Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.",
+      "findings": [
+        {
+          "description": "Filtro incorreto ou inconsistência na busca por categoria se não houver normalização adequada.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Erros não tratados em payloads inválidos para preço.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Cálculo incorreto do preço efetivo com desconto.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Condições de corrida potenciais na manipulação direta do estoque (risco futuro, não imediato).",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Inconsistência na remoção de descontos associados ao excluir produtos se não sincronizado com outros módulos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Inclusão do campo `category` em produtos e filtros na função `listProducts`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Validações em `createProduct` e `updateProduct` para preço não negativo e tipo numérico.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Novas funções `applyDiscount`, `removeDiscount` e cálculo do preço efetivo em `_serialize`.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Método `reserveStock` que altera diretamente o estoque e lança erros para quantidades inválidas ou insuficientes.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Exclusão de produto removendo descontos associados.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.",
+          "severity": "ERROR",
+          "line_number": null
+        },
+        {
+          "description": "Complexidade aumentada no cálculo do preço final devido a descontos.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Impacto nos fluxos de reserva e venda pelo controle direto do estoque.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Necessidade de estratégias para evitar condições de corrida na manipulação do estoque em ambientes concorrentes.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Garantia de sincronização da remoção de descontos com outros módulos do sistema além do serviço analisado.",
+          "severity": "INFO",
+          "line_number": null
+        },
+        {
+          "description": "Como o consumidor da API deve tratar os erros lançados pelas validações para evitar falhas inesperadas.",
+          "severity": "ERROR",
+          "line_number": null
+        }
+      ],
+      "test_needs": [
+        "Listar produtos com filtros combinados (categoria com variações de caixa, busca case insensitive, faixa de preço, estoque disponível).",
+        "Criar produto com e sem categoria, com preços válidos e inválidos.",
+        "Atualizar produto alterando categoria e preço, incluindo casos inválidos.",
+        "Aplicar e remover descontos, verificando o preço final exibido.",
+        "Reservar estoque com quantidades válidas, zero, negativas e maiores que o estoque disponível, observando erros.",
+        "Excluir produto e verificar remoção dos descontos associados.",
+        "Listar categorias garantindo unicidade e ordenação.",
+        "Testar filtros de listagem por categoria (case insensitive) e filtros combinados.",
+        "Validar criação e atualização de produtos com preços válidos e inválidos.",
+        "Testar aplicação e remoção de descontos e cálculo correto do preço efetivo em `_serialize`.",
+        "Testar reserva de estoque com quantidades válidas e inválidas, verificando erros.",
+        "Testar exclusão de produto removendo descontos associados.",
+        "Fluxo completo de criação, atualização (categoria e preço), aplicação de desconto, reserva de estoque e exclusão, garantindo integridade e sincronização dos dados.",
+        "Testes de regressão para filtros antigos, validação de preço e reserva de estoque.",
+        "Não aplicável, pois não há evidências no diff que justifiquem testes de performance."
+      ],
+      "summary_html": "<p>Melhoria funcional com introdução de novos campos e funcionalidades (categoria, descontos, reserva de estoque) e reforço de validações.</p>\n<ul>\n<li>Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.</li>\n<li>Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.</li>\n<li>Complexidade aumentada no cálculo do preço final devido a descontos.</li>\n<li>Impacto nos fluxos de reserva e venda pelo controle direto do estoque.</li>\n<li>Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.</li>\n</ul>"
+    },
+    "test_strategy_result": {
+      "recommended_tests": [
+        {
+          "name": "Listar produtos com filtros combinados (categoria com variações de caixa, busca case insensitive, faixa de preço, estoque disponível).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Criar produto com e sem categoria, com preços válidos e inválidos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Atualizar produto alterando categoria e preço, incluindo casos inválidos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Aplicar e remover descontos, verificando o preço final exibido.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Reservar estoque com quantidades válidas, zero, negativas e maiores que o estoque disponível, observando erros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Excluir produto e verificar remoção dos descontos associados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Listar categorias garantindo unicidade e ordenação.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar filtros de listagem por categoria (case insensitive) e filtros combinados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar criação e atualização de produtos com preços válidos e inválidos.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar aplicação e remoção de descontos e cálculo correto do preço efetivo em `_serialize`.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar reserva de estoque com quantidades válidas e inválidas, verificando erros.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar exclusão de produto removendo descontos associados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Fluxo completo de criação, atualização (categoria e preço), aplicação de desconto, reserva de estoque e exclusão, garantindo integridade e sincronização dos dados.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testes de regressão para filtros antigos, validação de preço e reserva de estoque.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Não aplicável, pois não há evidências no diff que justifiquem testes de performance.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Filtro incorreto ou inconsistência na busca por categoria se não houver normalização adequada.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Erros não tratados em payloads inválidos para preço.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Cálculo incorreto do preço efetivo com desconto.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Condições de corrida potenciais na manipulação direta do estoque (risco futuro, não imediato).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Inconsistência na remoção de descontos associados ao excluir produtos se não sincronizado com outros módulos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Inclusão do campo `category` em produtos e filtros na função `listProducts`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Validações em `createProduct` e `updateProduct` para preço não negativo e tipo numérico.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Novas funções `applyDiscount`, `removeDiscount` e cálculo do preço efetivo em `_serialize`.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Método `reserveStock` que altera diretamente o estoque e lança erros para quantidades inválidas ou insuficientes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Exclusão de produto removendo descontos associados.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Alteração no comportamento da listagem e busca de produtos, especialmente com filtro por categoria.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Possibilidade de erros ao criar ou atualizar produtos com preços inválidos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Complexidade aumentada no cálculo do preço final devido a descontos.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Impacto nos fluxos de reserva e venda pelo controle direto do estoque.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Risco de inconsistência caso a remoção de descontos não esteja sincronizada com outras partes do sistema.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Necessidade de estratégias para evitar condições de corrida na manipulação do estoque em ambientes concorrentes.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Garantia de sincronização da remoção de descontos com outros módulos do sistema além do serviço analisado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "[CRÍTICO] Prevenir regressão: Como o consumidor da API deve tratar os erros lançados pelas validações para evitar falhas inesperadas.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Teste de regressão geral para 'javascript-api/src/services/productService.js'",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar comportamento ao aplicar múltiplos descontos cumulativos e garantir cálculo correto do preço final.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar remoção parcial de descontos e verificar atualização correta do preço final e estado interno.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Verificar tratamento de erros ao tentar aplicar descontos inválidos (ex: valores negativos, percentuais acima de 100%).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar criação e atualização de produtos com categorias inválidas ou inexistentes, garantindo falha controlada.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar comportamento ao reservar estoque simultaneamente em múltiplas requisições unitárias simuladas para detectar possíveis condições de corrida.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar rollback ou consistência do estoque em caso de falha durante a reserva (ex: erro após decremento parcial).",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar que a exclusão de produto com descontos associados não deixa dados órfãos em cache ou memória temporária.",
+          "test_type": "UNIT",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar integração entre productService e módulos consumidores para garantir que erros lançados (ex: preço inválido, estoque insuficiente) são tratados adequadamente e propagados conforme esperado.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar sincronização da remoção de descontos em cenários de concorrência entre múltiplos serviços ou instâncias.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar comportamento da listagem e filtros quando categorias são atualizadas ou removidas simultaneamente a operações de busca.",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar consistência do estoque e descontos em fluxos de venda que envolvem múltiplas etapas (reserva, confirmação, cancelamento).",
+          "test_type": "INTEGRATION",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar fluxo completo de criação, atualização, aplicação e remoção de descontos, reserva de estoque e exclusão do produto em ambiente realista, incluindo tratamento de erros e rollback.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Testar busca e listagem de produtos com filtros combinados em cenários de alta carga para detectar possíveis falhas de sincronização ou inconsistência.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        },
+        {
+          "name": "Validar comportamento do sistema ao receber payloads inválidos ou malformados via API, garantindo respostas apropriadas e sem falhas inesperadas.",
+          "test_type": "E2E",
+          "priority": "HIGH"
+        }
+      ],
+      "notes": "⚠️ Política HIGH aplicada para 'javascript-api/src/services/productService.js'.\nTodos os cenários foram priorizados como críticos.\nResumo do QA: Melhoria funcional com introdução de novos campos e funcionalidades (categoria, descontos, reserva de estoque) e reforço de validações.\n\n- Alteração no comportamento da listagem e busca de produtos, e...\n\n--- Refinamento HIGH risk (via LLM) ---\n- A estratégia base cobre amplamente os principais fluxos e riscos, porém a inclusão de testes focados em condições de corrida e concorrência é essencial dado o controle direto do estoque e manipulação de descontos.\n- Testes que simulam falhas parciais e garantem rollback ou consistência do estado interno reforçam a robustez do serviço.\n- A validação da integração com consumidores da API e outros módulos do sistema é crítica para evitar inconsistências e falhas em produção.\n- Cenários de borda envolvendo múltiplos descontos cumulativos e remoção parcial são importantes para garantir a integridade do cálculo do preço final.\n- Testes E2E adicionais focados em carga e tratamento de erros malformados complementam a cobertura e ajudam a prevenir regressões em ambientes reais."
+    },
+    "generated_test_review_result": {
+      "status": "INVALID",
+      "summary": "Os testes gerados apresentam excelente cobertura e alinhamento com os riscos e funcionalidades introduzidas no código. Contudo, a execução dos testes falhou devido a um erro de importação externo (módulo 'email_validator' não instalado), que impede a execução dos testes no ambiente atual. Este erro não está relacionado diretamente aos testes gerados, mas impacta a validação prática dos mesmos. Portanto, o status é INVALID até que o ambiente de testes seja corrigido para permitir a execução.",
+      "issues": [
+        {
+          "severity": "ERROR",
+          "description": "Falha na execução dos testes devido a ImportError: módulo 'email_validator' não está instalado, conforme mensagem 'email-validator is not installed, run `pip install pydantic[email]`'. Este erro ocorre durante a importação de dependências externas não relacionadas diretamente ao código testado, mas impede a execução dos testes.",
+          "related_test": null,
+          "suggested_fix": "Instalar a dependência 'email_validator' no ambiente de testes com o comando 'pip install pydantic[email]' para permitir a execução dos testes."
+        }
+      ],
+      "missing_scenarios": [],
+      "execution_recommended": false,
+      "execution_reason": "Os testes não puderam ser executados devido a erro de importação externo, portanto não é possível recomendar execução automática até que o ambiente seja corrigido.",
+      "suggested_fixes": [
+        "Corrigir o ambiente de testes instalando a dependência 'email_validator' para permitir a execução dos testes.",
+        "Após correção do ambiente, reexecutar os testes para validar a cobertura e comportamento.",
+        "Considerar isolar os testes do productService para evitar dependências externas que não sejam necessárias para sua execução."
+      ]
+    },
+    "test_execution_result": {
+      "success": false,
+      "exit_code": 2,
+      "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.13.13, pytest-9.0.3, pluggy-1.6.0\nrootdir: /home/runner/work/qagent/qagent/target\nplugins: anyio-4.13.0\ncollected 13 items / 1 error\n\n==================================== ERRORS ====================================\n______________________ ERROR collecting python-api/tests _______________________\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:946: in import_email_validator\n    import email_validator\nE   ModuleNotFoundError: No module named 'email_validator'\n\nThe above exception was the direct cause of the following exception:\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1395: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:197: in exec_module\n    exec(co, module.__dict__)\npython-api/tests/conftest.py:3: in <module>\n    from app.api import routes\npython-api/app/api/routes.py:3: in <module>\n    from app.services.external_service import ExternalService\npython-api/app/services/external_service.py:3: in <module>\n    from app.schemas import AgeEstimateResponse\npython-api/app/schemas.py:9: in <module>\n    class UserCreate(BaseModel):\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py:237: in __new__\n    complete_model_class(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py:597: in complete_model_class\n    schema = gen_schema.generate_schema(cls)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:711: in generate_schema\n    schema = self._generate_schema_inner(obj)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1004: in _generate_schema_inner\n    return self._model_schema(obj)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:837: in _model_schema\n    {k: self._generate_md_field_schema(k, v, decorators) for k, v in fields.items()},\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1206: in _generate_md_field_schema\n    common_field = self._common_field_schema(name, field_info, decorators)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:1372: in _common_field_schema\n    schema = self._apply_annotations(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:2297: in _apply_annotations\n    schema = get_inner_schema(source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_schema_generation_shared.py:83: in __call__\n    schema = self._handler(source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:2276: in inner_handler\n    schema = self._generate_schema_from_get_schema_method(obj, source_type)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py:900: in _generate_schema_from_get_schema_method\n    schema = get_schema(\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:986: in __get_pydantic_core_schema__\n    import_email_validator()\n/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/pydantic/networks.py:948: in import_email_validator\n    raise ImportError('email-validator is not installed, run `pip install pydantic[email]`') from e\nE   ImportError: email-validator is not installed, run `pip install pydantic[email]`\n=========================== short test summary info ============================\nERROR python-api/tests - ImportError: email-validator is not installed, run `pip install pydantic[email]`\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.64s ===============================\n",
+      "stderr": "",
+      "duration_seconds": 1.0095086097717285,
+      "command": "pytest"
+    },
+    "generated_tests_raw": "### FILE: javascript-api/tests/productService.test.js\n```javascript\nconst productService = require('../src/services/productService');\n\ndescribe('ProductService Unit Tests', () => {\n  beforeEach(() => {\n    // Reset productService state before each test\n    productService.products = [\n      { id: 1, name: \"Teclado Mecânico\", price: 299.90, stock: 10, category: \"perifericos\" },\n      { id: 2, name: \"Mouse Sem Fio\", price: 149.90, stock: 25, category: \"perifericos\" },\n      { id: 3, name: \"Monitor 24\\\"\", price: 1199.00, stock: 5, category: \"monitores\" },\n      { id: 4, name: \"Headset USB\", price: 199.90, stock: 15, category: \"audio\" },\n      { id: 5, name: \"Webcam HD\", price: 249.90, stock: 8, category: \"perifericos\" },\n    ];\n    productService.nextId = 6;\n    productService.discounts = {};\n  });\n\n  describe('listProducts', () => {\n    test('should return products filtered by combined filters: category (case insensitive), search (case insensitive), price range and inStock', () => {\n      // Add discount to test effectivePrice filtering\n      productService.applyDiscount(1, 10); // 299.90 * 0.9 = 269.91\n      productService.applyDiscount(2, 50); // 149.90 * 0.5 = 74.95\n\n      const filters = {\n        category: 'Perifericos', // mixed case\n        search: 'mouse',         // lowercase search\n        minPrice: 70,\n        maxPrice: 150,\n        inStock: true,\n      };\n      const results = productService.listProducts(filters);\n\n      expect(results).toHaveLength(1);\n      expect(results[0].id).toBe(2);\n      expect(results[0].category).toBe('perifericos');\n      expect(results[0].name.toLowerCase()).toContain('mouse');\n      expect(results[0].effectivePrice).toBeCloseTo(74.95, 2);\n      expect(results[0].stock).toBeGreaterThan(0);\n    });\n\n    test('should return all products if no filters applied', () => {\n      const results = productService.listProducts();\n      expect(results.length).toBe(productService.products.length);\n    });\n  });\n\n  describe('createProduct', () => {\n    test('should create product with category normalized to lowercase', () => {\n      const payload = {\n        name: 'Teclado Gamer',\n        price: 399.99,\n        stock: 20,\n        category: 'Perifericos',\n      };\n      const created = productService.createProduct(payload);\n      expect(created.id).toBe(productService.nextId - 1);\n      expect(created.name).toBe(payload.name);\n      expect(created.price).toBe(payload.price);\n      expect(created.stock).toBe(payload.stock);\n      expect(created.category).toBe('perifericos');\n    });\n\n    test('should create product with default category \"geral\" if category not provided', () => {\n      const payload = {\n        name: 'Cabo USB',\n        price: 19.99,\n      };\n      const created = productService.createProduct(payload);\n      expect(created.category).toBe('geral');\n      expect(created.stock).toBe(0);\n    });\n\n    test('should throw error if name is missing', () => {\n      expect(() => productService.createProduct({ price: 10 })).toThrow(\"name e price são obrigatórios\");\n    });\n\n    test('should throw error if price is missing', () => {\n      expect(() => productService.createProduct({ name: 'Produto' })).toThrow(\"name e price são obrigatórios\");\n    });\n\n    test('should throw error if price is negative', () => {\n      expect(() => productService.createProduct({ name: 'Produto', price: -1 })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should throw error if price is not a number', () => {\n      expect(() => productService.createProduct({ name: 'Produto', price: 'abc' })).toThrow(\"price deve ser número não negativo\");\n    });\n  });\n\n  describe('updateProduct', () => {\n    test('should update product category and price with valid values', () => {\n      const updated = productService.updateProduct(1, { category: 'Audio', price: 350 });\n      expect(updated).not.toBeNull();\n      expect(updated.category).toBe('audio');\n      expect(updated.price).toBe(350);\n    });\n\n    test('should throw error when updating product with invalid price (negative)', () => {\n      expect(() => productService.updateProduct(1, { price: -10 })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should throw error when updating product with invalid price (non-number)', () => {\n      expect(() => productService.updateProduct(1, { price: 'abc' })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should return null when updating non-existent product', () => {\n      const result = productService.updateProduct(999, { price: 100 });\n      expect(result).toBeNull();\n    });\n\n    test('should update product name and stock', () => {\n      const updated = productService.updateProduct(2, { name: 'Mouse Gamer', stock: 30 });\n      expect(updated.name).toBe('Mouse Gamer');\n      expect(updated.stock).toBe(30);\n    });\n\n    test('should update product category to lowercase', () => {\n      const updated = productService.updateProduct(3, { category: 'MONITORES' });\n      expect(updated.category).toBe('monitores');\n    });\n  });\n\n  describe('applyDiscount and removeDiscount', () => {\n    test('should apply valid discount and calculate effective price correctly', () => {\n      const productBefore = productService.getProduct(1);\n      expect(productBefore.discount).toBe(0);\n\n      const updated = productService.applyDiscount(1, 20);\n      expect(updated.discount).toBe(20);\n      expect(updated.effectivePrice).toBeCloseTo(299.90 * 0.8, 2);\n    });\n\n    test('should throw error when applying discount less than 0', () => {\n      expect(() => productService.applyDiscount(1, -5)).toThrow(\"Desconto deve estar entre 0 e 100\");\n    });\n\n    test('should throw error when applying discount greater than 100', () => {\n      expect(() => productService.applyDiscount(1, 150)).toThrow(\"Desconto deve estar entre 0 e 100\");\n    });\n\n    test('should return null when applying discount to non-existent product', () => {\n      const result = productService.applyDiscount(999, 10);\n      expect(result).toBeNull();\n    });\n\n    test('should remove existing discount and return true', () => {\n      productService.applyDiscount(1, 30);\n      const removed = productService.removeDiscount(1);\n      expect(removed).toBe(true);\n      const product = productService.getProduct(1);\n      expect(product.discount).toBe(0);\n    });\n\n    test('should return false when removing discount that does not exist', () => {\n      const removed = productService.removeDiscount(2);\n      expect(removed).toBe(false);\n    });\n  });\n\n  describe('reserveStock', () => {\n    test('should reserve stock with valid quantity and reduce stock accordingly', () => {\n      const productBefore = productService.getProduct(1);\n      const reserved = productService.reserveStock(1, 5);\n      expect(reserved.stock).toBe(productBefore.stock - 5);\n    });\n\n    test('should throw error when reserving zero quantity', () => {\n      expect(() => productService.reserveStock(1, 0)).toThrow(\"Quantidade deve ser positiva\");\n    });\n\n    test('should throw error when reserving negative quantity', () => {\n      expect(() => productService.reserveStock(1, -3)).toThrow(\"Quantidade deve ser positiva\");\n    });\n\n    test('should throw error when reserving quantity greater than stock', () => {\n      const product = productService.getProduct(1);\n      expect(() => productService.reserveStock(1, product.stock + 1)).toThrow(/Estoque insuficiente/);\n    });\n\n    test('should return null when reserving stock for non-existent product', () => {\n      const result = productService.reserveStock(999, 1);\n      expect(result).toBeNull();\n    });\n  });\n\n  describe('deleteProduct', () => {\n    test('should delete product and remove associated discounts', () => {\n      productService.applyDiscount(1, 10);\n      const deleted = productService.deleteProduct(1);\n      expect(deleted).toBe(true);\n      expect(productService.getProduct(1)).toBeNull();\n      expect(productService.discounts[1]).toBeUndefined();\n    });\n\n    test('should return false when deleting non-existent product', () => {\n      const deleted = productService.deleteProduct(999);\n      expect(deleted).toBe(false);\n    });\n  });\n\n  describe('listCategories', () => {\n    test('should return unique sorted categories', () => {\n      const categories = productService.listCategories();\n      expect(Array.isArray(categories)).toBe(true);\n      expect(categories).toEqual([...new Set(productService.products.map(p => p.category))].sort());\n    });\n\n    test('should not contain duplicates and be sorted alphabetically', () => {\n      productService.products.push({ id: 6, name: 'Produto X', price: 10, stock: 1, category: 'Audio' });\n      const categories = productService.listCategories();\n      expect(categories).toEqual(['audio', 'monitores', 'perifericos']);\n    });\n  });\n\n  describe('listProducts filters regression', () => {\n    test('should filter by category case insensitive', () => {\n      const results = productService.listProducts({ category: 'PERIFERICOS' });\n      expect(results.every(p => p.category === 'perifericos')).toBe(true);\n    });\n\n    test('should filter by search case insensitive', () => {\n      const results = productService.listProducts({ search: 'monitor' });\n      expect(results.length).toBe(1);\n      expect(results[0].name.toLowerCase()).toContain('monitor');\n    });\n\n    test('should filter by minPrice and maxPrice using effectivePrice', () => {\n      productService.applyDiscount(3, 50); // 1199 * 0.5 = 599.5\n      const results = productService.listProducts({ minPrice: 500, maxPrice: 600 });\n      expect(results.some(p => p.id === 3)).toBe(true);\n    });\n\n    test('should filter by inStock true', () => {\n      productService.products[0].stock = 0;\n      const results = productService.listProducts({ inStock: true });\n      expect(results.every(p => p.stock > 0)).toBe(true);\n      expect(results.some(p => p.id === 1)).toBe(false);\n    });\n  });\n\n  describe('discounts cumulative and partial removal', () => {\n    test('should apply multiple discounts cumulatively and calculate correct effective price', () => {\n      // Apply 20% discount to product 1\n      productService.applyDiscount(1, 20);\n      // Apply 10% discount to product 2\n      productService.applyDiscount(2, 10);\n\n      const p1 = productService.getProduct(1);\n      const p2 = productService.getProduct(2);\n\n      expect(p1.discount).toBe(20);\n      expect(p1.effectivePrice).toBeCloseTo(299.90 * 0.8, 2);\n\n      expect(p2.discount).toBe(10);\n      expect(p2.effectivePrice).toBeCloseTo(149.90 * 0.9, 2);\n    });\n\n    test('should remove discount partially and update price and internal state correctly', () => {\n      productService.applyDiscount(1, 30);\n      productService.applyDiscount(2, 15);\n\n      let p1 = productService.getProduct(1);\n      let p2 = productService.getProduct(2);\n      expect(p1.discount).toBe(30);\n      expect(p2.discount).toBe(15);\n\n      const removed = productService.removeDiscount(1);\n      expect(removed).toBe(true);\n\n      p1 = productService.getProduct(1);\n      p2 = productService.getProduct(2);\n\n      expect(p1.discount).toBe(0);\n      expect(p2.discount).toBe(15);\n    });\n  });\n\n  describe('create and update product with invalid or nonexistent categories', () => {\n    test('should create product with invalid category and normalize to lowercase', () => {\n      const payload = { name: 'Produto X', price: 100, category: 'CategoriaInvalida' };\n      const created = productService.createProduct(payload);\n      expect(created.category).toBe('categoriainvalida');\n    });\n\n    test('should update product with invalid category and normalize to lowercase', () => {\n      const updated = productService.updateProduct(1, { category: 'CategoriaInvalida' });\n      expect(updated.category).toBe('categoriainvalida');\n    });\n  });\n\n  describe('reserveStock concurrency simulation', () => {\n    test('should handle multiple sequential reservations correctly without stock inconsistency', () => {\n      const initialStock = productService.getProduct(1).stock;\n\n      // Reserve 3 units\n      const res1 = productService.reserveStock(1, 3);\n      expect(res1.stock).toBe(initialStock - 3);\n\n      // Reserve 2 units\n      const res2 = productService.reserveStock(1, 2);\n      expect(res2.stock).toBe(initialStock - 5);\n\n      // Reserve remaining stock\n      const remaining = productService.getProduct(1).stock;\n      const res3 = productService.reserveStock(1, remaining);\n      expect(res3.stock).toBe(0);\n\n      // Attempt to reserve more should throw\n      expect(() => productService.reserveStock(1, 1)).toThrow(/Estoque insuficiente/);\n    });\n\n    test('should throw error and not partially decrement stock on invalid reservation', () => {\n      const initialStock = productService.getProduct(2).stock;\n      try {\n        productService.reserveStock(2, 5);\n        productService.reserveStock(2, -1);\n      } catch (e) {\n        // ignore error\n      }\n      const afterStock = productService.getProduct(2).stock;\n      expect(afterStock).toBe(initialStock - 5);\n    });\n  });\n\n  describe('exclusion of product does not leave orphan discounts', () => {\n    test('should not leave discounts in memory after product deletion', () => {\n      productService.applyDiscount(3, 25);\n      expect(productService.discounts[3]).toBe(25);\n      const deleted = productService.deleteProduct(3);\n      expect(deleted).toBe(true);\n      expect(productService.discounts[3]).toBeUndefined();\n    });\n  });\n});\n```",
+    "generated_test_files": {
+      "javascript-api/tests/productService.test.js": "const productService = require('../src/services/productService');\n\ndescribe('ProductService Unit Tests', () => {\n  beforeEach(() => {\n    // Reset productService state before each test\n    productService.products = [\n      { id: 1, name: \"Teclado Mecânico\", price: 299.90, stock: 10, category: \"perifericos\" },\n      { id: 2, name: \"Mouse Sem Fio\", price: 149.90, stock: 25, category: \"perifericos\" },\n      { id: 3, name: \"Monitor 24\\\"\", price: 1199.00, stock: 5, category: \"monitores\" },\n      { id: 4, name: \"Headset USB\", price: 199.90, stock: 15, category: \"audio\" },\n      { id: 5, name: \"Webcam HD\", price: 249.90, stock: 8, category: \"perifericos\" },\n    ];\n    productService.nextId = 6;\n    productService.discounts = {};\n  });\n\n  describe('listProducts', () => {\n    test('should return products filtered by combined filters: category (case insensitive), search (case insensitive), price range and inStock', () => {\n      // Add discount to test effectivePrice filtering\n      productService.applyDiscount(1, 10); // 299.90 * 0.9 = 269.91\n      productService.applyDiscount(2, 50); // 149.90 * 0.5 = 74.95\n\n      const filters = {\n        category: 'Perifericos', // mixed case\n        search: 'mouse',         // lowercase search\n        minPrice: 70,\n        maxPrice: 150,\n        inStock: true,\n      };\n      const results = productService.listProducts(filters);\n\n      expect(results).toHaveLength(1);\n      expect(results[0].id).toBe(2);\n      expect(results[0].category).toBe('perifericos');\n      expect(results[0].name.toLowerCase()).toContain('mouse');\n      expect(results[0].effectivePrice).toBeCloseTo(74.95, 2);\n      expect(results[0].stock).toBeGreaterThan(0);\n    });\n\n    test('should return all products if no filters applied', () => {\n      const results = productService.listProducts();\n      expect(results.length).toBe(productService.products.length);\n    });\n  });\n\n  describe('createProduct', () => {\n    test('should create product with category normalized to lowercase', () => {\n      const payload = {\n        name: 'Teclado Gamer',\n        price: 399.99,\n        stock: 20,\n        category: 'Perifericos',\n      };\n      const created = productService.createProduct(payload);\n      expect(created.id).toBe(productService.nextId - 1);\n      expect(created.name).toBe(payload.name);\n      expect(created.price).toBe(payload.price);\n      expect(created.stock).toBe(payload.stock);\n      expect(created.category).toBe('perifericos');\n    });\n\n    test('should create product with default category \"geral\" if category not provided', () => {\n      const payload = {\n        name: 'Cabo USB',\n        price: 19.99,\n      };\n      const created = productService.createProduct(payload);\n      expect(created.category).toBe('geral');\n      expect(created.stock).toBe(0);\n    });\n\n    test('should throw error if name is missing', () => {\n      expect(() => productService.createProduct({ price: 10 })).toThrow(\"name e price são obrigatórios\");\n    });\n\n    test('should throw error if price is missing', () => {\n      expect(() => productService.createProduct({ name: 'Produto' })).toThrow(\"name e price são obrigatórios\");\n    });\n\n    test('should throw error if price is negative', () => {\n      expect(() => productService.createProduct({ name: 'Produto', price: -1 })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should throw error if price is not a number', () => {\n      expect(() => productService.createProduct({ name: 'Produto', price: 'abc' })).toThrow(\"price deve ser número não negativo\");\n    });\n  });\n\n  describe('updateProduct', () => {\n    test('should update product category and price with valid values', () => {\n      const updated = productService.updateProduct(1, { category: 'Audio', price: 350 });\n      expect(updated).not.toBeNull();\n      expect(updated.category).toBe('audio');\n      expect(updated.price).toBe(350);\n    });\n\n    test('should throw error when updating product with invalid price (negative)', () => {\n      expect(() => productService.updateProduct(1, { price: -10 })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should throw error when updating product with invalid price (non-number)', () => {\n      expect(() => productService.updateProduct(1, { price: 'abc' })).toThrow(\"price deve ser número não negativo\");\n    });\n\n    test('should return null when updating non-existent product', () => {\n      const result = productService.updateProduct(999, { price: 100 });\n      expect(result).toBeNull();\n    });\n\n    test('should update product name and stock', () => {\n      const updated = productService.updateProduct(2, { name: 'Mouse Gamer', stock: 30 });\n      expect(updated.name).toBe('Mouse Gamer');\n      expect(updated.stock).toBe(30);\n    });\n\n    test('should update product category to lowercase', () => {\n      const updated = productService.updateProduct(3, { category: 'MONITORES' });\n      expect(updated.category).toBe('monitores');\n    });\n  });\n\n  describe('applyDiscount and removeDiscount', () => {\n    test('should apply valid discount and calculate effective price correctly', () => {\n      const productBefore = productService.getProduct(1);\n      expect(productBefore.discount).toBe(0);\n\n      const updated = productService.applyDiscount(1, 20);\n      expect(updated.discount).toBe(20);\n      expect(updated.effectivePrice).toBeCloseTo(299.90 * 0.8, 2);\n    });\n\n    test('should throw error when applying discount less than 0', () => {\n      expect(() => productService.applyDiscount(1, -5)).toThrow(\"Desconto deve estar entre 0 e 100\");\n    });\n\n    test('should throw error when applying discount greater than 100', () => {\n      expect(() => productService.applyDiscount(1, 150)).toThrow(\"Desconto deve estar entre 0 e 100\");\n    });\n\n    test('should return null when applying discount to non-existent product', () => {\n      const result = productService.applyDiscount(999, 10);\n      expect(result).toBeNull();\n    });\n\n    test('should remove existing discount and return true', () => {\n      productService.applyDiscount(1, 30);\n      const removed = productService.removeDiscount(1);\n      expect(removed).toBe(true);\n      const product = productService.getProduct(1);\n      expect(product.discount).toBe(0);\n    });\n\n    test('should return false when removing discount that does not exist', () => {\n      const removed = productService.removeDiscount(2);\n      expect(removed).toBe(false);\n    });\n  });\n\n  describe('reserveStock', () => {\n    test('should reserve stock with valid quantity and reduce stock accordingly', () => {\n      const productBefore = productService.getProduct(1);\n      const reserved = productService.reserveStock(1, 5);\n      expect(reserved.stock).toBe(productBefore.stock - 5);\n    });\n\n    test('should throw error when reserving zero quantity', () => {\n      expect(() => productService.reserveStock(1, 0)).toThrow(\"Quantidade deve ser positiva\");\n    });\n\n    test('should throw error when reserving negative quantity', () => {\n      expect(() => productService.reserveStock(1, -3)).toThrow(\"Quantidade deve ser positiva\");\n    });\n\n    test('should throw error when reserving quantity greater than stock', () => {\n      const product = productService.getProduct(1);\n      expect(() => productService.reserveStock(1, product.stock + 1)).toThrow(/Estoque insuficiente/);\n    });\n\n    test('should return null when reserving stock for non-existent product', () => {\n      const result = productService.reserveStock(999, 1);\n      expect(result).toBeNull();\n    });\n  });\n\n  describe('deleteProduct', () => {\n    test('should delete product and remove associated discounts', () => {\n      productService.applyDiscount(1, 10);\n      const deleted = productService.deleteProduct(1);\n      expect(deleted).toBe(true);\n      expect(productService.getProduct(1)).toBeNull();\n      expect(productService.discounts[1]).toBeUndefined();\n    });\n\n    test('should return false when deleting non-existent product', () => {\n      const deleted = productService.deleteProduct(999);\n      expect(deleted).toBe(false);\n    });\n  });\n\n  describe('listCategories', () => {\n    test('should return unique sorted categories', () => {\n      const categories = productService.listCategories();\n      expect(Array.isArray(categories)).toBe(true);\n      expect(categories).toEqual([...new Set(productService.products.map(p => p.category))].sort());\n    });\n\n    test('should not contain duplicates and be sorted alphabetically', () => {\n      productService.products.push({ id: 6, name: 'Produto X', price: 10, stock: 1, category: 'Audio' });\n      const categories = productService.listCategories();\n      expect(categories).toEqual(['audio', 'monitores', 'perifericos']);\n    });\n  });\n\n  describe('listProducts filters regression', () => {\n    test('should filter by category case insensitive', () => {\n      const results = productService.listProducts({ category: 'PERIFERICOS' });\n      expect(results.every(p => p.category === 'perifericos')).toBe(true);\n    });\n\n    test('should filter by search case insensitive', () => {\n      const results = productService.listProducts({ search: 'monitor' });\n      expect(results.length).toBe(1);\n      expect(results[0].name.toLowerCase()).toContain('monitor');\n    });\n\n    test('should filter by minPrice and maxPrice using effectivePrice', () => {\n      productService.applyDiscount(3, 50); // 1199 * 0.5 = 599.5\n      const results = productService.listProducts({ minPrice: 500, maxPrice: 600 });\n      expect(results.some(p => p.id === 3)).toBe(true);\n    });\n\n    test('should filter by inStock true', () => {\n      productService.products[0].stock = 0;\n      const results = productService.listProducts({ inStock: true });\n      expect(results.every(p => p.stock > 0)).toBe(true);\n      expect(results.some(p => p.id === 1)).toBe(false);\n    });\n  });\n\n  describe('discounts cumulative and partial removal', () => {\n    test('should apply multiple discounts cumulatively and calculate correct effective price', () => {\n      // Apply 20% discount to product 1\n      productService.applyDiscount(1, 20);\n      // Apply 10% discount to product 2\n      productService.applyDiscount(2, 10);\n\n      const p1 = productService.getProduct(1);\n      const p2 = productService.getProduct(2);\n\n      expect(p1.discount).toBe(20);\n      expect(p1.effectivePrice).toBeCloseTo(299.90 * 0.8, 2);\n\n      expect(p2.discount).toBe(10);\n      expect(p2.effectivePrice).toBeCloseTo(149.90 * 0.9, 2);\n    });\n\n    test('should remove discount partially and update price and internal state correctly', () => {\n      productService.applyDiscount(1, 30);\n      productService.applyDiscount(2, 15);\n\n      let p1 = productService.getProduct(1);\n      let p2 = productService.getProduct(2);\n      expect(p1.discount).toBe(30);\n      expect(p2.discount).toBe(15);\n\n      const removed = productService.removeDiscount(1);\n      expect(removed).toBe(true);\n\n      p1 = productService.getProduct(1);\n      p2 = productService.getProduct(2);\n\n      expect(p1.discount).toBe(0);\n      expect(p2.discount).toBe(15);\n    });\n  });\n\n  describe('create and update product with invalid or nonexistent categories', () => {\n    test('should create product with invalid category and normalize to lowercase', () => {\n      const payload = { name: 'Produto X', price: 100, category: 'CategoriaInvalida' };\n      const created = productService.createProduct(payload);\n      expect(created.category).toBe('categoriainvalida');\n    });\n\n    test('should update product with invalid category and normalize to lowercase', () => {\n      const updated = productService.updateProduct(1, { category: 'CategoriaInvalida' });\n      expect(updated.category).toBe('categoriainvalida');\n    });\n  });\n\n  describe('reserveStock concurrency simulation', () => {\n    test('should handle multiple sequential reservations correctly without stock inconsistency', () => {\n      const initialStock = productService.getProduct(1).stock;\n\n      // Reserve 3 units\n      const res1 = productService.reserveStock(1, 3);\n      expect(res1.stock).toBe(initialStock - 3);\n\n      // Reserve 2 units\n      const res2 = productService.reserveStock(1, 2);\n      expect(res2.stock).toBe(initialStock - 5);\n\n      // Reserve remaining stock\n      const remaining = productService.getProduct(1).stock;\n      const res3 = productService.reserveStock(1, remaining);\n      expect(res3.stock).toBe(0);\n\n      // Attempt to reserve more should throw\n      expect(() => productService.reserveStock(1, 1)).toThrow(/Estoque insuficiente/);\n    });\n\n    test('should throw error and not partially decrement stock on invalid reservation', () => {\n      const initialStock = productService.getProduct(2).stock;\n      try {\n        productService.reserveStock(2, 5);\n        productService.reserveStock(2, -1);\n      } catch (e) {\n        // ignore error\n      }\n      const afterStock = productService.getProduct(2).stock;\n      expect(afterStock).toBe(initialStock - 5);\n    });\n  });\n\n  describe('exclusion of product does not leave orphan discounts', () => {\n    test('should not leave discounts in memory after product deletion', () => {\n      productService.applyDiscount(3, 25);\n      expect(productService.discounts[3]).toBe(25);\n      const deleted = productService.deleteProduct(3);\n      expect(deleted).toBe(true);\n      expect(productService.discounts[3]).toBeUndefined();\n    });\n  });\n});"
+    },
+    "memory_query": "Testes para javascript-api/src/services/productService.js. Código: class ProductService {\n  constructor() {\n    this.products = [\n      { id: 1, name: \"Teclado Mecânico\", price: 299.90, stock: 10, category: \"perifericos\" },\n      { id: 2, name: \"Mouse Sem Fio\", price",
+    "memories_used_raw": "[distance=1.276] (PR #73 em jrcosta/repo_alvo_api_simples, por jrcosta)\n  Lição: Clarificar e alinhar o comportamento esperado na desserialização de JSON com campos ausentes, ajustando testes para refletir robustez ou necessidade de exceção.",
+    "memories_used": [
+      {
+        "distance": 1.276,
+        "pr_number": 73,
+        "repo": "jrcosta/repo_alvo_api_simples",
+        "author": "jrcosta",
+        "lesson": "Clarificar e alinhar o comportamento esperado na desserialização de JSON com campos ausentes, ajustando testes para refletir robustez ou necessidade de exceção."
+      }
+    ],
+    "agent_messages": {},
+    "risk_level": "HIGH",
+    "review_quality": "OK",
+    "test_generation_recommendation": "RECOMMENDED",
+    "executed_steps": [
+      "parse_review",
+      "evaluate_risk",
+      "build_strategy",
+      "high_risk_enrichment",
+      "evaluate_final",
+      "test_generation",
+      "test_execution",
+      "test_review",
+      "test_auto_fix",
+      "test_re_execution_after_fix",
+      "test_re_review_after_fix"
+    ],
+    "skipped_steps": [],
+    "applied_policies": [
+      "token_budget_standard",
+      "context_expanded",
+      "strategy_HIGH",
+      "high_risk_llm_enrichment"
+    ],
+    "fallbacks_triggered": [],
+    "step_durations_ms": {
+      "evaluate_risk": 0.01,
+      "build_strategy": 0.11,
+      "high_risk_enrichment": 8363.61,
+      "test_generation": 84088.16,
+      "test_execution": 1217.22,
+      "test_review": 5311.81,
+      "test_auto_fix": 45174.62,
+      "test_re_execution_after_fix": 1009.55,
+      "test_re_review_after_fix": 5008.91
+    },
+    "diagnostic_notes": [
+      "QA padrão escolhido pelo orçamento determinístico.",
+      "Execução real dos testes falhou; saída anexada ao contexto da revisão crítica.",
+      "Testes corrigidos automaticamente após revisão crítica.",
+      "Re-execução real dos testes falhou após auto-fix.",
+      "Auto-fix executado, mas ainda restam problemas na re-revisão."
+    ]
+  }
+]
