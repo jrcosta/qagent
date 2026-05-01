@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>QAgent · jrcosta/repo_alvo_api_simples · 01 May 2026 – 01:42:34 UTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --radius: 10px;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0; padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--accent-hover); }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { font-size: .9rem; }
+.topbar .sep { color: var(--border); }
+.topbar .slug { color: var(--text-muted); font-size: .85rem; font-family: var(--font-mono); }
+.report { padding-top: 16px; }
+.report h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.report h2 { font-size: 1.3rem; margin-top: 32px; color: var(--accent); }
+.report h3 { font-size: 1.1rem; margin-top: 24px; }
+.report p { margin: 12px 0; }
+.report ul, .report ol { padding-left: 24px; }
+.report li { margin: 6px 0; }
+.report code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.report pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5;
+}
+.report pre code { background: none; border: none; padding: 0; }
+.report blockquote {
+  border-left: 3px solid var(--accent); margin: 16px 0;
+  padding: 8px 16px; color: var(--text-muted); background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.report table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.report th, .report td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.report th { background: var(--surface); font-weight: 600; }
+.report hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.report strong { color: #f0f6fc; }
+.meta-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+  display: flex; flex-wrap: wrap; gap: 24px; font-size: .88rem;
+}
+.meta-item label { color: var(--text-muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+.meta-item span { font-family: var(--font-mono); }
+
+/* Novas seções de artefatos */
+.section-title { font-size: 1.4rem; margin: 40px 0 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+.stat-label { color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.artifact-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+.artifact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.artifact-header { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+.artifact-header:hover { background: var(--surface-hover); }
+.artifact-title { font-family: var(--font-mono); font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+.artifact-content { padding: 0 20px 20px; border-top: 1px solid var(--border); background: #161b2255; }
+
+.sub-section { margin-top: 20px; }
+.sub-section-title { font-size: .9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.data-item { background: #0d111755; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+.data-label { font-size: .75rem; color: var(--text-muted); display: block; }
+.data-value { font-size: .9rem; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+.badge-low { background: #23863633; color: #3fb950; border: 1px solid #238636; }
+.badge-medium { background: #9e6a0333; color: #d29922; border: 1px solid #9e6a03; }
+.badge-high { background: #da363333; color: #f85149; border: 1px solid #da3633; }
+.badge-info { background: #388bfd33; color: #58a6ff; border: 1px solid #388bfd; }
+.badge-policy { background: #8957e533; color: #bc8cff; border: 1px solid #8957e5; }
+.memory-list { display: flex; flex-direction: column; gap: 10px; }
+.memory-item { background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.memory-meta { color: var(--text-muted); font-size: .75rem; font-family: var(--font-mono); margin-bottom: 6px; }
+.memory-lesson { font-size: .86rem; margin: 0; }
+.memory-empty { color: var(--text-muted); font-size: .86rem; background: #0d111755; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+
+details summary { cursor: pointer; padding: 8px 0; color: var(--accent); font-size: .9rem; font-weight: 500; }
+details summary:hover { color: var(--accent-hover); }
+.raw-json { font-family: var(--font-mono); font-size: .8rem; background: #00000044; padding: 12px; border-radius: 6px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
+
+.error-msg { background: #f8514922; border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: var(--radius); margin: 20px 0; font-size: .9rem; }
+.md-content p { margin: 8px 0; }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 8px 0; }
+.md-content li { margin: 4px 0; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+footer { text-align: center; color: var(--text-muted); font-size: .8rem; padding: 40px 0 20px;
+         border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+  <nav class="topbar">
+    <a href="../../index.html">← Histórico</a>
+    <span class="sep">|</span>
+    <span class="slug">2026-05-01_01-42-34_UTC__jrcosta__repo_alvo_api_simples</span>
+  </nav>
+  <div class="container">
+    <div class="meta-box">
+      <div class="meta-item"><label>Repositório</label><span>jrcosta/repo_alvo_api_simples</span></div>
+      <div class="meta-item"><label>Execução</label><span>01 May 2026 – 01:42:34 UTC</span></div>
+    </div>
+    <div class="meta-box" style="margin-top:12px;font-size:.85rem"><a href="artifacts.json" style="margin-right:16px">📦 artifacts.json</a> <a href="run_summary.json">📊 run_summary.json</a></div>
+    <div id="run-summary-container"></div>
+    <div id="artifacts-container"></div>
+    <article class="report">
+      <h1 id="arquivo-analisado-javascript-apisrcroutesusersjs">Arquivo analisado: javascript-api/src/routes/users.js</h1>
+<h1 id="tipo-da-mudanca">Tipo da mudança</h1>
+<p>Implementação de novas rotas HTTP REST para atualização (<code>PUT /:user_id</code>) e exclusão (<code>DELETE /:user_id</code>) de usuários.</p>
+<h1 id="evidencias-observadas">Evidências observadas</h1>
+<ul>
+<li>O diff adiciona dois novos endpoints no arquivo <code>javascript-api/src/routes/users.js</code>:</li>
+<li><code>router.put('/:user_id', ...)</code> para atualizar campos <code>name</code> e/ou <code>email</code> de um usuário.</li>
+<li><code>router.delete('/:user_id', ...)</code> para deletar um usuário pelo ID.</li>
+<li>O código atual do arquivo já possui endpoints para criação (<code>POST /</code>), listagem (<code>GET /</code>), busca e leitura de usuários, mas não tinha rotas para atualização ou exclusão.</li>
+<li>A implementação do <code>PUT</code> valida:</li>
+<li>Que pelo menos um dos campos <code>name</code> ou <code>email</code> seja informado, caso contrário retorna 422.</li>
+<li>Que o email informado não esteja cadastrado para outro usuário, retornando 409 em conflito.</li>
+<li>Que o usuário exista, retornando 404 se não encontrado.</li>
+<li>A implementação do <code>DELETE</code> verifica se o usuário existe antes de deletar, retornando 404 se não encontrado, e retorna 204 no sucesso.</li>
+<li>O serviço <code>userService</code> é utilizado para buscar, atualizar e deletar usuários, consistente com o padrão do arquivo.</li>
+<li>O contexto do repositório indica que há testes existentes para usuários (<code>users.test.js</code> e <code>users-has-email.test.js</code>), mas não há evidência direta de testes para esses novos endpoints.</li>
+</ul>
+<h1 id="impacto-provavel">Impacto provável</h1>
+<ul>
+<li>Ampliação da API para permitir atualização parcial de usuários e exclusão, funcionalidades essenciais para gerenciamento completo de usuários.</li>
+<li>Possível impacto em clientes que consumam a API, pois agora podem modificar e remover usuários.</li>
+<li>A validação de email no <code>PUT</code> pode impedir atualizações que tentem usar emails já cadastrados, evitando duplicidade.</li>
+<li>A exclusão de usuários pode impactar dados relacionados, dependendo da implementação interna do <code>userService.deleteUser</code> (não visível aqui).</li>
+<li>A ausência de tratamento explícito para dados inválidos além do email e nome pode permitir atualizações com dados parcialmente inválidos (ex: email com formato inválido não é validado aqui).</li>
+</ul>
+<h1 id="riscos-identificados">Riscos identificados</h1>
+<ul>
+<li><strong>Risco de inconsistência de dados</strong>: Se <code>userService.updateUser</code> ou <code>deleteUser</code> não implementarem transações ou validações adequadas, pode haver corrupção ou inconsistência.</li>
+<li><strong>Validação insuficiente do email</strong>: Diferente do endpoint <code>GET /by-email</code> que valida formato de email, o <code>PUT</code> não valida formato do email, podendo aceitar emails inválidos.</li>
+<li><strong>Falha silenciosa em atualização parcial</strong>: Se <code>name</code> ou <code>email</code> forem <code>null</code> ou <code>undefined</code>, o objeto passado para <code>updateUser</code> pode conter campos indesejados, dependendo da implementação do serviço.</li>
+<li><strong>Ausência de autenticação/autorização</strong>: Não há evidência de controle de acesso para atualização ou exclusão, o que pode permitir alterações indevidas.</li>
+<li><strong>Possível problema com parsing do <code>user_id</code></strong>: O <code>parseInt</code> é usado, mas não há validação se o resultado é <code>NaN</code>, o que pode causar comportamento inesperado.</li>
+<li><strong>Ausência de tratamento de erros inesperados</strong>: Diferente do endpoint <code>GET /by-email</code> que tem bloco try/catch, aqui não há tratamento para exceções do serviço, podendo causar falhas não controladas.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Atualização parcial com nome válido</strong><br />
+   - Enviar <code>PUT /users/1</code> com <code>{ "name": "Novo Nome" }</code><br />
+   - Esperar resposta 200 com dados atualizados contendo o novo nome e email original.</p>
+</li>
+<li>
+<p><strong>Atualização parcial com email válido e não duplicado</strong><br />
+   - Enviar <code>PUT /users/1</code> com <code>{ "email": "novoemail@exemplo.com" }</code><br />
+   - Esperar resposta 200 com email atualizado.</p>
+</li>
+<li>
+<p><strong>Atualização com email já cadastrado por outro usuário</strong><br />
+   - Enviar <code>PUT /users/1</code> com <code>{ "email": "emaildeoutro@exemplo.com" }</code> onde esse email pertence a outro usuário.<br />
+   - Esperar resposta 409 com mensagem de conflito.</p>
+</li>
+<li>
+<p><strong>Atualização sem campos <code>name</code> e <code>email</code></strong><br />
+   - Enviar <code>PUT /users/1</code> com corpo vazio <code>{}</code> ou <code>{ "foo": "bar" }</code><br />
+   - Esperar resposta 422 com mensagem de erro.</p>
+</li>
+<li>
+<p><strong>Atualização de usuário inexistente</strong><br />
+   - Enviar <code>PUT /users/999999</code> com dados válidos.<br />
+   - Esperar resposta 404.</p>
+</li>
+<li>
+<p><strong>Exclusão de usuário existente</strong><br />
+   - Enviar <code>DELETE /users/1</code><br />
+   - Esperar resposta 204 e que o usuário não esteja mais disponível via GET.</p>
+</li>
+<li>
+<p><strong>Exclusão de usuário inexistente</strong><br />
+   - Enviar <code>DELETE /users/999999</code><br />
+   - Esperar resposta 404.</p>
+</li>
+<li>
+<p><strong>Envio de <code>user_id</code> inválido (ex: string não numérica)</strong><br />
+   - Enviar <code>PUT /users/abc</code> ou <code>DELETE /users/abc</code><br />
+   - Verificar comportamento (espera-se 404 ou erro controlado, mas não há validação explícita).</p>
+</li>
+<li>
+<p><strong>Atualização com email inválido (formato incorreto)</strong><br />
+   - Enviar <code>PUT /users/1</code> com <code>{ "email": "emailinvalido" }</code><br />
+   - Verificar se aceita ou rejeita (provavelmente aceita, pois não há validação de formato).</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>PUT /:user_id</code>:</li>
+<li>Atualização com apenas <code>name</code>.</li>
+<li>Atualização com apenas <code>email</code>.</li>
+<li>Atualização com <code>email</code> já existente em outro usuário (deve retornar conflito).</li>
+<li>Atualização com nenhum campo (deve retornar 422).</li>
+<li>Atualização de usuário inexistente (deve retornar 404).</li>
+<li>Testar <code>DELETE /:user_id</code>:</li>
+<li>Exclusão de usuário existente (deve chamar <code>userService.deleteUser</code> e retornar 204).</li>
+<li>Exclusão de usuário inexistente (deve retornar 404).</li>
+<li>Testar parsing e validação do <code>user_id</code> para garantir que IDs inválidos sejam tratados adequadamente (atualmente não há validação explícita, pode ser necessário adicionar).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao">Sugestões de testes de integração</h1>
+<ul>
+<li>Fluxo completo de criação, atualização e exclusão de usuário:</li>
+<li>Criar usuário via <code>POST /users</code>.</li>
+<li>Atualizar nome e email via <code>PUT /users/:user_id</code>.</li>
+<li>Verificar via <code>GET /users/:user_id</code> se dados foram atualizados.</li>
+<li>Tentar atualizar com email duplicado e verificar erro.</li>
+<li>Deletar usuário via <code>DELETE /users/:user_id</code>.</li>
+<li>Verificar que <code>GET /users/:user_id</code> retorna 404 após exclusão.</li>
+<li>Testar comportamento com IDs inválidos para <code>PUT</code> e <code>DELETE</code>.</li>
+<li>Testar concorrência: duas requisições simultâneas tentando atualizar o mesmo usuário com emails diferentes para verificar consistência.</li>
+<li>Testar resposta da API para payloads malformados ou incompletos no <code>PUT</code>.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não há evidência clara na mudança que justifique testes de carga ou desempenho específicos para esses endpoints.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li><strong>Validação de formato de email no <code>PUT</code></strong>: Deve ser adicionada validação para evitar emails inválidos, como no endpoint <code>GET /by-email</code>?</li>
+<li><strong>Tratamento de erros inesperados</strong>: Por que o <code>PUT</code> e <code>DELETE</code> não possuem bloco try/catch para capturar exceções do serviço? Isso pode causar falhas não controladas.</li>
+<li><strong>Validação do parâmetro <code>user_id</code></strong>: Como deve ser tratado o caso de <code>user_id</code> inválido (não numérico)? Atualmente o código não valida se <code>parseInt</code> retorna <code>NaN</code>.</li>
+<li><strong>Controle de acesso/autorização</strong>: Existe algum mecanismo para restringir quem pode atualizar ou deletar usuários? Não há evidência no código.</li>
+<li><strong>Comportamento do <code>userService.updateUser</code> e <code>deleteUser</code></strong>: Como esses métodos se comportam internamente? Eles fazem validações adicionais, lançam exceções, ou retornam valores específicos?</li>
+<li><strong>Retorno do <code>updateUser</code></strong>: O que exatamente é retornado? O usuário atualizado completo? Apenas os campos alterados? Isso impacta o contrato da API.</li>
+</ul>
+<hr />
+<p>Essa análise técnica detalha o impacto e riscos da implementação dos endpoints de atualização e exclusão de usuários, com sugestões de testes específicos para garantir a qualidade e robustez da API.</p>
+<hr />
+<h1 id="arquivo-analisado-javascript-apisrcservicesuserservicejs">Arquivo analisado: javascript-api/src/services/userService.js</h1>
+<h1 id="tipo-da-mudanca_1">Tipo da mudança</h1>
+<p>Adição de funcionalidades (feature) na classe UserService, com inclusão dos métodos <code>updateUser</code> e <code>deleteUser</code> para manipulação dos usuários existentes.</p>
+<h1 id="evidencias-observadas_1">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a inclusão dos métodos <code>updateUser(id, payload)</code> e <code>deleteUser(id)</code> na classe <code>UserService</code>.</li>
+<li><code>updateUser</code> busca o índice do usuário pelo id, atualiza os campos <code>name</code> e <code>email</code> se presentes no payload, e retorna o usuário atualizado ou <code>null</code> se não encontrado.</li>
+<li><code>deleteUser</code> busca o índice do usuário pelo id, remove o usuário da lista se encontrado e retorna <code>true</code>, ou retorna <code>false</code> se não encontrado.</li>
+<li>A lista de usuários é mantida internamente como um array na instância singleton da classe.</li>
+<li>O contexto do repositório indica que existem testes unitários para <code>UserService</code>, mas não há evidência direta de testes para esses novos métodos.</li>
+<li>As rotas HTTP existentes usam <code>userService</code>, mas não há evidência clara de rotas para update ou delete.</li>
+</ul>
+<h1 id="impacto-provavel_1">Impacto provável</h1>
+<ul>
+<li>Alteração do estado interno global do singleton <code>UserService</code> ao modificar ou remover usuários.</li>
+<li>Possível impacto em outras funcionalidades que dependem da lista de usuários, devido à modificação in-place dos objetos e remoção de elementos.</li>
+<li>Necessidade de validação e tratamento adequado de entradas para evitar corrupção de dados.</li>
+<li>Potencial necessidade de atualização das rotas HTTP para expor essas operações via API.</li>
+<li>Possível impacto em fluxos que dependem da existência dos usuários removidos ou atualizados.</li>
+</ul>
+<h1 id="riscos-identificados_1">Riscos identificados</h1>
+<ul>
+<li>Ausência de validação explícita dos dados de entrada (nome e email) no método <code>updateUser</code>, podendo permitir dados inválidos ou inconsistentes.</li>
+<li>Falta de tratamento explícito para ids inválidos (ex: null, undefined, tipos incorretos) em ambos os métodos.</li>
+<li>Possibilidade de efeitos colaterais indesejados devido à modificação direta dos objetos na lista, afetando referências externas.</li>
+<li>Ausência de mecanismos de sincronização ou notificação para mudanças no estado global, podendo causar inconsistências em sistemas que mantêm cache ou estados derivados.</li>
+<li>Risco de condições de corrida em ambientes concorrentes, pois não há controle explícito de concorrência para as operações.</li>
+<li>Falta de rotas HTTP evidenciadas para update e delete, o que pode limitar o uso dessas funcionalidades via API.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_1">Cenários de testes manuais</h1>
+<ul>
+<li>Atualizar um usuário existente via API ou interface, alterando nome e email, e verificar se as alterações são refletidas corretamente.</li>
+<li>Tentar atualizar um usuário inexistente e verificar a resposta adequada (ex: mensagem de erro ou status 404).</li>
+<li>Testar atualização parcial, alterando apenas o nome ou apenas o email.</li>
+<li>Testar atualização com dados inválidos (ex: email sem formato correto) e observar o comportamento.</li>
+<li>Remover um usuário existente e confirmar que ele não aparece mais na listagem.</li>
+<li>Tentar remover um usuário inexistente e verificar a resposta adequada.</li>
+<li>Verificar o comportamento da aplicação após remoção, tentando acessar dados do usuário removido.</li>
+<li>Testar múltiplas atualizações e remoções consecutivas para o mesmo usuário.</li>
+<li>Validar mensagens de sucesso e erro exibidas ao usuário.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_1">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>updateUser</code> com id existente, atualizando nome e email, e verificar retorno e estado interno.</li>
+<li>Testar <code>updateUser</code> com id inexistente, esperando retorno <code>null</code> e sem alteração na lista.</li>
+<li>Testar atualização parcial (apenas nome ou apenas email).</li>
+<li>Testar <code>updateUser</code> com dados inválidos para nome e email, verificando se o método aceita ou rejeita.</li>
+<li>Testar múltiplas atualizações consecutivas no mesmo usuário.</li>
+<li>Testar <code>deleteUser</code> com id existente, verificando retorno <code>true</code> e remoção efetiva.</li>
+<li>Testar <code>deleteUser</code> com id inexistente, esperando retorno <code>false</code>.</li>
+<li>Testar chamadas consecutivas para o mesmo id em <code>deleteUser</code>.</li>
+<li>Testar comportamento com ids inválidos (null, undefined, tipos errados) para ambos os métodos.</li>
+<li>Verificar que outros usuários e propriedades não são alterados inadvertidamente.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_1">Sugestões de testes de integração</h1>
+<ul>
+<li>Verificar existência das rotas HTTP <code>PUT /users/:id</code> e <code>DELETE /users/:id</code> para expor os métodos.</li>
+<li>Testar <code>PUT /users/:id</code> com payload válido, inválido, parcial e sem payload, verificando status HTTP e respostas.</li>
+<li>Testar <code>PUT /users/:id</code> com id inexistente, esperando status 404.</li>
+<li>Testar <code>DELETE /users/:id</code> com id válido, inválido e inexistente, verificando status HTTP e respostas.</li>
+<li>Validar integração entre camada de rota e <code>UserService</code>, garantindo tratamento correto dos retornos <code>null</code> e <code>false</code>.</li>
+<li>Utilizar ferramentas como Jest + Supertest para testes automatizados de integração.</li>
+<li>Testar comportamento da API em ambiente isolado ou mockado.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_1">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança não indica impacto claro em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_1">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>Existe validação de formato e conteúdo para os campos <code>name</code> e <code>email</code> no contexto do sistema? Se não, deve ser adicionada.</li>
+<li>As rotas HTTP para update e delete de usuários já existem? Caso contrário, há planos para implementá-las?</li>
+<li>O sistema opera em ambiente concorrente? Se sim, há mecanismos para evitar condições de corrida nas operações de atualização e remoção?</li>
+<li>Há necessidade de notificação ou eventos para outras partes do sistema quando usuários são atualizados ou removidos?</li>
+<li>Qual o comportamento esperado ao tentar atualizar com dados inválidos? Deve rejeitar ou aceitar parcialmente?</li>
+</ul>
+<h1 id="validacao-cooperativa">Validação cooperativa</h1>
+<p>A análise foi revisada e enriquecida com contribuições do QA Sênior Investigador, que detalhou os riscos técnicos e impactos no estado interno; do Especialista em Estratégia de Testes para Código de Alto Risco, que elaborou uma estratégia abrangente de testes unitários, integração e manuais; e do Crítico de Análise de QA, que apontou fragilidades na cobertura, validação de dados, integração com rotas e tratamento de erros, recomendando aprofundamento para evitar achados genéricos. A consolidação final reflete um consenso equilibrado, fundamentado em evidências do diff, código e contexto, com foco em riscos reais e sugestões práticas para garantir qualidade e confiabilidade.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappapiroutespy">Arquivo analisado: python-api/app/api/routes.py</h1>
+<h1 id="tipo-da-mudanca_2">Tipo da mudança</h1>
+<ul>
+<li><strong>Adição de funcionalidade</strong>: inclusão de um novo endpoint HTTP DELETE para remoção de usuários pelo ID.</li>
+</ul>
+<h1 id="evidencias-observadas_2">Evidências observadas</h1>
+<ul>
+<li>O diff adiciona o método <code>delete_user</code> no <code>router</code> FastAPI, com a rota <code>@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["users"])</code>.</li>
+<li>O método busca o usuário pelo ID via <code>user_service.get_user(user_id)</code>.</li>
+<li>Se o usuário não existir, retorna HTTP 404 com mensagem "Usuário não encontrado".</li>
+<li>Caso exista, chama <code>user_service.delete_user(user_id)</code> para remover o usuário.</li>
+<li>O método não retorna conteúdo (retorno <code>None</code>) e usa status HTTP 204 No Content.</li>
+<li>O arquivo <code>routes.py</code> já possui endpoints CRUD para usuários, incluindo GET, POST, PUT, e agora DELETE.</li>
+<li>O serviço <code>user_service</code> é utilizado para operações de usuário, indicando que a lógica de remoção está delegada a ele.</li>
+<li>O contexto do repositório mostra que a API é construída com FastAPI e que testes unitários e de integração existem para endpoints de usuário (ex: <code>test_user_update.py</code>, <code>test_api.py</code>, <code>test_integration.py</code>).</li>
+</ul>
+<h1 id="impacto-provavel_2">Impacto provável</h1>
+<ul>
+<li>Introdução da capacidade de remover usuários via API REST.</li>
+<li>Possível alteração no estado do sistema, afetando dados persistidos de usuários.</li>
+<li>Impacto direto em fluxos que dependem da existência do usuário, como consultas, atualizações e operações relacionadas.</li>
+<li>Pode afetar integrações ou clientes que esperam que usuários permaneçam no sistema.</li>
+<li>A ausência do usuário após exclusão deve ser refletida em chamadas subsequentes (ex: GET /users/{user_id} deve retornar 404).</li>
+<li>Como o endpoint retorna 204 No Content, clientes devem estar preparados para resposta sem corpo.</li>
+</ul>
+<h1 id="riscos-identificados_2">Riscos identificados</h1>
+<ul>
+<li><strong>Risco de exclusão acidental</strong>: sem autenticação/autorização visível no código, qualquer cliente pode deletar usuários se o endpoint estiver exposto.</li>
+<li><strong>Risco de inconsistência</strong>: se <code>user_service.delete_user</code> não tratar corretamente relacionamentos ou dados dependentes, pode haver dados órfãos.</li>
+<li><strong>Risco de não tratamento de erros internos</strong>: o método não captura exceções da camada de serviço, o que pode levar a erros 500 inesperados.</li>
+<li><strong>Duplicidade de endpoint</strong>: o arquivo já contém o mesmo método <code>delete_user</code> com a mesma assinatura e rota, o que pode causar conflito ou sobrescrita. Isso sugere que o diff pode ter sido aplicado em duplicidade ou que há um erro de merge.</li>
+<li><strong>Ausência de logs ou auditoria</strong>: não há evidência de registro da operação de exclusão, o que pode dificultar rastreamento.</li>
+<li><strong>Falta de controle de acesso</strong>: não há verificação de permissões para deletar usuários, o que pode ser um problema de segurança.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_2">Cenários de testes manuais</h1>
+<ol>
+<li>
+<p><strong>Excluir usuário existente</strong><br />
+   - Criar um usuário via POST /users.<br />
+   - Chamar DELETE /users/{user_id} com o ID do usuário criado.<br />
+   - Verificar retorno HTTP 204 No Content.<br />
+   - Confirmar que GET /users/{user_id} retorna 404 após exclusão.</p>
+</li>
+<li>
+<p><strong>Excluir usuário inexistente</strong><br />
+   - Chamar DELETE /users/{user_id} com um ID que não existe.<br />
+   - Verificar retorno HTTP 404 com mensagem "Usuário não encontrado".</p>
+</li>
+<li>
+<p><strong>Excluir usuário com dependências (se aplicável)</strong><br />
+   - Se o sistema possui relacionamentos (ex: pedidos, carrinho), testar exclusão de usuário com dados relacionados.<br />
+   - Verificar se a exclusão é permitida ou se retorna erro apropriado.</p>
+</li>
+<li>
+<p><strong>Testar comportamento sem autenticação/autorização</strong><br />
+   - Se a API tiver controle de acesso, testar exclusão sem credenciais.<br />
+   - Verificar se o acesso é negado.</p>
+</li>
+<li>
+<p><strong>Testar resposta do endpoint</strong><br />
+   - Confirmar que o corpo da resposta está vazio (204 No Content).</p>
+</li>
+</ol>
+<h1 id="sugestoes-de-testes-unitarios_2">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar <code>delete_user</code> com usuário existente:</li>
+<li>Mockar <code>user_service.get_user</code> para retornar um usuário.</li>
+<li>Mockar <code>user_service.delete_user</code> para confirmar chamada.</li>
+<li>
+<p>Verificar que a função não retorna conteúdo e não levanta exceção.</p>
+</li>
+<li>
+<p>Testar <code>delete_user</code> com usuário inexistente:</p>
+</li>
+<li>Mockar <code>user_service.get_user</code> para retornar None.</li>
+<li>
+<p>Verificar que a função levanta <code>HTTPException</code> com status 404 e mensagem correta.</p>
+</li>
+<li>
+<p>Testar tratamento de exceções inesperadas:</p>
+</li>
+<li>Mockar <code>user_service.delete_user</code> para lançar exceção.</li>
+<li>Verificar se a exceção é propagada ou tratada (atualmente não há tratamento).</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_2">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar fluxo completo de criação e exclusão de usuário via API:</li>
+<li>Criar usuário via POST.</li>
+<li>Excluir usuário via DELETE.</li>
+<li>
+<p>Confirmar que GET retorna 404 após exclusão.</p>
+</li>
+<li>
+<p>Testar exclusão de usuário inexistente via API e validar resposta 404.</p>
+</li>
+<li>
+<p>Testar concorrência:</p>
+</li>
+<li>
+<p>Tentar excluir o mesmo usuário simultaneamente e verificar comportamento.</p>
+</li>
+<li>
+<p>Testar impacto da exclusão em endpoints relacionados (ex: listagem de usuários, contagem).</p>
+</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_2">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável. A mudança não indica impacto direto em performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_2">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>
+<p><strong>Duplicidade do endpoint <code>delete_user</code> no arquivo</strong>: o diff adiciona um método que já existe no arquivo atual. Isso pode indicar erro de merge ou duplicação. Qual é a versão correta? Deve-se remover a duplicidade para evitar conflito.</p>
+</li>
+<li>
+<p><strong>Controle de acesso/autenticação</strong>: o endpoint não possui nenhum mecanismo visível de autenticação ou autorização. A exclusão de usuários deve ser protegida? Se sim, onde está implementado?</p>
+</li>
+<li>
+<p><strong>Comportamento esperado em caso de falha na exclusão</strong>: o que deve ocorrer se <code>user_service.delete_user</code> falhar? Atualmente não há tratamento.</p>
+</li>
+<li>
+<p><strong>Impacto em dados relacionados</strong>: a exclusão do usuário deve remover ou preservar dados relacionados? Há regras de negócio para isso?</p>
+</li>
+<li>
+<p><strong>Logs/auditoria</strong>: há necessidade de registrar operações de exclusão para rastreabilidade?</p>
+</li>
+</ul>
+<hr />
+<h1 id="resumo">Resumo</h1>
+<p>A mudança adiciona um endpoint DELETE para remoção de usuários, com tratamento básico de usuário inexistente e resposta 204 No Content. Contudo, o arquivo já contém esse método, indicando possível duplicidade. A funcionalidade impacta diretamente a integridade dos dados de usuários e deve ser testada para garantir exclusão correta e tratamento de erros. Riscos de segurança e inconsistência existem devido à ausência de controle de acesso e tratamento de falhas. Recomenda-se esclarecer a duplicidade, implementar controles de acesso e adicionar testes específicos para exclusão.</p>
+<hr />
+<h1 id="arquivo-analisado-python-apiappservicesuser_servicepy">Arquivo analisado: python-api/app/services/user_service.py</h1>
+<h1 id="tipo-da-mudanca_3">Tipo da mudança</h1>
+<p>Adição de funcionalidade (feature) no serviço de usuário: implementação do método <code>delete_user</code> para remoção de usuários pelo ID.</p>
+<h1 id="evidencias-observadas_3">Evidências observadas</h1>
+<ul>
+<li>O diff mostra a inclusão do método <code>delete_user</code> na classe <code>UserService</code> que remove um usuário da lista interna <code>_users</code> pelo <code>user_id</code> e retorna <code>True</code> se removido, ou <code>False</code> se não encontrado.</li>
+<li>O arquivo completo indica que <code>UserService</code> mantém usuários em memória numa lista e oferece operações CRUD.</li>
+<li>O contexto do repositório mostra que o serviço é usado em uma API REST com FastAPI, com testes unitários existentes para outros métodos, mas sem evidência de testes para <code>delete_user</code>.</li>
+<li>O método <code>reset</code> reinicializa o estado da lista para dois usuários fixos.</li>
+<li>Testes unitários existentes cobrem parcialmente métodos como <code>update_user</code>, mas não <code>delete_user</code>.</li>
+</ul>
+<h1 id="impacto-provavel_3">Impacto provável</h1>
+<ul>
+<li>A nova função altera o estado interno do serviço ao remover usuários da lista em memória.</li>
+<li>Pode afetar qualquer funcionalidade que dependa da lista <code>_users</code>, incluindo endpoints da API que listam, atualizam ou contam usuários.</li>
+<li>A remoção é volátil, válida apenas durante a vida do processo, pois não há persistência externa.</li>
+<li>Pode impactar fluxos de negócio que esperam a existência de usuários previamente cadastrados.</li>
+</ul>
+<h1 id="riscos-identificados_3">Riscos identificados</h1>
+<ul>
+<li><strong>Concorrência:</strong> A lista <code>_users</code> não possui mecanismos de sincronização, podendo ocorrer condições de corrida (race conditions) em ambiente multi-thread/processo típico de APIs web, levando a inconsistências ou erros.</li>
+<li><strong>Integridade do estado:</strong> Remover usuários diretamente da lista pode causar efeitos colaterais não controlados se outras partes do sistema dependem do estado da lista.</li>
+<li><strong>Ausência de validação de entrada:</strong> O método não valida o tipo ou valor do <code>user_id</code>, podendo receber valores inválidos.</li>
+<li><strong>Falta de testes específicos:</strong> Não há testes unitários ou de integração para <code>delete_user</code>, aumentando o risco de regressão e falhas não detectadas.</li>
+<li><strong>Ausência de tratamento de erros:</strong> A função retorna booleano simples, sem lançar exceções ou registrar logs, o que pode dificultar diagnóstico.</li>
+</ul>
+<h1 id="cenarios-de-testes-manuais_3">Cenários de testes manuais</h1>
+<ul>
+<li>Deletar um usuário existente via API e verificar que ele não aparece mais nas listagens.</li>
+<li>Tentar deletar um usuário inexistente e observar mensagem de erro clara e código HTTP 404.</li>
+<li>Enviar requisição de deleção com ID inválido (ex: texto, negativo) e verificar resposta de erro de validação.</li>
+<li>Realizar múltiplas deleções sequenciais e verificar integridade da lista de usuários.</li>
+<li>Após deleção, usar endpoint de listagem para confirmar estado consistente.</li>
+<li>Testar comportamento da API sob múltiplas requisições simultâneas de deleção para o mesmo usuário.</li>
+</ul>
+<h1 id="sugestoes-de-testes-unitarios_3">Sugestões de testes unitários</h1>
+<ul>
+<li>Testar remoção de usuário existente: verificar retorno <code>True</code> e ausência do usuário na lista.</li>
+<li>Testar remoção de usuário inexistente: verificar retorno <code>False</code> e lista inalterada.</li>
+<li>Testar remoção com lista vazia: garantir que não cause erro inesperado.</li>
+<li>Testar múltiplas remoções sequenciais e verificar integridade da lista.</li>
+<li>Testar comportamento com IDs inválidos (tipos errados, valores negativos).</li>
+<li>Testar se o método <code>reset</code> restaura o estado inicial após deleções.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-integracao_3">Sugestões de testes de integração</h1>
+<ul>
+<li>Testar endpoint HTTP DELETE <code>/users/{id}</code> para usuário existente: verificar código 200/204 e remoção efetiva.</li>
+<li>Testar endpoint DELETE para usuário inexistente: verificar código 404 e mensagem adequada.</li>
+<li>Testar envio de ID inválido no endpoint DELETE: verificar código 400/422.</li>
+<li>Testar idempotência da deleção: deletar o mesmo usuário duas vezes, primeira com sucesso, segunda com 404.</li>
+<li>Verificar estado do serviço após deleção via API, confirmando que usuário não aparece mais em listagens.</li>
+</ul>
+<h1 id="sugestoes-de-testes-de-carga-ou-desempenho_3">Sugestões de testes de carga ou desempenho</h1>
+<ul>
+<li>Não aplicável diretamente, pois a mudança é simples e não indica impacto de performance ou carga.</li>
+</ul>
+<h1 id="pontos-que-precisam-de-esclarecimento_3">Pontos que precisam de esclarecimento</h1>
+<ul>
+<li>O serviço deve ser thread-safe? Há necessidade de implementar mecanismos de sincronização para evitar condições de corrida?</li>
+<li>Qual o comportamento esperado para IDs inválidos? Deve lançar exceção, retornar False, ou outro tratamento?</li>
+<li>Há necessidade de emitir logs ou eventos ao deletar usuários para auditoria ou monitoramento?</li>
+<li>O método <code>delete_user</code> deve afetar outras estruturas ou caches além da lista <code>_users</code>?</li>
+<li>A API expõe endpoint DELETE para usuários? Se sim, qual o comportamento esperado em casos de erro?</li>
+</ul>
+<h1 id="validacao-cooperativa_1">Validação cooperativa</h1>
+<ul>
+<li>O QA Sênior Investigador identificou riscos reais de concorrência, ausência de validação e falta de testes específicos, recomendando testes unitários e de concorrência.</li>
+<li>O Especialista em Estratégia de Testes propôs uma estratégia detalhada cobrindo testes unitários, integração e manuais, com exemplos de casos e código.</li>
+<li>O Crítico de Análise de QA apontou pontos fracos na cobertura de testes, riscos de concorrência, necessidade de validação de entrada e reforçou a importância do método <code>reset</code> para isolamento.</li>
+<li>As análises foram consolidadas para garantir que a resposta final seja objetiva, rastreável e útil para revisão humana, sem omitir incertezas.</li>
+</ul>
+<hr />
+<p>Esta análise coordenada fornece um panorama claro dos impactos, riscos e recomendações para a nova função <code>delete_user</code> no <code>UserService</code>, orientando a equipe para garantir qualidade e robustez na entrega.</p>
+    </article>
+  </div>
+  <footer>QAgent — análise automatizada de QA com IA</footer>
+  
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const summaryContainer = document.getElementById('run-summary-container');
+  const artifactsContainer = document.getElementById('artifacts-container');
+
+  const formatMs = (ms) => {
+    if (!ms) return '0ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const getRiskBadge = (level) => {
+    const map = {
+      'HIGH': { text: 'Alto risco', class: 'badge-high' },
+      'MEDIUM': { text: 'Risco médio', class: 'badge-medium' },
+      'LOW': { text: 'Baixo risco', class: 'badge-low' }
+    };
+    const info = map[level] || { text: level, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getQualityBadge = (quality) => {
+    const map = {
+      'OK': { text: 'Review suficiente', class: 'badge-low' },
+      'INCOMPLETE': { text: 'Review incompleto', class: 'badge-high' }
+    };
+    const info = map[quality] || { text: quality, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const getRecBadge = (rec) => {
+    const map = {
+      'RECOMMENDED': { text: 'Geração recomendada', class: 'badge-low' },
+      'SKIPPED': { text: 'Geração pulada', class: 'badge-medium' }
+    };
+    const info = map[rec] || { text: rec, class: 'badge-info' };
+    return `<span class="badge ${info.class}">${info.text}</span>`;
+  };
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderMemories = (artifact) => {
+    const memories = artifact.memories_used || [];
+    if (!memories.length) {
+      return `
+        <div class="memory-empty">
+          Nenhuma memória relevante do banco vetorial foi usada na geração deste arquivo.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="memory-list">
+        ${memories.map((mem) => `
+          <div class="memory-item">
+            <div class="memory-meta">
+              PR #${escapeHtml(mem.pr_number || '--')} · ${escapeHtml(mem.repo || 'repo desconhecido')} ·
+              distância ${escapeHtml(mem.distance ?? '--')} · por ${escapeHtml(mem.author || '--')}
+            </div>
+            <p class="memory-lesson">${escapeHtml(mem.lesson || '')}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
+  // 1. Carregar Run Summary
+  try {
+    const resp = await fetch('run_summary.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      summaryContainer.innerHTML = `
+        <div class="section-title">📊 Resumo da Execução</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">${data.total_files || 0}</span>
+            <span class="stat-label">Arquivos</span>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              ${getRiskBadge('HIGH')} x ${data.risk_distribution?.HIGH || 0}
+              ${getRiskBadge('MEDIUM')} x ${data.risk_distribution?.MEDIUM || 0}
+              ${getRiskBadge('LOW')} x ${data.risk_distribution?.LOW || 0}
+            </div>
+            <span class="stat-label" style="margin-top:8px">Distribuição</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_steps_skipped || 0}</span>
+            <span class="stat-label">Etapas Puladas</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${data.total_fallbacks_triggered || 0}</span>
+            <span class="stat-label">Fallbacks</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">${formatMs(data.total_duration_ms)}</span>
+            <span class="stat-label">Duração Total</span>
+          </div>
+        </div>
+        <details>
+          <summary>Ver dados brutos do resumo</summary>
+          <pre class="raw-json">${JSON.stringify(data, null, 2)}</pre>
+        </details>
+      `;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar run_summary.json', e);
+  }
+
+  // 2. Carregar Artifacts
+  try {
+    const resp = await fetch('artifacts.json');
+    if (resp.ok) {
+      const artifacts = await resp.json();
+      let html = '<div class="section-title">📦 Artefatos Estruturados</div><div class="artifact-list">';
+      
+      artifacts.forEach((a, index) => {
+        const id = `art-${index}`;
+        html += `
+          <div class="artifact-card">
+            <div class="artifact-header" onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'">
+              <div class="artifact-title">
+                <span>📄</span> <strong>${a.file_path}</strong>
+              </div>
+              <div style="display:flex; gap:8px">
+                ${getRiskBadge(a.risk_level)}
+                ${getQualityBadge(a.review_quality)}
+              </div>
+            </div>
+            <div id="${id}" class="artifact-content" style="display:none">
+              
+              <div class="data-grid" style="margin-top:20px">
+                <div class="data-item">
+                  <span class="data-label">Recomendação de Testes</span>
+                  <span class="data-value">${getRecBadge(a.test_generation_recommendation)}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Políticas Aplicadas</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                    ${(a.applied_policies || []).map(p => `<span class="badge badge-policy">${p}</span>`).join('') || '--'}
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🔍 Visão Geral e Contexto</div>
+                <div class="data-grid">
+                   <div class="data-item">
+                    <span class="data-label">Linguagem</span>
+                    <span class="data-value">${a.context_result?.language || '--'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Propósito</span>
+                    <span class="data-value">${a.context_result?.file_purpose || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🛡️ Review de QA</div>
+                <div class="md-content" style="font-size:.85rem; color:var(--text-muted)">${a.review_result?.summary_html || escapeHtml(a.review_result?.summary || 'Sem resumo disponível')}</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Principais Riscos</span>
+                    <ul style="margin:5px 0; padding-left:18px; font-size:.85rem">
+                      ${(a.review_result?.security_vulnerabilities || []).slice(0,2).map(v => `<li>${v}</li>`).join('') || '<li>Nenhum detectado</li>'}
+                    </ul>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Impacto Funcional</span>
+                    <span class="data-value">${a.review_result?.impact_assessment || '--'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">⏱️ Observabilidade e Performance</div>
+                <div class="data-grid">
+                  <div class="data-item">
+                    <span class="data-label">Etapas Executadas</span>
+                    <div style="font-size:.8rem; display:flex; flex-wrap:wrap; gap:4px">
+                      ${(a.executed_steps || []).map(s => `<span class="badge badge-info">${s}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Etapas Puladas</span>
+                    <div style="font-size:.8rem; color:var(--red)">
+                      ${(a.skipped_steps || []).join(', ') || 'Nenhuma'}
+                    </div>
+                  </div>
+                   <div class="data-item">
+                    <span class="data-label">Duração das Etapas</span>
+                    <div style="font-size:.8rem">
+                      ${Object.entries(a.step_durations_ms || {}).map(([s, d]) => `<div>${s}: <strong>${formatMs(d)}</strong></div>`).join('')}
+                    </div>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Fallbacks</span>
+                    <div style="font-size:.8rem; color:var(--yellow)">
+                      ${(a.fallbacks_triggered || []).join(', ') || 'Nenhum'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-section">
+                <div class="sub-section-title">🧠 Memórias do Banco Vetorial</div>
+                <div class="data-grid" style="margin-bottom:12px">
+                  <div class="data-item">
+                    <span class="data-label">Memória usada na geração</span>
+                    <span class="data-value">${(a.memories_used || []).length ? 'Sim' : 'Não'}</span>
+                  </div>
+                  <div class="data-item">
+                    <span class="data-label">Quantidade recuperada</span>
+                    <span class="data-value">${(a.memories_used || []).length}</span>
+                  </div>
+                </div>
+                ${renderMemories(a)}
+                ${a.memory_query ? `
+                  <details style="margin-top:10px">
+                    <summary>Ver consulta usada no banco vetorial</summary>
+                    <pre class="raw-json">${escapeHtml(a.memory_query)}</pre>
+                  </details>
+                ` : ''}
+              </div>
+
+              <details style="margin-top:20px">
+                <summary>Ver JSON completo do arquivo</summary>
+                <pre class="raw-json">${JSON.stringify(a, null, 2)}</pre>
+              </details>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      artifactsContainer.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar artifacts.json', e);
+    artifactsContainer.innerHTML = '<div class="error-msg">Aviso: Não foi possível carregar os artefatos estruturados para esta execução.</div>';
+  }
+});
+</script>
+
+</body>
+</html>

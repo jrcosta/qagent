@@ -1,0 +1,27 @@
+{
+  "total_files": 4,
+  "risk_distribution": {
+    "LOW": 0,
+    "MEDIUM": 1,
+    "HIGH": 3
+  },
+  "total_steps_executed": 23,
+  "total_steps_skipped": 1,
+  "total_fallbacks_triggered": 0,
+  "policies_applied": [
+    "context_compact",
+    "context_expanded",
+    "high_risk_llm_enrichment",
+    "strategy_HIGH",
+    "strategy_MEDIUM",
+    "token_budget_standard"
+  ],
+  "analysis_flow_distribution": {
+    "standard": 4
+  },
+  "context_level_distribution": {
+    "compact": 2,
+    "expanded": 2
+  },
+  "total_duration_ms": 195140.94
+}
