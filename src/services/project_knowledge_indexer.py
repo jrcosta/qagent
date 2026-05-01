@@ -62,8 +62,17 @@ def index_project_knowledge(repo_path: str) -> None:
         rows_to_insert = []
         
         files_found = list(knowledge_dir.rglob("*.md")) + list(knowledge_dir.rglob("*.txt"))
-        
+        knowledge_root = knowledge_dir.resolve()
+
         for file_path in files_found:
+            # Block symlinks that could point outside the knowledge directory
+            if file_path.is_symlink():
+                print(f"  [Knowledge] Symlink ignorado (segurança): {file_path}")
+                continue
+            resolved_file = file_path.resolve()
+            if not resolved_file.is_relative_to(knowledge_root):
+                print(f"  [Knowledge] Caminho fora de .qagent/knowledge/ bloqueado: {file_path}")
+                continue
             content = file_path.read_text(encoding="utf-8").strip()
             if not content:
                 continue

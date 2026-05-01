@@ -36,16 +36,23 @@ class ReadFileTool(BaseTool):
         self._repo_path = repo_path
 
     def _run(self, file_path: str) -> str:
-        path = self._repo_path / file_path
+        try:
+            resolved = (self._repo_path / file_path).resolve()
+        except Exception:
+            return f"Caminho inválido: {file_path}"
 
-        if not path.exists():
+        repo_root = self._repo_path.resolve()
+        if not resolved.is_relative_to(repo_root):
+            return "Acesso negado: caminho fora do repositório."
+
+        if not resolved.exists():
             return f"Arquivo não encontrado: {file_path}"
 
-        if not path.is_file():
+        if not resolved.is_file():
             return f"Caminho não é um arquivo: {file_path}"
 
         try:
-            return path.read_text(encoding="utf-8")
+            return resolved.read_text(encoding="utf-8")
         except Exception as error:
             return f"Erro ao ler arquivo {file_path}: {error}"
 

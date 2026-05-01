@@ -36,13 +36,20 @@ jobs:
     steps:
 
       - name: Debug payload
+        env:
+          TARGET_OWNER: ${{ github.event.client_payload.target_owner || inputs.target_owner }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo || inputs.target_repo }}
+          TARGET_REF: ${{ github.event.client_payload.target_ref || inputs.target_ref }}
+          TARGET_BRANCH: ${{ github.event.client_payload.target_branch || inputs.target_branch }}
+          BASE_SHA: ${{ github.event.client_payload.base_sha || inputs.base_sha }}
+          HEAD_SHA: ${{ github.event.client_payload.head_sha || inputs.head_sha }}
         run: |
-          echo "target_owner=${{ github.event.client_payload.target_owner || inputs.target_owner }}"
-          echo "target_repo=${{ github.event.client_payload.target_repo || inputs.target_repo }}"
-          echo "target_ref=${{ github.event.client_payload.target_ref || inputs.target_ref }}"
-          echo "target_branch=${{ github.event.client_payload.target_branch || inputs.target_branch }}"
-          echo "base_sha=${{ github.event.client_payload.base_sha || inputs.base_sha }}"
-          echo "head_sha=${{ github.event.client_payload.head_sha || inputs.head_sha }}"
+          echo "target_owner=$TARGET_OWNER"
+          echo "target_repo=$TARGET_REPO"
+          echo "target_ref=$TARGET_REF"
+          echo "target_branch=$TARGET_BRANCH"
+          echo "base_sha=$BASE_SHA"
+          echo "head_sha=$HEAD_SHA"
 
       - name: Checkout do repo do agente
         uses: actions/checkout@v4
@@ -69,21 +76,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r agent/requirements.txt
 
-      - name: Criar arquivo .env do agente
-        run: |
-          echo "LLM_PROVIDER=groq" >> agent/.env
-          echo "LLM_MODEL=openai/gpt-4.1-mini" >> agent/.env
-          echo "LLM_API_KEY=${{ secrets.GROQ_API_KEY }}" >> agent/.env
-          echo "LLM_TEMPERATURE=0" >> agent/.env
-
       - name: Executar QAgent contra o repo alvo
+        env:
+          LLM_PROVIDER: groq
+          LLM_MODEL: openai/gpt-4.1-mini
+          LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LLM_TEMPERATURE: "0"
+          BASE_SHA: ${{ github.event.client_payload.base_sha || inputs.base_sha }}
+          HEAD_SHA: ${{ github.event.client_payload.head_sha || inputs.head_sha }}
         run: |
           cd agent
           python -m src.main \
             --repo-path ../target \
             --output-file ../target/outputs/analysis.md \
-            --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
+            --base-sha "$BASE_SHA" \
+            --head-sha "$HEAD_SHA" \
             --cooperative-analysis
 
       - name: Mostrar relatório gerado
@@ -91,25 +98,43 @@ jobs:
           cat target/outputs/analysis.md || true
 
       - name: Executar agente gerador de testes unitários
+        env:
+          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
+          LLM_PROVIDER: groq
+          LLM_MODEL: openai/gpt-4.1-mini
+          LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LLM_TEMPERATURE: "0"
+          TARGET_BRANCH: ${{ github.event.client_payload.target_branch || inputs.target_branch }}
         run: |
           cd agent
           python -m src.main_test_generator \
             --repo-path ../target \
             --report-file ../target/outputs/analysis.md \
-            --base-branch "${{ github.event.client_payload.target_branch || inputs.target_branch }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
+            --base-branch "$TARGET_BRANCH"
 
-      - name: Instalar dependências do alvo (Python)
+      - name: Instalar dependências do alvo em venv isolado
         run: |
+          python -m venv target-venv
+          target-venv/bin/pip install --upgrade pip
           if [ -f target/python-api/requirements.txt ]; then
-            python -m pip install -r target/python-api/requirements.txt
+            target-venv/bin/pip install -r target/python-api/requirements.txt
           elif [ -f target/requirements.txt ]; then
-            python -m pip install -r target/requirements.txt
+            target-venv/bin/pip install -r target/requirements.txt
           fi
-          python -m pip install pytest pytest-asyncio  # Garante pytest no ambiente
+          target-venv/bin/pip install pytest pytest-asyncio
 
       - name: Executar revisão crítica dos testes (Test Reviewer)
+        env:
+          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
+          LLM_PROVIDER: groq
+          LLM_MODEL: openai/gpt-4.1-mini
+          LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LLM_TEMPERATURE: "0"
+          TARGET_OWNER: ${{ github.event.client_payload.target_owner || inputs.target_owner }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo || inputs.target_repo }}
+          BASE_SHA: ${{ github.event.client_payload.base_sha || inputs.base_sha }}
+          HEAD_SHA: ${{ github.event.client_payload.head_sha || inputs.head_sha }}
+          PYTEST_BIN: ${{ github.workspace }}/target-venv/bin/pytest
         run: |
           set +e
           target_sha="$(git -C target rev-parse HEAD)"
@@ -118,7 +143,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.event.client_payload.target_owner || inputs.target_owner }}/${{ github.event.client_payload.target_repo || inputs.target_repo }}/statuses/${target_sha}" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${TARGET_REPO}/statuses/${target_sha}" \
             -d "$(jq -n \
               --arg state "pending" \
               --arg context "QAgent Test Review" \
@@ -127,14 +152,13 @@ jobs:
               '{state: $state, context: $context, description: $description, target_url: $target_url}')"
 
           cd agent
-          # Define PYTHONPATH para que o TestExecutionRunner (pytest) encontre a app
           export PYTHONPATH=$PYTHONPATH:$(pwd)/../target/python-api
-          
+
           python -m src.main_test_reviewer \
             --repo-path ../target \
             --artifacts-file ../target/outputs/artifacts.json \
-            --base-sha "${{ github.event.client_payload.base_sha || inputs.base_sha }}" \
-            --head-sha "${{ github.event.client_payload.head_sha || inputs.head_sha }}" \
+            --base-sha "$BASE_SHA" \
+            --head-sha "$HEAD_SHA" \
             --execute-tests \
             --auto-fix-tests \
             --fail-on-findings
@@ -153,7 +177,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.event.client_payload.target_owner || inputs.target_owner }}/${{ github.event.client_payload.target_repo || inputs.target_repo }}/statuses/${target_sha}" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${TARGET_REPO}/statuses/${target_sha}" \
             -d "$(jq -n \
               --arg state "$review_state" \
               --arg context "QAgent Test Review" \
@@ -164,8 +188,6 @@ jobs:
           if [ "$reviewer_exit" -ne 0 ]; then
             echo "QAgent Test Review publicou failure no PR alvo; mantendo o workflow do qagent verde."
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
 
       - name: Publicar relatório como artifact
         uses: actions/upload-artifact@v4
@@ -183,11 +205,14 @@ jobs:
         working-directory: agent
 
       - name: Montar site com histórico
+        env:
+          TARGET_OWNER: ${{ github.event.client_payload.target_owner || inputs.target_owner }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo || inputs.target_repo }}
         run: |
           python scripts/build_pages_site.py \
             --analysis-file ../target/outputs/analysis.md \
-            --target-owner "${{ github.event.client_payload.target_owner || inputs.target_owner }}" \
-            --target-repo "${{ github.event.client_payload.target_repo || inputs.target_repo }}"
+            --target-owner "$TARGET_OWNER" \
+            --target-repo "$TARGET_REPO"
         working-directory: agent
 
       - name: Remover worktree temporário

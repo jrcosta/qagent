@@ -27,23 +27,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env
-        run: |
-          echo "LLM_PROVIDER=groq" >> .env
-          echo "LLM_MODEL=${{ vars.LLM_MODEL || 'openai/gpt-4.1-mini' }}" >> .env
-          echo "LLM_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
-          echo "LLM_TEMPERATURE=0" >> .env
-
       - name: Run memory ingest
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+          LLM_PROVIDER: groq
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'openai/gpt-4.1-mini' }}
+          LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LLM_TEMPERATURE: "0"
         run: python .github/scripts/ingest_comment.py
 
       - name: Commit memories DB
+        env:
+          PR_NUMBER: ${{ github.event.client_payload.pr_number }}
+          PR_REPO: ${{ github.event.client_payload.repo }}
         run: |
           git config user.name "qagent[bot]"
           git config user.email "qagent[bot]@users.noreply.github.com"
           git add data/lancedb/ || true
           git diff --cached --quiet && echo "No changes to commit" || \
-            git commit -m "chore: update memories from PR #${{ github.event.client_payload.pr_number }} (${{ github.event.client_payload.repo }})"
+            git commit -m "chore: update memories from PR #${PR_NUMBER} (${PR_REPO})"
           git push origin main

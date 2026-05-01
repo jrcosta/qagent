@@ -9,6 +9,15 @@ DEFAULT_PR_BODY_MAX_CHARS = 60_000
 COMPACT_PR_BODY_MAX_LIST_ITEMS = 80
 
 
+def _safe_resolve(repo_path: Path, relative_path: str) -> Path:
+    """Resolve path and raise if it escapes repo_path (path traversal guard)."""
+    resolved = (repo_path / relative_path).resolve()
+    repo_root = repo_path.resolve()
+    if not resolved.is_relative_to(repo_root):
+        raise ValueError(f"Path traversal blocked: '{relative_path}' resolves outside repo root")
+    return resolved
+
+
 def parse_test_files_from_output(agent_output: str) -> dict[str, str]:
     """Extrai arquivos de teste do output do agente no formato ### FILE: path + bloco de código."""
     files: dict[str, str] = {}
@@ -18,8 +27,14 @@ def parse_test_files_from_output(agent_output: str) -> dict[str, str]:
     for file_path, code in matches:
         file_path = file_path.strip()
         code = code.strip()
-        if file_path and code:
-            files[file_path] = code
+        if not file_path or not code:
+            continue
+        # Reject absolute paths and obvious traversal before repo_path is known
+        if os.path.isabs(file_path) or "\x00" in file_path:
+            continue
+        if ".." in Path(file_path).parts:
+            continue
+        files[file_path] = code
 
     return files
 
@@ -29,7 +44,7 @@ def write_test_files(repo_path: Path, test_files: dict[str, str]) -> list[str]:
     created_files: list[str] = []
 
     for relative_path, content in test_files.items():
-        full_path = repo_path / relative_path
+        full_path = _safe_resolve(repo_path, relative_path)
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content, encoding="utf-8")
         created_files.append(relative_path)
