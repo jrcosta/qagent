@@ -1,7 +1,7 @@
 from src.agent.qa_agent import QAAgentFactory
 from src.config.settings import Settings
 from src.services.context_builder import RepoContextBuilder
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from src.tasks.qa_task import QATaskFactory
 from crewai import Crew, Process
 from src.schemas.context_result import ContextResult
@@ -16,6 +16,7 @@ class QACrewResult:
     raw_review_markdown: str
     review_result: ReviewResult
     context_result: ContextResult | None = None
+    agent_messages: dict = field(default_factory=dict)
 
 
 class QACrewRunner:

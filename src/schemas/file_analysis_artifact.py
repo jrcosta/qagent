@@ -72,6 +72,10 @@ class FileAnalysisArtifact(BaseModel):
         default_factory=list,
         description="Memórias recuperadas do banco vetorial e usadas na geração",
     )
+    agent_messages: Dict[str, List[Dict[str, Any]]] = Field(
+        default_factory=dict,
+        description="Mensagens trocadas entre agentes via bus (topic → [{sender, message, timestamp}])",
+    )
 
     # --- Campos de orquestração ---
     risk_level: RiskLevel = Field(

@@ -217,6 +217,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
+  const renderAgentMessages = (artifact) => {
+    const msgs = artifact.agent_messages || {};
+    const topics = Object.keys(msgs);
+    if (!topics.length) return '';
+
+    const topicOrder = ['qa_findings', 'test_strategy', 'critique', 'consolidation'];
+    const sorted = topicOrder.filter(t => msgs[t]).concat(topics.filter(t => !topicOrder.includes(t)));
+
+    return `
+      <div class="sub-section">
+        <div class="sub-section-title">🔗 Comunicação Inter-Agente</div>
+        ${sorted.map(topic => `
+          <div style="margin-bottom:12px">
+            <div style="font-size:.8rem;font-weight:600;color:var(--purple);margin-bottom:6px">${escapeHtml(topic)}</div>
+            ${msgs[topic].map(m => `
+              <div class="data-item" style="margin-bottom:6px">
+                <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted)">
+                  <span>${escapeHtml(m.sender || '—')}</span>
+                  <span>${escapeHtml(m.timestamp || '')}</span>
+                </div>
+                <div style="font-size:.82rem;margin-top:4px;white-space:pre-wrap">${escapeHtml((m.message||'').slice(0,300))}${(m.message||'').length > 300 ? '…' : ''}</div>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
   const renderMemories = (artifact) => {
     const memories = artifact.memories_used || [];
     if (!memories.length) {
@@ -401,6 +430,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </details>
                 ` : ''}
               </div>
+
+              ${renderAgentMessages(a)}
 
               <details style="margin-top:20px">
                 <summary>Ver JSON completo do arquivo</summary>
