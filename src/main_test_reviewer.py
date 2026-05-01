@@ -187,6 +187,10 @@ def main() -> None:
         else:
             test_strategy = "Nenhuma recomendação de teste disponível na estratégia."
 
+        ci_execution_summary = (
+            _render_execution_result_for_prompt(artifact.test_execution_result)
+            if artifact.test_execution_result else ""
+        )
         t0 = time.perf_counter()
         review_result = reviewer_runner.run(
             file_path=artifact.file_path,
@@ -195,6 +199,7 @@ def main() -> None:
             test_strategy=test_strategy,
             generated_tests=generated_tests,
             file_diff=file_diff,
+            ci_execution_summary=ci_execution_summary,
         )
         artifact.generated_test_review_result = review_result
         artifact.record_duration("test_review", (time.perf_counter() - t0) * 1000)
@@ -359,6 +364,10 @@ def main() -> None:
                     else:
                         test_strategy = "Nenhuma recomendação de teste disponível na estratégia."
                         
+                    ci_execution_summary = (
+                        _render_execution_result_for_prompt(artifact.test_execution_result)
+                        if artifact.test_execution_result else ""
+                    )
                     t0 = time.perf_counter()
                     review_result = reviewer_runner.run(
                         file_path=artifact.file_path,
@@ -367,8 +376,9 @@ def main() -> None:
                         test_strategy=test_strategy,
                         generated_tests=generated_tests,
                         file_diff=file_diff,
+                        ci_execution_summary=ci_execution_summary,
                     )
-                    
+
                     artifact.generated_test_review_result = review_result
                     artifact.record_duration("test_re_review_after_fix", (time.perf_counter() - t0) * 1000)
                     artifact.mark_step_executed("test_re_review_after_fix")
