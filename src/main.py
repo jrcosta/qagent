@@ -58,12 +58,15 @@ def parse_args():
 
 
 def read_file_content(repo_path: Path, file_path: str) -> str:
-    path = repo_path / file_path
+    resolved = (repo_path / file_path).resolve()
+    repo_root = repo_path.resolve()
+    if not resolved.is_relative_to(repo_root):
+        raise ValueError(f"Path traversal blocked: '{file_path}' resolves outside repo root")
 
-    if not path.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {path}")
+    if not resolved.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {resolved}")
 
-    return path.read_text(encoding="utf-8")
+    return resolved.read_text(encoding="utf-8")
 
 
 def save_output(content: str, output_file: str) -> None:

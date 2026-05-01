@@ -18,8 +18,8 @@ class TestExecutionRunner:
         start = time.time()
 
         process = subprocess.Popen(
-            command,
-            shell=True,
+            [command],
+            shell=False,
             cwd=self.repo_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
