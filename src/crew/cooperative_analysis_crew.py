@@ -103,6 +103,7 @@ class CooperativeAnalysisCrewRunner:
         )
 
         result = crew.kickoff()
+        bus_messages = get_bus().read_all()
         raw_result = self._extract_raw_result(result)
         review_result = parse_review_markdown_to_review_result(raw_result)
 
@@ -110,6 +111,7 @@ class CooperativeAnalysisCrewRunner:
             raw_review_markdown=raw_result,
             review_result=review_result,
             context_result=context_result,
+            agent_messages=bus_messages,
         )
 
     @staticmethod

@@ -247,6 +247,7 @@ def main() -> None:
         if cooperative_succeeded:
             artifact.add_policy("cooperative_analysis_experimental")
             artifact.mark_step_executed("cooperative_analysis")
+            artifact.agent_messages = crew_result.agent_messages
         elif (
             args.cooperative_analysis
             and token_budget_plan.analysis_mode == "cooperative"
