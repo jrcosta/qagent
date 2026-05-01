@@ -15,6 +15,7 @@ from src.services.token_budget_planner import (
     TokenBudgetPlanner,
     build_code_content_for_plan,
 )
+from src.services.project_knowledge_indexer import index_project_knowledge
 
 
 def parse_args():
@@ -107,6 +108,9 @@ def main() -> None:
     args = parse_args()
     repo_path = Path(args.repo_path).resolve()
     pipeline_start = time.perf_counter()
+
+    print(f"Indexando conhecimento do projeto (RAG local) em {repo_path}...")
+    index_project_knowledge(str(repo_path))
 
     settings = get_settings()
     crew_runner = QACrewRunner(settings)

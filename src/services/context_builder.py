@@ -9,6 +9,7 @@ from src.tools.repo_tools import (
 )
 from src.schemas.context_result import ContextResult
 from src.schemas.token_budget import ContextLevel
+from src.services.project_knowledge_indexer import retrieve_project_knowledge
 
 
 
@@ -162,6 +163,19 @@ class RepoContextBuilder:
             f"# Conteúdo de código relacionado (amostra)\n{related_source_contents}",
             f"# Conteúdo de testes existentes (amostra)\n{existing_tests_contents}",
         ]
+
+        project_knowledge = retrieve_project_knowledge(
+            query=f"Arquivo: {changed_file}\n{code_content[:1000]}",
+            repo_path=str(self.repo_path),
+            k=3
+        )
+        
+        if project_knowledge:
+            context_sections.append(
+                "[INICIO_CONHECIMENTO_DO_PROJETO]\n"
+                f"{project_knowledge}\n"
+                "[FIM_CONHECIMENTO_DO_PROJETO]"
+            )
 
         summary_text = "\n\n".join(context_sections)
         if max_context_chars is not None and len(summary_text) > max_context_chars:

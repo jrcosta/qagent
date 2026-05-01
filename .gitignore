@@ -6,3 +6,5 @@ outputs/
 .pytest_cache/
 .tmp.drivedownload
 .tmp.driveupload
+
+data/
