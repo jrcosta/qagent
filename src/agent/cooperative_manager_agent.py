@@ -9,7 +9,7 @@ class CooperativeManagerAgentFactory:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def create(self) -> Agent:
+    def create(self, tools: list | None = None) -> Agent:
         llm = LLM(
             model=self.settings.llm_model,
             api_key=self.settings.llm_api_key,
@@ -19,16 +19,18 @@ class CooperativeManagerAgentFactory:
         return Agent(
             role="Gerente de Qualidade e Coordenação Multiagente",
             goal=(
-                "Coordenar especialistas de QA, estratégia de testes e revisão crítica "
-                "para produzir uma análise final objetiva, rastreável e útil para revisão humana."
+                "Ler todas as mensagens publicadas pelos agentes especializados no barramento "
+                "e consolidar uma análise final objetiva, rastreável e útil para revisão humana."
             ),
             backstory=(
-                "Você é um líder técnico de qualidade. Seu trabalho é distribuir o raciocínio "
-                "entre especialistas, confrontar conclusões frágeis e consolidar uma resposta "
+                "Você é um líder técnico de qualidade. Seu trabalho é consolidar o raciocínio "
+                "dos especialistas, confrontar conclusões frágeis e produzir uma resposta "
                 "final sem esconder incertezas. Você não substitui as regras determinísticas do "
-                "QAgent; você melhora a qualidade da análise que alimenta essas regras."
+                "QAgent; você melhora a qualidade da análise que alimenta essas regras. "
+                "Use a ferramenta read_messages com topic='all' para acessar o que cada agente publicou."
             ),
             llm=llm,
             verbose=True,
-            allow_delegation=True,
+            allow_delegation=False,
+            tools=tools or [],
         )

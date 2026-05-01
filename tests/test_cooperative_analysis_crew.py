@@ -68,11 +68,11 @@ class FakeAgentFactory:
     def __init__(self, role: str) -> None:
         self.role = role
 
-    def create(self) -> FakeAgent:
+    def create(self, tools: list | None = None) -> FakeAgent:
         return FakeAgent(self.role)
 
 
-def test_cooperative_runner_uses_hierarchical_process_with_manager(
+def test_cooperative_runner_uses_sequential_process(
     monkeypatch, tmp_path: Path
 ) -> None:
     source = tmp_path / "src" / "service.py"
@@ -82,9 +82,7 @@ def test_cooperative_runner_uses_hierarchical_process_with_manager(
     monkeypatch.setattr("src.crew.cooperative_analysis_crew.Crew", FakeCrew)
     monkeypatch.setattr(
         "src.crew.cooperative_analysis_crew.CooperativeManagerAgentFactory",
-        lambda settings: FakeAgentFactory(
-            "Gerente de Qualidade e Coordenação Multiagente"
-        ),
+        lambda settings: FakeAgentFactory("Gerente de Qualidade e Coordenação Multiagente"),
     )
     monkeypatch.setattr(
         "src.crew.cooperative_analysis_crew.QAAgentFactory",
@@ -110,26 +108,21 @@ def test_cooperative_runner_uses_hierarchical_process_with_manager(
     )
 
     crew_kwargs = FakeCrew.last_instance.kwargs
-    assert crew_kwargs["process"] == Process.hierarchical
-    assert crew_kwargs["manager_agent"].role == (
-        "Gerente de Qualidade e Coordenação Multiagente"
-    )
+    assert crew_kwargs["process"] == Process.sequential
     assert [agent.role for agent in crew_kwargs["agents"]] == [
         "QA Sênior Investigador",
         "Especialista em Estratégia de Testes para Código de Alto Risco",
         "Crítico de Análise de QA",
+        "Gerente de Qualidade e Coordenação Multiagente",
     ]
     assert "Validação cooperativa" in result.raw_review_markdown
     assert result.review_result.findings
     assert result.review_result.test_needs
 
 
-def test_cooperative_task_preserves_parser_sections() -> None:
-    task = CooperativeAnalysisTaskFactory.create(
+def test_cooperative_consolidation_task_preserves_parser_sections() -> None:
+    task = CooperativeAnalysisTaskFactory.create_consolidation_task(
         file_path="src/service.py",
-        file_diff="diff",
-        code_content="code",
-        repo_context="context",
     )
 
     for heading in [
@@ -144,3 +137,14 @@ def test_cooperative_task_preserves_parser_sections() -> None:
         "# Validação cooperativa",
     ]:
         assert heading in task.description
+
+
+def test_cooperative_task_compat_create_still_works() -> None:
+    task = CooperativeAnalysisTaskFactory.create(
+        file_path="src/service.py",
+        file_diff="diff",
+        code_content="code",
+        repo_context="context",
+    )
+    assert task is not None
+    assert "src/service.py" in task.description

@@ -9,7 +9,7 @@ class AnalysisCriticAgentFactory:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def create(self) -> Agent:
+    def create(self, tools: list | None = None) -> Agent:
         llm = LLM(
             model=self.settings.llm_model,
             api_key=self.settings.llm_api_key,
@@ -30,4 +30,5 @@ class AnalysisCriticAgentFactory:
             llm=llm,
             verbose=True,
             allow_delegation=False,
+            tools=tools or [],
         )

@@ -14,7 +14,7 @@ class QAAgentFactory:
         prompt_path = Path("src/prompts/system_prompt.txt")
         return prompt_path.read_text(encoding="utf-8")
 
-    def create(self) -> Agent:
+    def create(self, tools: list | None = None) -> Agent:
         llm = LLM(
             model=self.settings.llm_model,
             api_key=self.settings.llm_api_key,
@@ -31,4 +31,5 @@ class QAAgentFactory:
             llm=llm,
             verbose=True,
             allow_delegation=False,
+            tools=tools or [],
         )
