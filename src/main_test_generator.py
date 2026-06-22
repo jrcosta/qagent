@@ -9,7 +9,11 @@ from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
 from src.schemas.review_result import parse_review_markdown_to_review_result
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.analysis_orchestrator import AnalysisOrchestrator
-from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
+from src.services.artifact_exporter import (
+    export_artifacts_to_json,
+    export_run_summary,
+    load_artifacts_from_json,
+)
 from src.services.token_budget_planner import (
     TokenBudgetPlanner,
     build_code_content_for_plan,
@@ -39,7 +43,16 @@ def parse_args():
     parser.add_argument(
         "--report-file",
         default="outputs/analysis.md",
-        help="Caminho do relatório de QA gerado pelo primeiro agente",
+        help="Relatório Markdown legado, usado apenas se artifacts.json não existir",
+    )
+
+    parser.add_argument(
+        "--artifacts-file",
+        default=None,
+        help=(
+            "Handoff estruturado da análise. Padrão: artifacts.json no mesmo "
+            "diretório de --report-file"
+        ),
     )
 
     parser.add_argument(
@@ -104,6 +117,101 @@ def extract_report_sections(full_report: str) -> dict[str, str]:
     return sections
 
 
+def render_report_from_artifacts(artifacts: list[FileAnalysisArtifact]) -> str:
+    """Reconstrói o relatório agregado sem reinterpretar o Markdown."""
+    sections = []
+    for artifact in artifacts:
+        review = artifact.raw_review_markdown or ""
+        sections.append(f"# Arquivo analisado: {artifact.file_path}\n\n{review}")
+    return "\n\n---\n\n".join(sections)
+
+
+def build_legacy_artifacts(
+    report_file: str,
+    repo_path: Path,
+    base_sha: str | None,
+    head_sha: str | None,
+    orchestrator: AnalysisOrchestrator,
+    token_budget_planner: TokenBudgetPlanner,
+) -> list[FileAnalysisArtifact]:
+    """
+    Compatibilidade com execuções antigas que produzem somente analysis.md.
+
+    Este é o único caminho que reinterpreta Markdown e recalcula estratégia.
+    """
+    qa_report = read_report(report_file)
+    report_sections = extract_report_sections(qa_report)
+    artifacts: list[FileAnalysisArtifact] = []
+
+    for file_path, section_report in report_sections.items():
+        try:
+            code_content = read_file_content(repo_path, file_path)
+        except FileNotFoundError:
+            continue
+
+        file_diff = get_file_diff(
+            file_path=file_path,
+            repo_path=repo_path,
+            base_sha=base_sha,
+            head_sha=head_sha,
+        )
+        token_budget_plan = token_budget_planner.plan(
+            file_path=file_path,
+            file_diff=file_diff,
+            code_content=code_content,
+            cooperative_requested=False,
+        )
+        artifact = FileAnalysisArtifact(
+            file_path=file_path,
+            token_budget_plan=token_budget_plan,
+            raw_review_markdown=section_report,
+            review_result=parse_review_markdown_to_review_result(section_report),
+        )
+        artifact.mark_step_executed("parse_review_legacy")
+        artifact.add_policy("legacy_markdown_handoff")
+        artifact.add_policy(f"token_budget_{token_budget_plan.analysis_mode}")
+        artifact.add_policy(f"context_{token_budget_plan.context_level}")
+        artifact.add_note(token_budget_plan.reason)
+        orchestrator.run_artifact_pipeline(artifact)
+        artifacts.append(artifact)
+
+    return artifacts
+
+
+def load_generation_artifacts(
+    artifacts_file: str | None,
+    report_file: str,
+    repo_path: Path,
+    base_sha: str | None,
+    head_sha: str | None,
+    orchestrator: AnalysisOrchestrator,
+    token_budget_planner: TokenBudgetPlanner,
+) -> tuple[list[FileAnalysisArtifact], Path, bool]:
+    """
+    Carrega o contrato estruturado preferencialmente.
+
+    Retorna artefatos, caminho de persistência e indicador de fallback legado.
+    """
+    handoff_path = (
+        Path(artifacts_file)
+        if artifacts_file
+        else Path(report_file).parent / "artifacts.json"
+    )
+
+    if handoff_path.exists():
+        return load_artifacts_from_json(handoff_path), handoff_path, False
+
+    artifacts = build_legacy_artifacts(
+        report_file=report_file,
+        repo_path=repo_path,
+        base_sha=base_sha,
+        head_sha=head_sha,
+        orchestrator=orchestrator,
+        token_budget_planner=token_budget_planner,
+    )
+    return artifacts, handoff_path, True
+
+
 def main() -> None:
     args = parse_args()
     repo_path = Path(args.repo_path).resolve()
@@ -114,21 +222,30 @@ def main() -> None:
     orchestrator = AnalysisOrchestrator(high_risk_runner)
     token_budget_planner = TokenBudgetPlanner()
 
-    qa_report = read_report(args.report_file)
-    report_sections = extract_report_sections(qa_report)
-
-    if not report_sections:
-        print("Nenhuma seção de arquivo encontrada no relatório de QA.")
+    artifacts, artifacts_handoff_path, used_legacy_handoff = load_generation_artifacts(
+        artifacts_file=args.artifacts_file,
+        report_file=args.report_file,
+        repo_path=repo_path,
+        base_sha=args.base_sha,
+        head_sha=args.head_sha,
+        orchestrator=orchestrator,
+        token_budget_planner=token_budget_planner,
+    )
+    if not artifacts:
+        print("Nenhum artefato de análise encontrado para geração de testes.")
         return
 
-    changed_files = list(report_sections.keys())
+    if used_legacy_handoff:
+        print("⚠️ artifacts.json ausente; usando handoff legado via analysis.md")
+    else:
+        print(f"📦 Handoff estruturado carregado de: {artifacts_handoff_path}")
 
     all_test_files: dict[str, str] = {}
     analyzed_files: list[str] = []
-    artifacts: list[FileAnalysisArtifact] = []
     pipeline_start = time.perf_counter()
 
-    for file_path in changed_files:
+    for artifact in artifacts:
+        file_path = artifact.file_path
         print(f"\n🧪 Gerando testes para: {file_path}")
 
         try:
@@ -137,42 +254,31 @@ def main() -> None:
             print(f"  ⚠️ Arquivo não encontrado no repo, pulando: {file_path}")
             continue
 
-        section_report = report_sections[file_path]
         file_diff = get_file_diff(
             file_path=file_path,
             repo_path=repo_path,
             base_sha=args.base_sha,
             head_sha=args.head_sha,
         )
-        token_budget_plan = token_budget_planner.plan(
-            file_path=file_path,
-            file_diff=file_diff,
-            code_content=code_content,
-            cooperative_requested=False,
-        )
+        token_budget_plan = artifact.token_budget_plan
+        if token_budget_plan is None:
+            token_budget_plan = token_budget_planner.plan(
+                file_path=file_path,
+                file_diff=file_diff,
+                code_content=code_content,
+                cooperative_requested=False,
+            )
+            artifact.token_budget_plan = token_budget_plan
+            artifact.add_fallback("missing_token_budget_plan")
+            artifact.add_note(
+                "TokenBudgetPlan ausente no handoff; plano recalculado na geração."
+            )
+
         prompt_code_content = build_code_content_for_plan(
             code_content=code_content,
             file_diff=file_diff,
             plan=token_budget_plan,
         )
-
-        # Gera ReviewResult estruturado a partir do markdown de QA
-        review_result = parse_review_markdown_to_review_result(section_report)
-
-        # 1. Monta artefato parcial e avalia risco
-        artifact = FileAnalysisArtifact(
-            file_path=file_path,
-            token_budget_plan=token_budget_plan,
-            raw_review_markdown=section_report,
-            review_result=review_result,
-        )
-        artifact.mark_step_executed("parse_review")
-        artifact.add_policy(f"token_budget_{token_budget_plan.analysis_mode}")
-        artifact.add_policy(f"context_{token_budget_plan.context_level}")
-        artifact.add_note(token_budget_plan.reason)
-
-        # --- Pipeline de avaliação e estratégia ---
-        orchestrator.run_artifact_pipeline(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
         print(f"  ⏱️ Durações: {artifact.step_durations_ms}")
@@ -181,10 +287,18 @@ def main() -> None:
             artifact.mark_step_skipped("test_generation", "sem testes recomendados")
             print(f"  ⏭️ Geração de testes pulada para: {file_path} (sem testes recomendados)")
             continue
+        if artifact.review_result is None or artifact.test_strategy_result is None:
+            artifact.mark_step_skipped(
+                "test_generation",
+                "handoff estruturado incompleto: review ou estratégia ausente",
+            )
+            artifact.add_fallback("incomplete_analysis_artifact")
+            print(f"  ⚠️ Artefato incompleto para geração: {file_path}")
+            continue
 
         t0 = time.perf_counter()
         result = crew_runner.run(
-            qa_report=section_report,
+            qa_report=artifact.raw_review_markdown or "",
             file_path=file_path,
             code_content=prompt_code_content,
             repo_path=str(repo_path),
@@ -193,7 +307,8 @@ def main() -> None:
             token_budget_plan=token_budget_plan,
             risk_level=artifact.risk_level,
         )
-        artifact.context_result = crew_runner.last_context_result
+        if artifact.context_result is None:
+            artifact.context_result = crew_runner.last_context_result
         artifact.memory_query = crew_runner.last_memory_query
         artifact.memories_used_raw = crew_runner.last_memories_raw
         artifact.memories_used = crew_runner.last_memories_used
@@ -216,11 +331,9 @@ def main() -> None:
         for tf in test_files:
             print(f"  ✅ Teste gerado: {tf}")
 
-        artifacts.append(artifact)
-
     # Exportar artefatos estruturados
     if artifacts:
-        output_dir = str(Path(args.report_file).parent)
+        output_dir = str(artifacts_handoff_path.parent)
         total_duration_ms = (time.perf_counter() - pipeline_start) * 1000
         artifacts_path = export_artifacts_to_json(artifacts, output_dir)
         summary_path = export_run_summary(artifacts, output_dir, total_duration_ms)
@@ -262,6 +375,7 @@ def main() -> None:
         return
 
     repo_full_name = get_repo_full_name(repo_path)
+    qa_report = render_report_from_artifacts(artifacts)
     pr_body = build_pr_body(qa_report, created_files, analyzed_files)
 
     pr_title = f"🧪 QAgent: Testes unitários para {', '.join(analyzed_files)}"
@@ -282,7 +396,7 @@ def main() -> None:
 
     # Salva o nome da branch para jobs subsequentes
     try:
-        output_dir = Path(args.report_file).parent
+        output_dir = artifacts_handoff_path.parent
         (output_dir / ".branch_name").write_text(branch_name, encoding="utf-8")
     except Exception as exc:
         print(f"⚠️ Não foi possível salvar o nome da branch: {exc}")

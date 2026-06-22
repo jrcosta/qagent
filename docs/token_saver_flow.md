@@ -269,6 +269,10 @@ ReviewResult + TestStrategyResult -> prompt compacto
 
 Implementado por `render_compact_generation_report`, que transforma `ReviewResult` e `TestStrategyResult` em uma entrada curta com `Findings`, `Test needs` e `Strategy`.
 
+O `main_test_generator.py` carrega esses contratos diretamente de
+`artifacts.json`. O Markdown não é reinterpretado nem a estratégia é recalculada
+entre as etapas; `analysis.md` é aceito somente como fallback legado.
+
 Exemplo de prompt reduzido:
 
 ```text
