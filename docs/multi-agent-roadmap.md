@@ -72,6 +72,10 @@ pós-review por meio de `--agentic-runtime`. O ciclo local de geração, execuç
 revisão e correção também está disponível em `main_agentic_lifecycle.py`.
 Execução distribuída e efeitos externos de GitHub continuam pendentes.
 
+**Coordinator implementado:** `main_agentic.py` executa análise e ciclo de
+testes em uma única chamada, persiste checkpoints entre stages e suporta
+retomada por `--resume-run-id`.
+
 ---
 
 ### 3. Comunicação Direta Entre Agentes
