@@ -5,7 +5,12 @@ import pytest
 
 from src.crew.planning_crew import (
     build_deterministic_plan,
+    build_test_lifecycle_plan,
     validate_plan_capabilities,
+)
+from src.schemas.generated_test_review_result import (
+    GeneratedTestIssue,
+    GeneratedTestsReviewResult,
 )
 from src.schemas.agentic_runtime import (
     ExecutionPlan,
@@ -17,6 +22,7 @@ from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.schemas.review_result import Finding, ReviewResult
 from src.schemas.test_strategy_result import TestCase as StrategyTestCase
 from src.schemas.test_strategy_result import TestStrategyResult as StrategyResult
+from src.schemas.test_execution_result import TestExecutionResult as ExecutionResult
 from src.services.agentic_evaluator import AgenticRunEvaluator
 from src.services.agentic_runtime import GovernedAgenticRuntime
 from src.services.artifact_exporter import export_run_summary
@@ -76,6 +82,53 @@ class FakeOrchestrator:
         elif capability == "evaluate_final":
             artifact.test_generation_recommendation = "RECOMMENDED"
             artifact.mark_step_executed("evaluate_final")
+
+
+class FakeTestLifecycleExecutor:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+        self.fixed = False
+
+    def run_capability(self, capability, artifact) -> None:
+        self.calls.append(capability)
+        if capability == "generate_tests":
+            artifact.generated_tests_raw = (
+                "### FILE: tests/test_service.py\n"
+                "```python\ndef test_service():\n    assert True\n```"
+            )
+            artifact.generated_test_files = {
+                "tests/test_service.py": "def test_service():\n    assert True"
+            }
+        elif capability == "write_tests":
+            artifact.mark_step_executed("test_write")
+        elif capability == "execute_tests":
+            artifact.test_execution_result = ExecutionResult(
+                success=self.fixed,
+                exit_code=0 if self.fixed else 1,
+                stdout="passed" if self.fixed else "failed",
+                stderr="",
+                duration_seconds=0.1,
+                command="pytest",
+            )
+        elif capability == "review_tests":
+            artifact.generated_test_review_result = GeneratedTestsReviewResult(
+                status="APPROVED" if self.fixed else "INVALID",
+                summary="Aprovado" if self.fixed else "Teste falhou",
+                issues=(
+                    []
+                    if self.fixed
+                    else [
+                        GeneratedTestIssue(
+                            severity="ERROR",
+                            description="Expectativa incorreta",
+                        )
+                    ]
+                ),
+                execution_recommended=self.fixed,
+            )
+        elif capability == "fix_tests":
+            self.fixed = True
+            artifact.mark_step_executed("test_auto_fix")
 
 
 def test_execution_plan_rejects_future_dependencies() -> None:
@@ -185,6 +238,48 @@ def test_catalog_validation_requires_explicit_dependencies() -> None:
         validate_plan_capabilities(plan)
 
 
+def test_lifecycle_plan_rejects_analysis_capabilities() -> None:
+    plan = ExecutionPlan(
+        objective="Misturar fases",
+        phase="test_lifecycle",
+        rationale="Plano inválido",
+        steps=[
+            PlanStep(
+                id="generate",
+                capability="generate_tests",
+                reason="Gerar",
+            ),
+            PlanStep(
+                id="risk",
+                capability="evaluate_risk",
+                reason="Capability da fase errada",
+                depends_on=["generate"],
+            ),
+            PlanStep(
+                id="write",
+                capability="write_tests",
+                reason="Escrever",
+                depends_on=["generate"],
+            ),
+            PlanStep(
+                id="execute",
+                capability="execute_tests",
+                reason="Executar",
+                depends_on=["write"],
+            ),
+            PlanStep(
+                id="review",
+                capability="review_tests",
+                reason="Revisar",
+                depends_on=["execute"],
+            ),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="inválidas para ciclo de testes"):
+        validate_plan_capabilities(plan)
+
+
 def test_deterministic_planner_adds_high_risk_enrichment() -> None:
     plan = build_deterministic_plan(_artifact(high_risk=True))
 
@@ -195,6 +290,21 @@ def test_deterministic_planner_adds_high_risk_enrichment() -> None:
         "enrich_high_risk",
         "evaluate_final",
     ]
+
+
+def test_test_lifecycle_plan_uses_safe_initial_sequence() -> None:
+    plan = build_test_lifecycle_plan(_artifact())
+
+    validate_plan_capabilities(plan)
+
+    assert plan.phase == "test_lifecycle"
+    assert [step.capability for step in plan.steps] == [
+        "generate_tests",
+        "write_tests",
+        "execute_tests",
+        "review_tests",
+    ]
+    assert "fix_tests" not in [step.capability for step in plan.steps]
 
 
 def test_run_state_store_round_trip(tmp_path: Path) -> None:
@@ -318,6 +428,79 @@ def test_runtime_executes_authorized_correction_cycle(tmp_path: Path) -> None:
     assert len(state.plan.steps) == 5
 
 
+def test_runtime_controls_full_test_lifecycle_end_to_end(
+    tmp_path: Path,
+) -> None:
+    artifact = _artifact()
+    artifact.test_strategy_result = StrategyResult(
+        recommended_tests=[
+            StrategyTestCase(
+                name="Cobrir comportamento alterado",
+                test_type="UNIT",
+                priority="MEDIUM",
+            )
+        ]
+    )
+    artifact.test_generation_recommendation = "RECOMMENDED"
+    executor = FakeTestLifecycleExecutor()
+    runtime = GovernedAgenticRuntime(
+        executor,  # type: ignore[arg-type]
+        JsonRunStateStore(tmp_path),
+    )
+
+    state = runtime.run(artifact, build_test_lifecycle_plan(artifact))
+
+    assert state.status == "COMPLETED"
+    assert state.correction_cycles == 1
+    assert executor.calls == [
+        "generate_tests",
+        "write_tests",
+        "execute_tests",
+        "review_tests",
+        "fix_tests",
+        "execute_tests",
+        "review_tests",
+    ]
+    assert artifact.test_execution_result is not None
+    assert artifact.test_execution_result.success is True
+    assert artifact.generated_test_review_result is not None
+    assert artifact.generated_test_review_result.status == "APPROVED"
+    assert any(decision.action == "CORRECT" for decision in state.decisions)
+    assert state.decisions[-1].action == "COMPLETE"
+
+
+def test_new_runtime_stage_archives_previous_run(tmp_path: Path) -> None:
+    artifact = _artifact()
+    previous_plan = build_deterministic_plan(artifact)
+    artifact.agentic_run_id = "analysis-run"
+    artifact.agentic_run_status = "COMPLETED"
+    artifact.execution_plan = previous_plan
+    artifact.agentic_decisions = [
+        {"action": "COMPLETE", "reason": "Análise concluída"}
+    ]
+    artifact.test_strategy_result = StrategyResult(
+        recommended_tests=[
+            StrategyTestCase(
+                name="Cobrir comportamento",
+                test_type="UNIT",
+                priority="MEDIUM",
+            )
+        ]
+    )
+    artifact.test_generation_recommendation = "RECOMMENDED"
+    runtime = GovernedAgenticRuntime(
+        FakeTestLifecycleExecutor(),  # type: ignore[arg-type]
+        JsonRunStateStore(tmp_path),
+    )
+
+    runtime.run(artifact, build_test_lifecycle_plan(artifact))
+
+    assert artifact.agentic_run_history[0]["run_id"] == "analysis-run"
+    assert artifact.agentic_run_history[0]["status"] == "COMPLETED"
+    assert artifact.execution_plan is not None
+    assert artifact.execution_plan.phase == "test_lifecycle"
+
+
 def test_runtime_resumes_from_persisted_snapshot(tmp_path: Path) -> None:
     persisted_artifact = _artifact()
     persisted_artifact.risk_level = "LOW"
@@ -417,6 +600,37 @@ def test_evaluator_escalates_incomplete_review() -> None:
 
     assert decision.action == "ESCALATE"
     assert "Review incompleto" in decision.reason
+
+
+def test_lifecycle_evaluator_rejects_inconsistent_approval() -> None:
+    artifact = _artifact()
+    artifact.test_execution_result = ExecutionResult(
+        success=True,
+        exit_code=0,
+        stdout="passed",
+        stderr="",
+        duration_seconds=0.1,
+        command="pytest",
+    )
+    artifact.generated_test_review_result = GeneratedTestsReviewResult(
+        status="APPROVED",
+        summary="Aprovado com problema inconsistente.",
+        issues=[
+            GeneratedTestIssue(
+                severity="WARN",
+                description="Cenário ainda frágil",
+            )
+        ],
+        execution_recommended=True,
+    )
+    state = RunState(
+        file_path=artifact.file_path,
+        plan=build_test_lifecycle_plan(artifact),
+    )
+
+    decision = AgenticRunEvaluator().evaluate_completion(state, artifact)
+
+    assert decision.action == "CORRECT"
 
 
 def test_run_summary_reports_agentic_terminal_status(tmp_path: Path) -> None:

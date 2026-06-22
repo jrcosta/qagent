@@ -43,6 +43,9 @@ class AgenticRunEvaluator:
         state: RunState,
         artifact: FileAnalysisArtifact,
     ) -> EvaluationDecision:
+        if state.plan.phase == "test_lifecycle":
+            return self._evaluate_test_lifecycle(state, artifact)
+
         if artifact.review_quality == "INCOMPLETE":
             return EvaluationDecision(
                 action="ESCALATE",
@@ -85,7 +88,60 @@ class AgenticRunEvaluator:
             reason="Estado final inconsistente requer decisão humana.",
         )
 
+    @staticmethod
+    def _evaluate_test_lifecycle(
+        state: RunState,
+        artifact: FileAnalysisArtifact,
+    ) -> EvaluationDecision:
+        execution = artifact.test_execution_result
+        review = artifact.generated_test_review_result
+
+        review_is_clean = bool(
+            review
+            and review.status == "APPROVED"
+            and not review.issues
+            and not review.missing_scenarios
+            and not review.suggested_fixes
+        )
+        if execution and execution.success and review_is_clean:
+            return EvaluationDecision(
+                action="COMPLETE",
+                reason="Testes executaram com sucesso e foram aprovados.",
+            )
+
+        needs_correction = (
+            execution is not None
+            and not execution.success
+            or review is not None
+            and (
+                review.status in {"NEEDS_CHANGES", "INVALID"}
+                or not review_is_clean
+            )
+        )
+        if needs_correction and state.correction_cycles == 0:
+            return EvaluationDecision(
+                action="CORRECT",
+                reason="Execução ou revisão exige correção dos testes.",
+                correction_capabilities=[
+                    "fix_tests",
+                    "execute_tests",
+                    "review_tests",
+                ],
+            )
+
+        if needs_correction:
+            return EvaluationDecision(
+                action="ESCALATE",
+                reason=(
+                    "Testes continuam falhando ou reprovados após correção automática."
+                ),
+            )
+
+        return EvaluationDecision(
+            action="ESCALATE",
+            reason="Ciclo de testes terminou sem evidências suficientes para aprovação.",
+        )
+
 
 def _current_record(state: RunState):
     return next(record for record in state.steps if record.step_id == state.current_step_id)
-

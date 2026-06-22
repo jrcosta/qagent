@@ -26,6 +26,44 @@ CAPABILITY_CATALOG: dict[CapabilityName, CapabilityDefinition] = {
         description="Reavalia a recomendação final após a estratégia.",
         requires=["build_test_strategy"],
     ),
+    "generate_tests": CapabilityDefinition(
+        name="generate_tests",
+        description="Gera arquivos de teste a partir do artefato estruturado.",
+    ),
+    "write_tests": CapabilityDefinition(
+        name="write_tests",
+        description="Persiste localmente os arquivos de teste gerados.",
+        requires=["generate_tests"],
+    ),
+    "execute_tests": CapabilityDefinition(
+        name="execute_tests",
+        description="Executa a suíte real do repositório alvo.",
+        requires=["write_tests"],
+    ),
+    "review_tests": CapabilityDefinition(
+        name="review_tests",
+        description="Revisa criticamente testes gerados usando execução real.",
+        requires=["execute_tests"],
+    ),
+    "fix_tests": CapabilityDefinition(
+        name="fix_tests",
+        description="Corrige e persiste testes rejeitados pela revisão.",
+        requires=["review_tests"],
+    ),
+}
+
+ANALYSIS_CAPABILITIES = {
+    "evaluate_risk",
+    "build_test_strategy",
+    "enrich_high_risk",
+    "evaluate_final",
+}
+TEST_LIFECYCLE_CAPABILITIES = {
+    "generate_tests",
+    "write_tests",
+    "execute_tests",
+    "review_tests",
+    "fix_tests",
 }
 
 
@@ -46,16 +84,46 @@ def validate_execution_plan(plan: ExecutionPlan) -> None:
         raise ValueError("o planner não pode criar mais de 8 passos iniciais")
 
     capabilities = [step.capability for step in plan.steps]
-    if capabilities[0] != "evaluate_risk":
-        raise ValueError("o plano deve começar por evaluate_risk")
-    if capabilities[-1] != "evaluate_final":
-        raise ValueError("o plano deve terminar por evaluate_final")
-    if capabilities.count("evaluate_risk") != 1:
-        raise ValueError("o plano deve conter exatamente um evaluate_risk")
-    if capabilities.count("build_test_strategy") != 1:
-        raise ValueError("o plano deve conter exatamente um build_test_strategy")
-    if capabilities.count("evaluate_final") != 1:
-        raise ValueError("o plano deve conter exatamente um evaluate_final")
+    if plan.phase == "analysis":
+        unexpected = set(capabilities) - ANALYSIS_CAPABILITIES
+        if unexpected:
+            raise ValueError(
+                f"capabilities inválidas para análise: {sorted(unexpected)}"
+            )
+        if capabilities[0] != "evaluate_risk":
+            raise ValueError("o plano deve começar por evaluate_risk")
+        if capabilities[-1] != "evaluate_final":
+            raise ValueError("o plano deve terminar por evaluate_final")
+        if capabilities.count("evaluate_risk") != 1:
+            raise ValueError("o plano deve conter exatamente um evaluate_risk")
+        if capabilities.count("build_test_strategy") != 1:
+            raise ValueError("o plano deve conter exatamente um build_test_strategy")
+        if capabilities.count("evaluate_final") != 1:
+            raise ValueError("o plano deve conter exatamente um evaluate_final")
+    else:
+        unexpected = set(capabilities) - TEST_LIFECYCLE_CAPABILITIES
+        if unexpected:
+            raise ValueError(
+                f"capabilities inválidas para ciclo de testes: {sorted(unexpected)}"
+            )
+        if capabilities[0] != "generate_tests":
+            raise ValueError("o ciclo de testes deve começar por generate_tests")
+        if capabilities[-1] != "review_tests":
+            raise ValueError("o ciclo de testes deve terminar por review_tests")
+        for required in (
+            "generate_tests",
+            "write_tests",
+            "execute_tests",
+            "review_tests",
+        ):
+            if capabilities.count(required) != 1:
+                raise ValueError(
+                    f"o ciclo inicial deve conter exatamente um {required}"
+                )
+        if "fix_tests" in capabilities:
+            raise ValueError(
+                "fix_tests só pode ser inserido pelo evaluator após falha real"
+            )
 
     steps_by_id = {step.id: step for step in plan.steps}
     for index, step in enumerate(plan.steps):

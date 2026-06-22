@@ -66,6 +66,52 @@ class PlannerCrewRunner:
             plan.rationale += f" Fallback do planner: {exc}"
             return plan
 
+    def plan_test_lifecycle(
+        self,
+        artifact: FileAnalysisArtifact,
+    ) -> ExecutionPlan:
+        if not self.settings.llm_api_key:
+            return build_test_lifecycle_plan(artifact)
+
+        try:
+            agent = PlannerAgentFactory(self.settings).create()
+            findings = "\n".join(
+                f"- [{finding.severity}] {finding.description}"
+                for finding in (
+                    artifact.review_result.findings
+                    if artifact.review_result
+                    else []
+                )
+            )
+            task = PlanningTaskFactory.create(
+                agent,
+                file_path=artifact.file_path,
+                risk_hint=artifact.risk_level,
+                review_summary=(
+                    artifact.review_result.summary
+                    if artifact.review_result
+                    else "review ausente"
+                ),
+                findings_summary=findings,
+                capability_catalog=render_capability_catalog(),
+                phase="test_lifecycle",
+            )
+            result = Crew(
+                agents=[agent],
+                tasks=[task],
+                process=Process.sequential,
+                verbose=True,
+            ).kickoff()
+            plan = _extract_plan(result)
+            plan.phase = "test_lifecycle"
+            validate_execution_plan(plan)
+            plan.planner_source = "llm"
+            return plan
+        except Exception as exc:
+            plan = build_test_lifecycle_plan(artifact)
+            plan.rationale += f" Fallback do planner: {exc}"
+            return plan
+
 
 def _extract_plan(result) -> ExecutionPlan:
     candidates = []
@@ -129,4 +175,46 @@ def build_deterministic_plan(artifact: FileAnalysisArtifact) -> ExecutionPlan:
         steps=steps,
         rationale="Plano seguro derivado de regras determinísticas.",
         planner_source="deterministic_fallback",
+    )
+
+
+def build_test_lifecycle_plan(
+    artifact: FileAnalysisArtifact,
+) -> ExecutionPlan:
+    return ExecutionPlan(
+        objective=f"Gerar e validar testes para {artifact.file_path}",
+        phase="test_lifecycle",
+        planner_source="deterministic_fallback",
+        rationale=(
+            "Ciclo seguro: gerar, persistir localmente, executar e revisar. "
+            "Correções dependem do evaluator."
+        ),
+        steps=[
+            PlanStep(
+                id="generate",
+                capability="generate_tests",
+                reason="Transformar estratégia aprovada em testes executáveis.",
+                max_attempts=2,
+            ),
+            PlanStep(
+                id="write",
+                capability="write_tests",
+                reason="Persistir testes antes da execução real.",
+                depends_on=["generate"],
+            ),
+            PlanStep(
+                id="execute",
+                capability="execute_tests",
+                reason="Obter evidência real da suíte.",
+                depends_on=["write"],
+                max_attempts=2,
+            ),
+            PlanStep(
+                id="review",
+                capability="review_tests",
+                reason="Validar coerência, cobertura e resultado da execução.",
+                depends_on=["execute"],
+                max_attempts=2,
+            ),
+        ],
     )
