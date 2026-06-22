@@ -88,6 +88,9 @@ Repositório-alvo (push/PR)
 | Serviço | Propósito | Tipo |
 |---------|-----------|------|
 | `AnalysisOrchestrator` | Coordena pipeline pós-QA | Orquestração |
+| `GovernedAgenticRuntime` | Executa planos tipados com persistência e políticas | Orquestração |
+| `AgenticRunEvaluator` | Decide retry, correção, conclusão ou escalação | Determinístico |
+| `JsonRunStateStore` | Persiste estado e snapshot por execução | Infraestrutura |
 | `TokenBudgetPlanner` | Decide modo de análise pré-LLM | Determinístico |
 | `ArtifactEvaluator` | Classifica risco e qualidade | Determinístico |
 | `RepoContextBuilder` | Extrai contexto do repositório | Determinístico |
@@ -232,6 +235,7 @@ Cada `FileAnalysisArtifact` registra:
 - `diagnostic_notes` — notas de decisão
 - `qa_structured_output` em `applied_policies` quando o contrato direto foi usado
 - `qa_markdown_parser` em `fallbacks_triggered` quando houve fallback legado
+- `execution_plan`, `agentic_run_id`, `agentic_run_status` e decisões do evaluator
 
 ---
 

@@ -6,6 +6,7 @@ from src.config.settings import get_settings
 from src.crew.qa_crew import QACrewRunner
 from src.crew.cooperative_analysis_crew import CooperativeAnalysisCrewRunner
 from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
+from src.crew.planning_crew import PlannerCrewRunner
 from src.utils.git_utils import get_changed_files, get_file_diff
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.schemas.review_result import ReviewResult
@@ -16,6 +17,8 @@ from src.services.token_budget_planner import (
     build_code_content_for_plan,
 )
 from src.services.project_knowledge_indexer import index_project_knowledge
+from src.services.agentic_runtime import GovernedAgenticRuntime
+from src.services.run_state_store import JsonRunStateStore
 
 
 def parse_args():
@@ -52,6 +55,21 @@ def parse_args():
             "Usa uma Crew hierárquica experimental com gerente coordenando "
             "especialistas para produzir o relatório inicial de QA."
         ),
+    )
+
+    parser.add_argument(
+        "--agentic-runtime",
+        action="store_true",
+        help=(
+            "Usa planner tipado, máquina de estados persistente e evaluator "
+            "determinístico no pipeline pós-review."
+        ),
+    )
+
+    parser.add_argument(
+        "--run-state-dir",
+        default=None,
+        help="Diretório para persistir RunState; padrão: <output-dir>/run_states",
     )
 
     return parser.parse_args()
@@ -121,6 +139,20 @@ def main() -> None:
     high_risk_runner = HighRiskTestStrategyRunner(settings)
     orchestrator = AnalysisOrchestrator(high_risk_runner)
     token_budget_planner = TokenBudgetPlanner()
+    planner_runner = PlannerCrewRunner(settings) if args.agentic_runtime else None
+    run_state_dir = (
+        Path(args.run_state_dir)
+        if args.run_state_dir
+        else Path(args.output_file).parent / "run_states"
+    )
+    agentic_runtime = (
+        GovernedAgenticRuntime(
+            orchestrator=orchestrator,
+            state_store=JsonRunStateStore(run_state_dir),
+        )
+        if args.agentic_runtime
+        else None
+    )
 
     changed_files = get_changed_files(
         repo_path=repo_path,
@@ -276,7 +308,17 @@ def main() -> None:
         artifact.record_duration("qa_review", qa_duration)
 
         # --- Pipeline de avaliação e estratégia ---
-        orchestrator.run_artifact_pipeline(artifact)
+        if planner_runner and agentic_runtime:
+            plan = planner_runner.plan(artifact)
+            artifact.add_policy(f"planner_{plan.planner_source}")
+            artifact.add_note(f"Planner: {plan.rationale}")
+            run_state = agentic_runtime.run(artifact, plan)
+            artifact.add_policy("governed_agentic_runtime")
+            artifact.add_note(
+                f"RunState {run_state.run_id} finalizado como {run_state.status}."
+            )
+        else:
+            orchestrator.run_artifact_pipeline(artifact)
         artifacts.append(artifact)
 
         print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")

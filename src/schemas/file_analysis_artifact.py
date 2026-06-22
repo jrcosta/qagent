@@ -7,6 +7,7 @@ from src.schemas.test_strategy_result import TestStrategyResult
 from src.schemas.generated_test_review_result import GeneratedTestsReviewResult
 from src.schemas.test_execution_result import TestExecutionResult
 from src.schemas.token_budget import TokenBudgetPlan
+from src.schemas.agentic_runtime import ExecutionPlan, RunStatus
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +76,19 @@ class FileAnalysisArtifact(BaseModel):
     agent_messages: Dict[str, List[Dict[str, Any]]] = Field(
         default_factory=dict,
         description="Mensagens trocadas entre agentes via bus (topic → [{sender, message, timestamp}])",
+    )
+    execution_plan: Optional[ExecutionPlan] = Field(
+        None, description="Plano governado usado pelo runtime agêntico"
+    )
+    agentic_run_id: Optional[str] = Field(
+        None, description="Identificador da execução persistida"
+    )
+    agentic_run_status: Optional[RunStatus] = Field(
+        None, description="Estado terminal mais recente do runtime agêntico"
+    )
+    agentic_decisions: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Decisões do evaluator determinístico durante a execução",
     )
 
     # --- Campos de orquestração ---

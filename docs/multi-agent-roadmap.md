@@ -66,6 +66,11 @@ Sistema onde agentes:
 - Criar `src/agent/planner_agent.py` + `src/crew/planning_crew.py`
 - Substituir `AnalysisOrchestrator` por engine de DAG (ex.: Prefect, Temporal, ou implementação própria)
 
+**Fundação implementada:** `ExecutionPlan`, Planner Agent limitado por catálogo,
+runtime governado e máquina de estados JSON estão disponíveis no pipeline
+pós-review por meio de `--agentic-runtime`. A expansão para geração/revisão de
+testes e execução distribuída continua pendente.
+
 ---
 
 ### 3. Comunicação Direta Entre Agentes
@@ -120,6 +125,9 @@ Sistema onde agentes:
 - Criar `src/services/output_scorer.py`
 - Adicionar campo `quality_score` em `FileAnalysisArtifact`
 - Implementar retry loop em `QACrewRunner`
+
+**Fundação implementada:** `AgenticRunEvaluator` aplica retry limitado,
+correção única, conclusão e escalação humana com decisões persistidas.
 
 ---
 

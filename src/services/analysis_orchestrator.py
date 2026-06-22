@@ -8,8 +8,10 @@ entre os entrypoints (main.py / main_test_generator.py).
 """
 
 import time
+from typing import Callable
 
 from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
+from src.schemas.agentic_runtime import CapabilityName
 from src.schemas.file_analysis_artifact import FileAnalysisArtifact
 from src.services.artifact_evaluator import evaluate_artifact
 from src.services.test_strategy_builder import build_test_strategy_from_review
@@ -46,6 +48,24 @@ class AnalysisOrchestrator:
         self._enrich_high_risk(artifact)
         self._evaluate_final(artifact)
         return artifact
+
+    def run_capability(
+        self,
+        capability: CapabilityName,
+        artifact: FileAnalysisArtifact,
+    ) -> None:
+        """Executa uma capacidade autorizada pelo runtime governado."""
+        handlers: dict[CapabilityName, Callable[[FileAnalysisArtifact], None]] = {
+            "evaluate_risk": self._evaluate_risk,
+            "build_test_strategy": self._build_strategy,
+            "enrich_high_risk": self._enrich_high_risk,
+            "evaluate_final": self._evaluate_final,
+        }
+        try:
+            handler = handlers[capability]
+        except KeyError as exc:
+            raise ValueError(f"capability não registrada: {capability}") from exc
+        handler(artifact)
 
     # ------------------------------------------------------------------
     # Etapas internas
