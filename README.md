@@ -251,6 +251,19 @@ cada transição, enquanto um evaluator determinístico decide entre continuar,
 repetir, corrigir, concluir ou escalar. Veja
 [docs/agentic-runtime.md](docs/agentic-runtime.md).
 
+Para continuar do artefato até testes aprovados ou escalação humana:
+
+```bash
+python -m src.main_agentic_lifecycle \
+    --repo-path ./meu-repo \
+    --artifacts-file ./outputs/artifacts.json \
+    --fail-on-escalation
+```
+
+O ciclo governado executa `generate → write → execute → review` e permite uma
+correção `fix → execute → review`. Operações externas de GitHub não são feitas
+por esse entrypoint.
+
 ---
 
 ## Status do Projeto

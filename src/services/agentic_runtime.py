@@ -38,6 +38,7 @@ class GovernedAgenticRuntime:
         plan: ExecutionPlan,
     ) -> RunState:
         validate_execution_plan(plan)
+        _archive_current_run(artifact)
         state = RunState(
             file_path=artifact.file_path,
             plan=plan,
@@ -179,7 +180,8 @@ class GovernedAgenticRuntime:
         reason: str,
     ) -> None:
         state.status = "ESCALATED"
-        artifact.test_generation_recommendation = "SKIPPED"
+        if state.plan.phase == "analysis":
+            artifact.test_generation_recommendation = "SKIPPED"
         artifact.add_policy("agentic_human_escalation")
         artifact.add_note(f"Escalação agêntica: {reason}")
 
@@ -230,3 +232,20 @@ def _restore_artifact(
     restored = FileAnalysisArtifact.model_validate(state.artifact_snapshot)
     for field_name in FileAnalysisArtifact.model_fields:
         setattr(artifact, field_name, getattr(restored, field_name))
+
+
+def _archive_current_run(artifact: FileAnalysisArtifact) -> None:
+    if artifact.agentic_run_id is None:
+        return
+    artifact.agentic_run_history.append(
+        {
+            "run_id": artifact.agentic_run_id,
+            "status": artifact.agentic_run_status,
+            "plan": (
+                artifact.execution_plan.model_dump(mode="json")
+                if artifact.execution_plan
+                else None
+            ),
+            "decisions": list(artifact.agentic_decisions),
+        }
+    )

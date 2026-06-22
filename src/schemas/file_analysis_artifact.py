@@ -90,6 +90,10 @@ class FileAnalysisArtifact(BaseModel):
         default_factory=list,
         description="Decisões do evaluator determinístico durante a execução",
     )
+    agentic_run_history: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Execuções agênticas anteriores preservadas entre stages",
+    )
 
     # --- Campos de orquestração ---
     risk_level: RiskLevel = Field(

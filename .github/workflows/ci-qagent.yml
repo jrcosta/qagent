@@ -43,6 +43,7 @@ jobs:
       - name: Validate imports
         run: |
           python -c "import src.main"
+          python -c "import src.main_agentic_lifecycle"
           python -c "import src.main_test_generator"
           python -c "import src.main_test_reviewer"
 

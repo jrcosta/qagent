@@ -12,7 +12,13 @@ CapabilityName = Literal[
     "build_test_strategy",
     "enrich_high_risk",
     "evaluate_final",
+    "generate_tests",
+    "write_tests",
+    "execute_tests",
+    "review_tests",
+    "fix_tests",
 ]
+PlanPhase = Literal["analysis", "test_lifecycle"]
 PlannerSource = Literal["llm", "deterministic_fallback"]
 RunStatus = Literal["PENDING", "RUNNING", "COMPLETED", "ESCALATED", "FAILED"]
 StepStatus = Literal["PENDING", "RUNNING", "COMPLETED", "FAILED", "SKIPPED"]
@@ -39,6 +45,7 @@ class ExecutionPlan(BaseModel):
     steps: list[PlanStep] = Field(..., min_length=1, max_length=10)
     rationale: str = Field(..., min_length=1)
     planner_source: PlannerSource = "llm"
+    phase: PlanPhase = "analysis"
 
     @model_validator(mode="after")
     def validate_graph(self) -> "ExecutionPlan":

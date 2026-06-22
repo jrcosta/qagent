@@ -19,6 +19,21 @@ python -m src.main \
 Os estados são persistidos por padrão em `outputs/run_states/`. Outro diretório
 pode ser informado com `--run-state-dir`.
 
+Após a análise, o ciclo local completo de testes pode ser executado com:
+
+```bash
+python -m src.main_agentic_lifecycle \
+  --repo-path ./meu-repo \
+  --artifacts-file outputs/artifacts.json \
+  --base-sha COMMIT_A \
+  --head-sha COMMIT_B \
+  --fail-on-escalation
+```
+
+Esse entrypoint pode gerar e escrever arquivos no repositório local, executar a
+suíte, revisar e corrigir os testes. Ele não faz commit, push, abre PR ou publica
+comentários.
+
 ## Componentes
 
 ### `ExecutionPlan`
@@ -43,6 +58,11 @@ O planner não pode criar ferramentas ou comandos arbitrários. O catálogo atua
 | `build_test_strategy` | Construção da estratégia tipada |
 | `enrich_high_risk` | Refinamento LLM exclusivo para risco HIGH |
 | `evaluate_final` | Consolidação da recomendação final |
+| `generate_tests` | Geração de testes a partir do artefato |
+| `write_tests` | Escrita local dos testes |
+| `execute_tests` | Execução real da suíte |
+| `review_tests` | Revisão crítica com evidência da execução |
+| `fix_tests` | Correção e persistência local após reprovação |
 
 Planos fora desse catálogo ou sem pré-requisitos são rejeitados. Quando o
 planner LLM falha, o runtime usa um plano determinístico seguro.
@@ -58,7 +78,8 @@ Estado persistido após cada transição:
 - estado terminal da execução.
 
 A escrita usa arquivo temporário e substituição atômica. O runtime oferece
-retomada sem repetir passos concluídos.
+retomada sem repetir passos concluídos. Ao iniciar um novo stage, a execução
+anterior é preservada em `agentic_run_history`.
 
 ### Evaluator determinístico
 
@@ -71,9 +92,19 @@ Após cada passo, o evaluator decide:
 - `ESCALATE`: interromper e solicitar validação humana.
 
 Há no máximo um ciclo de correção automática. Reviews incompletos, tentativas
-esgotadas e estados finais inconsistentes são escalados. Uma escalação define
-`test_generation_recommendation=SKIPPED`, impedindo automação downstream até
+esgotadas e estados finais inconsistentes são escalados. Na fase de análise,
+uma escalação define `test_generation_recommendation=SKIPPED`. No ciclo de
+testes, use `--fail-on-escalation` para bloquear automação downstream até
 validação humana.
+
+No ciclo de testes, falha de execução ou revisão `NEEDS_CHANGES`/`INVALID`
+autoriza a sequência corretiva:
+
+```text
+fix_tests → execute_tests → review_tests
+```
+
+Uma segunda reprovação é escalada.
 
 ## Fluxo
 
@@ -97,9 +128,9 @@ GovernedAgenticRuntime
 
 ## Limites atuais
 
-- O runtime cobre inicialmente o pipeline pós-review de cada arquivo.
-- O catálogo ainda não inclui geração, execução e revisão de testes.
+- O runtime cobre análise pós-review e ciclo local completo de testes.
 - A persistência é local em JSON; execução distribuída exigirá um state store
   transacional.
 - O planner escolhe passos, mas políticas de segurança, retries e escalação
   permanecem determinísticas.
+- Efeitos externos de GitHub continuam fora do catálogo governado.

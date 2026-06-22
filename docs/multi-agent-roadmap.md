@@ -68,8 +68,9 @@ Sistema onde agentes:
 
 **Fundação implementada:** `ExecutionPlan`, Planner Agent limitado por catálogo,
 runtime governado e máquina de estados JSON estão disponíveis no pipeline
-pós-review por meio de `--agentic-runtime`. A expansão para geração/revisão de
-testes e execução distribuída continua pendente.
+pós-review por meio de `--agentic-runtime`. O ciclo local de geração, execução,
+revisão e correção também está disponível em `main_agentic_lifecycle.py`.
+Execução distribuída e efeitos externos de GitHub continuam pendentes.
 
 ---
 

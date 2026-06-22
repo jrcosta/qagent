@@ -91,6 +91,7 @@ Repositório-alvo (push/PR)
 | `GovernedAgenticRuntime` | Executa planos tipados com persistência e políticas | Orquestração |
 | `AgenticRunEvaluator` | Decide retry, correção, conclusão ou escalação | Determinístico |
 | `JsonRunStateStore` | Persiste estado e snapshot por execução | Infraestrutura |
+| `TestLifecycleCapabilityExecutor` | Gera, escreve, executa, revisa e corrige testes localmente | Orquestração |
 | `TokenBudgetPlanner` | Decide modo de análise pré-LLM | Determinístico |
 | `ArtifactEvaluator` | Classifica risco e qualidade | Determinístico |
 | `RepoContextBuilder` | Extrai contexto do repositório | Determinístico |
@@ -236,6 +237,7 @@ Cada `FileAnalysisArtifact` registra:
 - `qa_structured_output` em `applied_policies` quando o contrato direto foi usado
 - `qa_markdown_parser` em `fallbacks_triggered` quando houve fallback legado
 - `execution_plan`, `agentic_run_id`, `agentic_run_status` e decisões do evaluator
+- `agentic_run_history` preserva execuções anteriores entre análise e testes
 
 ---
 
