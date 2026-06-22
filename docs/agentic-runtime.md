@@ -34,6 +34,41 @@ Esse entrypoint pode gerar e escrever arquivos no repositório local, executar a
 suíte, revisar e corrigir os testes. Ele não faz commit, push, abre PR ou publica
 comentários.
 
+## Coordinator persistente
+
+O fluxo completo pode ser iniciado por um único entrypoint:
+
+```bash
+python -m src.main_agentic \
+  --repo-path ./meu-repo \
+  --output-dir outputs \
+  --base-sha COMMIT_A \
+  --head-sha COMMIT_B \
+  --fail-on-escalation
+```
+
+O `AgenticRepositoryCoordinator` persiste um estado de nível superior:
+
+```text
+PENDING
+  → ANALYSIS_RUNNING
+  → ANALYSIS_COMPLETED
+  → TEST_LIFECYCLE_RUNNING
+  → COMPLETED | ESCALATED | FAILED
+```
+
+Para retomar:
+
+```bash
+python -m src.main_agentic \
+  --output-dir outputs \
+  --resume-run-id <coordinator-run-id>
+```
+
+Quando a análise já foi concluída, o coordinator carrega `artifacts.json` e
+segue diretamente para testes. Dentro do ciclo, arquivos `COMPLETED` ou
+`ESCALATED` são preservados e não executam novamente.
+
 ## Componentes
 
 ### `ExecutionPlan`
@@ -134,3 +169,5 @@ GovernedAgenticRuntime
 - O planner escolhe passos, mas políticas de segurança, retries e escalação
   permanecem determinísticas.
 - Efeitos externos de GitHub continuam fora do catálogo governado.
+- A retomada automática é baseada nos checkpoints JSON locais; execução
+  distribuída ainda exige um store transacional.

@@ -264,6 +264,24 @@ O ciclo governado executa `generate → write → execute → review` e permite 
 correção `fix → execute → review`. Operações externas de GitHub não são feitas
 por esse entrypoint.
 
+### Coordinator único
+
+Para executar análise e ciclo de testes em uma única chamada:
+
+```bash
+python -m src.main_agentic \
+    --repo-path ./meu-repo \
+    --output-dir ./outputs \
+    --base-sha COMMIT_A \
+    --head-sha COMMIT_B \
+    --fail-on-escalation
+```
+
+O coordinator persiste a execução em `outputs/coordinator_runs/` e avança pelos
+stages `ANALYSIS → TEST_LIFECYCLE → COMPLETED/ESCALATED`. Uma execução
+interrompida pode ser retomada com `--resume-run-id`, sem repetir stages ou
+arquivos já concluídos.
+
 ---
 
 ## Status do Projeto

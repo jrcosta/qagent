@@ -92,6 +92,8 @@ Repositório-alvo (push/PR)
 | `AgenticRunEvaluator` | Decide retry, correção, conclusão ou escalação | Determinístico |
 | `JsonRunStateStore` | Persiste estado e snapshot por execução | Infraestrutura |
 | `TestLifecycleCapabilityExecutor` | Gera, escreve, executa, revisa e corrige testes localmente | Orquestração |
+| `AgenticRepositoryCoordinator` | Coordena análise e testes com checkpoint entre stages | Orquestração |
+| `JsonCoordinatorStateStore` | Persiste estado global e permite retomada | Infraestrutura |
 | `TokenBudgetPlanner` | Decide modo de análise pré-LLM | Determinístico |
 | `ArtifactEvaluator` | Classifica risco e qualidade | Determinístico |
 | `RepoContextBuilder` | Extrai contexto do repositório | Determinístico |

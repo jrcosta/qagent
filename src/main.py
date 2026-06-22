@@ -1,352 +1,36 @@
 from argparse import ArgumentParser
 from pathlib import Path
-import time
 
 from src.config.settings import get_settings
-from src.crew.qa_crew import QACrewRunner
-from src.crew.cooperative_analysis_crew import CooperativeAnalysisCrewRunner
-from src.crew.high_risk_strategy_crew import HighRiskTestStrategyRunner
-from src.crew.planning_crew import PlannerCrewRunner
-from src.utils.git_utils import get_changed_files, get_file_diff
-from src.schemas.file_analysis_artifact import FileAnalysisArtifact
-from src.schemas.review_result import ReviewResult
-from src.services.analysis_orchestrator import AnalysisOrchestrator
-from src.services.artifact_exporter import export_artifacts_to_json, export_run_summary
-from src.services.token_budget_planner import (
-    TokenBudgetPlanner,
-    build_code_content_for_plan,
-)
-from src.services.project_knowledge_indexer import index_project_knowledge
-from src.services.agentic_runtime import GovernedAgenticRuntime
-from src.services.run_state_store import JsonRunStateStore
+from src.services.analysis_pipeline import RepositoryAnalysisPipeline
 
 
 def parse_args():
     parser = ArgumentParser()
-
-    parser.add_argument(
-        "--repo-path",
-        default=".",
-        help="Caminho do repositório a ser analisado",
-    )
-
-    parser.add_argument(
-        "--output-file",
-        default="outputs/analysis.md",
-        help="Arquivo de saída do relatório",
-    )
-
-    parser.add_argument(
-        "--base-sha",
-        default=None,
-        help="Commit base para comparação",
-    )
-
-    parser.add_argument(
-        "--head-sha",
-        default=None,
-        help="Commit final para comparação",
-    )
-
-    parser.add_argument(
-        "--cooperative-analysis",
-        action="store_true",
-        help=(
-            "Usa uma Crew hierárquica experimental com gerente coordenando "
-            "especialistas para produzir o relatório inicial de QA."
-        ),
-    )
-
-    parser.add_argument(
-        "--agentic-runtime",
-        action="store_true",
-        help=(
-            "Usa planner tipado, máquina de estados persistente e evaluator "
-            "determinístico no pipeline pós-review."
-        ),
-    )
-
-    parser.add_argument(
-        "--run-state-dir",
-        default=None,
-        help="Diretório para persistir RunState; padrão: <output-dir>/run_states",
-    )
-
+    parser.add_argument("--repo-path", default=".")
+    parser.add_argument("--output-file", default="outputs/analysis.md")
+    parser.add_argument("--base-sha", default=None)
+    parser.add_argument("--head-sha", default=None)
+    parser.add_argument("--cooperative-analysis", action="store_true")
+    parser.add_argument("--agentic-runtime", action="store_true")
+    parser.add_argument("--run-state-dir", default=None)
     return parser.parse_args()
-
-
-def read_file_content(repo_path: Path, file_path: str) -> str:
-    resolved = (repo_path / file_path).resolve()
-    repo_root = repo_path.resolve()
-    if not resolved.is_relative_to(repo_root):
-        raise ValueError(f"Path traversal blocked: '{file_path}' resolves outside repo root")
-
-    if not resolved.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {resolved}")
-
-    return resolved.read_text(encoding="utf-8")
-
-
-def save_output(content: str, output_file: str) -> None:
-    output_path = Path(output_file)
-    output_path.parent.mkdir(exist_ok=True, parents=True)
-    output_path.write_text(content, encoding="utf-8")
-
-
-def build_report(sections: list[str]) -> str:
-    return "\n\n---\n\n".join(sections)
-
-
-def build_skipped_review_markdown(file_path: str, reason: str) -> str:
-    return f"""# Tipo da mudança
-Mudança trivial analisada por fallback determinístico.
-
-# Evidências observadas
-- Arquivo: {file_path}
-- Motivo do TokenBudgetPlanner: {reason}
-
-# Impacto provável
-Baixo impacto provável; arquivo classificado para não consumir análise LLM.
-
-# Riscos identificados
-Nenhum risco relevante identificado pelas regras determinísticas.
-
-# Cenários de testes manuais
-Nenhum cenário manual específico recomendado.
-
-# Sugestões de testes unitários
-Nenhum teste unitário novo recomendado.
-
-# Sugestões de testes de integração
-Nenhum teste de integração novo recomendado.
-
-# Pontos que precisam de esclarecimento
-Nenhum ponto adicional identificado.
-"""
 
 
 def main() -> None:
     args = parse_args()
-    repo_path = Path(args.repo_path).resolve()
-    pipeline_start = time.perf_counter()
-
-    print(f"Indexando conhecimento do projeto (RAG local) em {repo_path}...")
-    index_project_knowledge(str(repo_path))
-
-    settings = get_settings()
-    crew_runner = QACrewRunner(settings)
-    cooperative_runner = CooperativeAnalysisCrewRunner(settings)
-    high_risk_runner = HighRiskTestStrategyRunner(settings)
-    orchestrator = AnalysisOrchestrator(high_risk_runner)
-    token_budget_planner = TokenBudgetPlanner()
-    planner_runner = PlannerCrewRunner(settings) if args.agentic_runtime else None
-    run_state_dir = (
-        Path(args.run_state_dir)
-        if args.run_state_dir
-        else Path(args.output_file).parent / "run_states"
-    )
-    agentic_runtime = (
-        GovernedAgenticRuntime(
-            orchestrator=orchestrator,
-            state_store=JsonRunStateStore(run_state_dir),
-        )
-        if args.agentic_runtime
-        else None
-    )
-
-    changed_files = get_changed_files(
-        repo_path=repo_path,
+    result = RepositoryAnalysisPipeline(get_settings()).run(
+        repo_path=args.repo_path,
+        output_file=args.output_file,
         base_sha=args.base_sha,
         head_sha=args.head_sha,
+        cooperative_analysis=args.cooperative_analysis,
+        agentic_runtime=args.agentic_runtime,
+        run_state_dir=args.run_state_dir,
     )
-
-    if not changed_files:
-        message = "# Nenhum arquivo alterado relevante encontrado para análise."
-        save_output(message, args.output_file)
-        print(message)
-        return
-
-    analyses = []
-    artifacts: list[FileAnalysisArtifact] = []
-
-    for file_path in changed_files:
-        print(f"Analisando: {file_path}")
-
-        code_content = read_file_content(repo_path, file_path)
-        file_diff = get_file_diff(
-            file_path=file_path,
-            repo_path=repo_path,
-            base_sha=args.base_sha,
-            head_sha=args.head_sha,
-        )
-
-        if not file_diff.strip():
-            print(f"Sem diff relevante para: {file_path}")
-            continue
-
-        token_budget_plan = token_budget_planner.plan(
-            file_path=file_path,
-            file_diff=file_diff,
-            code_content=code_content,
-            cooperative_requested=args.cooperative_analysis,
-        )
-        prompt_code_content = build_code_content_for_plan(
-            code_content=code_content,
-            file_diff=file_diff,
-            plan=token_budget_plan,
-        )
-        print(
-            "  🧭 Fluxo escolhido: "
-            f"{token_budget_plan.analysis_mode} | contexto={token_budget_plan.context_level} | "
-            f"arquivo_completo={token_budget_plan.include_full_file}"
-        )
-
-        # --- QA Review ---
-        t0 = time.perf_counter()
-        cooperative_succeeded = False
-        cooperative_failed_reason = ""
-        if token_budget_plan.analysis_mode == "skip":
-            skipped_markdown = build_skipped_review_markdown(
-                file_path=file_path,
-                reason=token_budget_plan.reason,
-            )
-            crew_result = type(
-                "SkippedQACrewResult",
-                (),
-                {
-                    "raw_review_markdown": skipped_markdown,
-                    "review_result": ReviewResult(
-                        summary=(
-                            "Mudança trivial analisada por fallback determinístico "
-                            f"para {file_path}."
-                        ),
-                        findings=[],
-                        test_needs=[],
-                    ),
-                    "context_result": None,
-                },
-            )()
-        elif token_budget_plan.analysis_mode == "cooperative":
-            try:
-                print("  🤝 Usando análise cooperativa multiagente")
-                crew_result = cooperative_runner.run(
-                    file_path=file_path,
-                    file_diff=file_diff,
-                    code_content=prompt_code_content,
-                    repo_path=str(repo_path),
-                    token_budget_plan=token_budget_plan,
-                )
-                cooperative_succeeded = True
-            except Exception as exc:
-                cooperative_failed_reason = str(exc)
-                print(
-                    "  ⚠️ Fallback: análise cooperativa falhou; "
-                    f"usando QA Agent padrão. Erro: {exc}"
-                )
-                crew_result = crew_runner.run(
-                    file_path=file_path,
-                    file_diff=file_diff,
-                    code_content=prompt_code_content,
-                    repo_path=str(repo_path),
-                    token_budget_plan=token_budget_plan,
-                )
-        else:
-            crew_result = crew_runner.run(
-                file_path=file_path,
-                file_diff=file_diff,
-                code_content=prompt_code_content,
-                repo_path=str(repo_path),
-                token_budget_plan=token_budget_plan,
-            )
-        qa_duration = (time.perf_counter() - t0) * 1000
-
-        # 1. Monta artefato parcial e avalia risco
-        artifact = FileAnalysisArtifact(
-            file_path=file_path,
-            context_result=crew_result.context_result,
-            token_budget_plan=token_budget_plan,
-            raw_review_markdown=crew_result.raw_review_markdown,
-            review_result=crew_result.review_result,
-        )
-        artifact.add_policy(f"token_budget_{token_budget_plan.analysis_mode}")
-        artifact.add_policy(f"context_{token_budget_plan.context_level}")
-        artifact.add_note(token_budget_plan.reason)
-        if getattr(crew_result, "structured_output_used", False):
-            artifact.add_policy("qa_structured_output")
-        else:
-            fallback_reason = getattr(
-                crew_result,
-                "output_fallback_reason",
-                "",
-            )
-            if fallback_reason:
-                artifact.add_fallback("qa_markdown_parser")
-                artifact.add_note(fallback_reason)
-        if token_budget_plan.analysis_mode == "skip":
-            artifact.mark_step_skipped("qa_review", token_budget_plan.reason)
-            artifact.mark_step_executed("deterministic_token_saver_review")
-        else:
-            artifact.mark_step_executed("qa_review")
-        if cooperative_succeeded:
-            artifact.add_policy("cooperative_analysis_experimental")
-            artifact.mark_step_executed("cooperative_analysis")
-            artifact.agent_messages = crew_result.agent_messages
-        elif (
-            args.cooperative_analysis
-            and token_budget_plan.analysis_mode == "cooperative"
-        ):
-            artifact.add_fallback("cooperative_analysis_to_qa_agent")
-            artifact.mark_step_skipped(
-                "cooperative_analysis",
-                cooperative_failed_reason or "erro não informado",
-            )
-        elif args.cooperative_analysis:
-            artifact.mark_step_skipped(
-                "cooperative_analysis",
-                f"{token_budget_plan.analysis_mode} definido pelo TokenBudgetPlanner",
-            )
-        artifact.record_duration("qa_review", qa_duration)
-
-        # --- Pipeline de avaliação e estratégia ---
-        if planner_runner and agentic_runtime:
-            plan = planner_runner.plan(artifact)
-            artifact.add_policy(f"planner_{plan.planner_source}")
-            artifact.add_note(f"Planner: {plan.rationale}")
-            run_state = agentic_runtime.run(artifact, plan)
-            artifact.add_policy("governed_agentic_runtime")
-            artifact.add_note(
-                f"RunState {run_state.run_id} finalizado como {run_state.status}."
-            )
-        else:
-            orchestrator.run_artifact_pipeline(artifact)
-        artifacts.append(artifact)
-
-        print(f"  📊 Risco: {artifact.risk_level} | Review: {artifact.review_quality} | Testes: {artifact.test_generation_recommendation}")
-        print(f"  ⏱️ Durações: {artifact.step_durations_ms}")
-
-        section = f"# Arquivo analisado: {file_path}\n\n{artifact.raw_review_markdown}"
-        analyses.append(section)
-
-    if not analyses:
-        message = "# Nenhum diff relevante encontrado para análise."
-        save_output(message, args.output_file)
-        print(message)
-        return
-
-    final_report = build_report(analyses)
-    save_output(final_report, args.output_file)
-
-    # Exportar artefatos estruturados
-    output_dir = str(Path(args.output_file).parent)
-    total_duration_ms = (time.perf_counter() - pipeline_start) * 1000
-
-    artifacts_path = export_artifacts_to_json(artifacts, output_dir)
-    summary_path = export_run_summary(artifacts, output_dir, total_duration_ms)
-
-    print("\nAnálise salva em:")
-    print(args.output_file)
-    print(f"📦 Artefatos: {artifacts_path}")
-    print(f"📊 Resumo: {summary_path}")
+    print(f"Análise salva em: {result.report_file}")
+    print(f"Artefatos: {result.artifacts_file}")
+    print(f"Resumo: {result.summary_file}")
 
 
 if __name__ == "__main__":
