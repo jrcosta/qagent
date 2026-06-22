@@ -35,6 +35,7 @@ Repositório-alvo (push/PR)
         ▼                                     │
 [STAGE 2: Test Generation]                    │
   src/main_test_generator.py                  │
+  ├─ Carrega e atualiza artifacts.json         │
   ├─ TestGeneratorCrewRunner                  │
   ├─ parse_test_files_from_output()           │
   └─ create PR com testes gerados             │

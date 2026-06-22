@@ -45,7 +45,8 @@ jobs:
           cd qagent
           python -m src.main_test_generator \
             --repo-path .. \
-            --report-file ../outputs/analysis.md
+            --report-file ../outputs/analysis.md \
+            --artifacts-file ../outputs/artifacts.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

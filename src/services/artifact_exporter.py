@@ -36,6 +36,24 @@ def export_artifacts_to_json(
     return file_path
 
 
+def load_artifacts_from_json(file_path: str | Path) -> list[FileAnalysisArtifact]:
+    """
+    Carrega o handoff estruturado produzido pela etapa de análise.
+
+    Falha explicitamente quando o arquivo não existe, não contém uma lista ou
+    possui um artefato incompatível com o contrato Pydantic atual.
+    """
+    path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Arquivo de artefatos não encontrado: {path}")
+
+    raw_data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw_data, list):
+        raise ValueError("artifacts.json deve conter uma lista de artefatos")
+
+    return [FileAnalysisArtifact.model_validate(item) for item in raw_data]
+
+
 def export_run_summary(
     artifacts: list[FileAnalysisArtifact],
     output_dir: str,

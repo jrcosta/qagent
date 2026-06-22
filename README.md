@@ -219,8 +219,14 @@ Cada arquivo analisado recebe um `token_budget_plan` em `artifacts.json`, com `a
 ### Agente Gerador de Testes
 
 ```bash
-python -m src.main_test_generator --repo-path ./meu-repo
+python -m src.main_test_generator \
+    --repo-path ./meu-repo \
+    --artifacts-file ./outputs/artifacts.json
 ```
+
+O gerador consome preferencialmente o `artifacts.json` produzido pela análise,
+preservando o review estruturado, risco, estratégia, orçamento de tokens e
+decisões de orquestração. O `analysis.md` permanece como fallback legado.
 
 ---
 
