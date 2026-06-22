@@ -1,5 +1,7 @@
 from crewai import Task
 
+from src.schemas.review_result import ReviewResult
+
 
 class CooperativeAnalysisTaskFactory:
     """Quatro tasks sequenciais com comunicação direta via barramento inter-agente."""
@@ -127,54 +129,28 @@ Arquivo em análise: {file_path}
 
 Instruções:
 1. Use a ferramenta read_messages com topic='all' para ler todas as mensagens dos agentes.
-2. Consolide uma análise final única em Markdown com base no que os especialistas publicaram.
+2. Consolide uma análise final única com base no que os especialistas publicaram.
 3. Onde houver conflito entre a análise e a crítica, resolva com base nas evidências do diff.
 4. Não repita conteúdo redundante — sintetize.
 
-Sua resposta final deve conter exatamente estas seções:
-
-# Tipo da mudança
-Classifique a mudança.
-
-# Evidências observadas
-Aponte trechos ou comportamentos do diff/código que sustentam a análise.
-
-# Impacto provável
-Explique o que provavelmente foi afetado.
-
-# Riscos identificados
-Liste riscos reais e contextualizados (apenas os validados pelo crítico).
-
-# Cenários de testes manuais
-Sugira cenários específicos para a mudança.
-
-# Sugestões de testes unitários
-Sugira testes unitários específicos.
-
-# Sugestões de testes de integração
-Sugira testes de integração específicos.
-
-# Sugestões de testes de carga ou desempenho
-Inclua apenas se a mudança justificar claramente.
-
-# Pontos que precisam de esclarecimento
-Liste dúvidas relevantes de negócio ou implementação.
-
-# Validação cooperativa
-Explique brevemente como as conclusões foram revisadas pelos especialistas e quais conflitos foram resolvidos.
+Sua resposta final deve preencher o contrato ReviewResult:
+- summary: tipo da mudança, impacto e síntese da validação cooperativa
+- findings: somente riscos validados pelo crítico, com description, severity
+  (INFO, WARN ou ERROR) e line_number quando houver evidência verificável
+- test_needs: cenários específicos consolidados a partir da estratégia validada
 
 Regras:
 - não invente regra de negócio sem evidência
 - não produza checklist superficial
-- preserve o formato das seções para que o parser estruturado continue funcionando
+- não inclua achados rejeitados pelo crítico
 """
         return Task(
             description=description,
             expected_output=(
-                "Relatório final em Markdown consolidado a partir das mensagens dos três agentes especialistas, "
-                "com todas as seções exigidas e conclusões baseadas em evidências do diff."
+                "Objeto ReviewResult válido consolidado a partir das mensagens dos "
+                "especialistas e baseado em evidências do diff."
             ),
-            markdown=True,
+            output_pydantic=ReviewResult,
         )
 
     @staticmethod

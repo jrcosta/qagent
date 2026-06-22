@@ -239,6 +239,17 @@ def main() -> None:
         artifact.add_policy(f"token_budget_{token_budget_plan.analysis_mode}")
         artifact.add_policy(f"context_{token_budget_plan.context_level}")
         artifact.add_note(token_budget_plan.reason)
+        if getattr(crew_result, "structured_output_used", False):
+            artifact.add_policy("qa_structured_output")
+        else:
+            fallback_reason = getattr(
+                crew_result,
+                "output_fallback_reason",
+                "",
+            )
+            if fallback_reason:
+                artifact.add_fallback("qa_markdown_parser")
+                artifact.add_note(fallback_reason)
         if token_budget_plan.analysis_mode == "skip":
             artifact.mark_step_skipped("qa_review", token_budget_plan.reason)
             artifact.mark_step_executed("deterministic_token_saver_review")

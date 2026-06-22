@@ -33,6 +33,7 @@ O QAgent utiliza uma arquitetura multi-stage com contratos estruturados entre et
 ### Princípios
 
 - **Contratos tipados** — cada etapa produz e consome schemas Pydantic (`ContextResult`, `ReviewResult`, `TestStrategyResult`, `FileAnalysisArtifact`)
+- **Saída QA estruturada** — os fluxos padrão e cooperativo solicitam `ReviewResult` diretamente ao CrewAI; Markdown é apenas uma apresentação humana
 - **Handoffs explícitos** — os dados fluem por artefatos estruturados, sem estado implícito
 - **Roteamento condicional** — o nível de risco determina qual política de estratégia é aplicada e se o agente HIGH risk é acionado
 - **Orçamento de tokens** — antes das chamadas LLM, o `TokenBudgetPlanner` define fluxo, contexto e uso de memória por arquivo
@@ -215,6 +216,10 @@ Nesse modo, um gerente coordena agentes de QA, estratégia de testes e crítica.
 ### Observabilidade do fluxo escolhido
 
 Cada arquivo analisado recebe um `token_budget_plan` em `artifacts.json`, com `analysis_mode`, `context_level`, `include_full_file`, `include_memory`, `max_context_chars` e `reason`. O `run_summary.json` também inclui `analysis_flow_distribution` e `context_level_distribution`, permitindo ver rapidamente quantos arquivos usaram `skip`, `standard` ou `cooperative`.
+
+O QA Agent produz `ReviewResult` como saída Pydantic. Quando o runtime não
+entrega um objeto estruturado válido, o QAgent interpreta o Markdown legado e
+registra `qa_markdown_parser` em `fallbacks_triggered`.
 
 ### Agente Gerador de Testes
 

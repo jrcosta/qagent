@@ -4,6 +4,7 @@ from crewai import Process
 
 from src.config.settings import Settings
 from src.crew.cooperative_analysis_crew import CooperativeAnalysisCrewRunner
+from src.schemas.review_result import ReviewResult
 from src.tasks.cooperative_analysis_task import CooperativeAnalysisTaskFactory
 
 
@@ -120,23 +121,14 @@ def test_cooperative_runner_uses_sequential_process(
     assert result.review_result.test_needs
 
 
-def test_cooperative_consolidation_task_preserves_parser_sections() -> None:
+def test_cooperative_consolidation_task_requires_structured_output() -> None:
     task = CooperativeAnalysisTaskFactory.create_consolidation_task(
         file_path="src/service.py",
     )
 
-    for heading in [
-        "# Tipo da mudança",
-        "# Evidências observadas",
-        "# Impacto provável",
-        "# Riscos identificados",
-        "# Cenários de testes manuais",
-        "# Sugestões de testes unitários",
-        "# Sugestões de testes de integração",
-        "# Pontos que precisam de esclarecimento",
-        "# Validação cooperativa",
-    ]:
-        assert heading in task.description
+    assert task.output_pydantic is ReviewResult
+    assert "contrato ReviewResult" in task.description
+    assert "validação cooperativa" in task.description
 
 
 def test_cooperative_task_compat_create_still_works() -> None:

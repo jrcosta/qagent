@@ -188,6 +188,11 @@ FileAnalysisArtifact (consolidado)
     └─► run_summary.json (observabilidade)
 ```
 
+O `ReviewResult` é solicitado diretamente como saída Pydantic tanto no fluxo
+QA padrão quanto na consolidação cooperativa. O relatório Markdown é renderizado
+a partir desse contrato. O parser heurístico permanece apenas como fallback
+observável para respostas incompatíveis.
+
 ### Avaliação de Risco (Determinístico)
 
 | Severidade de Findings | Risco |
@@ -225,6 +230,8 @@ Cada `FileAnalysisArtifact` registra:
 - `fallbacks_triggered` — fallbacks ativados
 - `step_durations_ms` — timing por passo
 - `diagnostic_notes` — notas de decisão
+- `qa_structured_output` em `applied_policies` quando o contrato direto foi usado
+- `qa_markdown_parser` em `fallbacks_triggered` quando houve fallback legado
 
 ---
 

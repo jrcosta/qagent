@@ -20,6 +20,37 @@ class ReviewResult(BaseModel):
     test_needs: List[str] = Field(default_factory=list, description="Necessidades de testes identificadas")
 
 
+def render_review_result_as_markdown(review_result: ReviewResult) -> str:
+    """Renderiza o contrato estruturado para apresentação humana."""
+    lines = [
+        "# Resumo da análise",
+        review_result.summary.strip(),
+        "",
+        "# Riscos identificados",
+    ]
+
+    if review_result.findings:
+        for finding in review_result.findings:
+            location = (
+                f" (linha {finding.line_number})"
+                if finding.line_number is not None
+                else ""
+            )
+            lines.append(
+                f"- [{finding.severity}] {finding.description}{location}"
+            )
+    else:
+        lines.append("- Nenhum risco relevante identificado.")
+
+    lines.extend(["", "# Necessidades de teste"])
+    if review_result.test_needs:
+        lines.extend(f"- {need}" for need in review_result.test_needs)
+    else:
+        lines.append("- Nenhuma necessidade adicional de teste identificada.")
+
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Seções conhecidas do markdown produzido pelo QA Agent
 # ---------------------------------------------------------------------------
