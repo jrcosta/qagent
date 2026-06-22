@@ -1,5 +1,7 @@
 from crewai import Task
 
+from src.schemas.review_result import ReviewResult
+
 
 class QATaskFactory:
     @staticmethod
@@ -37,34 +39,11 @@ Instruções:
 4. Não invente regra de negócio sem evidência.
 5. Seja específico sobre o comportamento alterado e impacto provável.
 
-Sua resposta deve conter:
-
-# Tipo da mudança
-Classifique a mudança.
-
-# Evidências observadas
-Aponte os trechos ou comportamentos do diff, do arquivo e do contexto que sustentam sua análise.
-
-# Impacto provável
-Explique o que provavelmente foi afetado.
-
-# Riscos identificados
-Liste riscos reais e contextualizados.
-
-# Cenários de testes manuais
-Sugira cenários específicos para a mudança.
-
-# Sugestões de testes unitários
-Sugira testes unitários específicos.
-
-# Sugestões de testes de integração
-Sugira testes de integração específicos.
-
-# Sugestões de testes de carga ou desempenho
-Inclua apenas se a mudança justificar claramente.
-
-# Pontos que precisam de esclarecimento
-Liste dúvidas relevantes de negócio ou implementação.
+Sua resposta deve preencher o contrato ReviewResult:
+- summary: resumo objetivo do tipo de mudança e impacto provável
+- findings: riscos reais, cada um com description, severity (INFO, WARN ou ERROR)
+  e line_number quando houver uma linha verificável
+- test_needs: cenários específicos que precisam ser cobertos por testes
 
 Regras:
 - não escreva resposta genérica
@@ -74,13 +53,14 @@ Regras:
 - não sugira performance/carga sem indício real
 """
 
-        expected_output = """
-Relatório completo em Markdown, técnico, contextualizado e baseado no diff, no conteúdo atual do arquivo e no contexto adicional do repositório.
-"""
+        expected_output = (
+            "Objeto ReviewResult válido, técnico e fundamentado no diff, "
+            "sem campos adicionais."
+        )
 
         return Task(
             description=description,
             expected_output=expected_output,
             agent=agent,
-            markdown=True,
+            output_pydantic=ReviewResult,
         )

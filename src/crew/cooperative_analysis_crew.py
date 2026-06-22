@@ -7,9 +7,9 @@ from src.agent.cooperative_manager_agent import CooperativeManagerAgentFactory
 from src.agent.high_risk_strategy_agent import HighRiskStrategyAgentFactory
 from src.agent.qa_agent import QAAgentFactory
 from src.config.settings import Settings
-from src.crew.qa_crew import QACrewResult
+from src.crew.qa_crew import QACrewResult, extract_review_result
 from src.schemas.context_result import render_context_result_for_prompt
-from src.schemas.review_result import parse_review_markdown_to_review_result
+from src.schemas.review_result import render_review_result_as_markdown
 from src.schemas.token_budget import TokenBudgetPlan
 from src.services.context_builder import RepoContextBuilder
 from src.tasks.cooperative_analysis_task import CooperativeAnalysisTaskFactory
@@ -35,7 +35,7 @@ class CooperativeAnalysisCrewRunner:
       1. QA Agent  → analisa diff → publica 'qa_findings' no barramento
       2. Strategy Agent → lê 'qa_findings' → publica 'test_strategy'
       3. Critic Agent → lê 'qa_findings' + 'test_strategy' → publica 'critique'
-      4. Manager Agent → lê 'all' → consolida relatório final em Markdown
+      4. Manager Agent → lê 'all' → consolida ReviewResult estruturado
 
     O barramento (AgentMessageBus) é reiniciado antes de cada execução para
     evitar contaminação entre análises de arquivos distintos.
@@ -104,24 +104,19 @@ class CooperativeAnalysisCrewRunner:
 
         result = crew.kickoff()
         bus_messages = get_bus().read_all()
-        raw_result = self._extract_raw_result(result)
-        review_result = parse_review_markdown_to_review_result(raw_result)
+        review_result, raw_result, structured_output_used, fallback_reason = (
+            extract_review_result(result)
+        )
 
         return QACrewResult(
-            raw_review_markdown=raw_result,
+            raw_review_markdown=(
+                render_review_result_as_markdown(review_result)
+                if structured_output_used
+                else raw_result
+            ),
             review_result=review_result,
             context_result=context_result,
             agent_messages=bus_messages,
+            structured_output_used=structured_output_used,
+            output_fallback_reason=fallback_reason,
         )
-
-    @staticmethod
-    def _extract_raw_result(result) -> str:
-        if hasattr(result, "tasks_output") and result.tasks_output:
-            task_output = result.tasks_output[-1]
-            if hasattr(task_output, "raw") and task_output.raw:
-                return task_output.raw
-
-        if hasattr(result, "raw") and result.raw:
-            return result.raw
-
-        return str(result)
