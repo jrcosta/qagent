@@ -73,6 +73,7 @@ def export_run_summary(
     all_policies: list[str] = []
     flow_counts: dict[str, int] = {}
     context_level_counts: dict[str, int] = {}
+    agentic_status_counts: dict[str, int] = {}
 
     for a in artifacts:
         risk_counts[a.risk_level] = risk_counts.get(a.risk_level, 0) + 1
@@ -87,6 +88,10 @@ def export_run_summary(
             context_level_counts[context_level] = (
                 context_level_counts.get(context_level, 0) + 1
             )
+        if a.agentic_run_status is not None:
+            agentic_status_counts[a.agentic_run_status] = (
+                agentic_status_counts.get(a.agentic_run_status, 0) + 1
+            )
 
     summary: dict[str, Any] = {
         "total_files": len(artifacts),
@@ -97,6 +102,7 @@ def export_run_summary(
         "policies_applied": sorted(set(all_policies)),
         "analysis_flow_distribution": flow_counts,
         "context_level_distribution": context_level_counts,
+        "agentic_run_status_distribution": agentic_status_counts,
     }
 
     if total_duration_ms is not None:

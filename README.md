@@ -18,6 +18,7 @@ O QAgent é um pipeline multi-stage que coordena agentes de IA especializados pa
 |----------------------|-----------|
 | **QA Agent** | Analisa mudanças de código a partir do *diff*, identificando riscos, tipo de mudança e sugerindo cenários de testes. |
 | **TokenBudgetPlanner** | Etapa determinística que escolhe `skip`, `standard` ou `cooperative`, define nível de contexto e registra a política aplicada. |
+| **Planner Agent** | Produz um `ExecutionPlan` limitado ao catálogo autorizado quando o runtime agêntico está ativo. |
 | **High Risk Strategy Agent** | Agente especializado acionado **seletivamente** quando o risco é classificado como HIGH. Enriquece a estratégia de testes via LLM. |
 | **Test Generator Agent** | Gera código real de testes automatizados com base na análise e estratégia, submetendo PRs automáticos no repositório alvo. |
 | **Memory Agent** | Extrai lições aprendidas de comentários de Code Review e as persiste em banco vetorial (**LanceDB**) para futuras gerações. |
@@ -39,6 +40,7 @@ O QAgent utiliza uma arquitetura multi-stage com contratos estruturados entre et
 - **Orçamento de tokens** — antes das chamadas LLM, o `TokenBudgetPlanner` define fluxo, contexto e uso de memória por arquivo
 - **Fallback determinístico** — regras de decisão são determinísticas; o LLM é acionado apenas onde agrega valor (enriquecimento HIGH risk)
 - **Observabilidade** — cada etapa registra duração, execução/skip e políticas aplicadas no próprio artefato
+- **Runtime agêntico governado** — planejamento dinâmico opcional com estado persistente, retry limitado, correção e escalação determinística
 
 ### Fluxo do Pipeline
 
@@ -232,6 +234,22 @@ python -m src.main_test_generator \
 O gerador consome preferencialmente o `artifacts.json` produzido pela análise,
 preservando o review estruturado, risco, estratégia, orçamento de tokens e
 decisões de orquestração. O `analysis.md` permanece como fallback legado.
+
+### Runtime agêntico experimental
+
+```bash
+python -m src.main \
+    --repo-path ./meu-repo \
+    --base-sha COMMIT_A \
+    --head-sha COMMIT_B \
+    --agentic-runtime
+```
+
+Nesse modo, um Planner Agent produz um `ExecutionPlan` usando somente
+capacidades registradas. O `GovernedAgenticRuntime` persiste `RunState` após
+cada transição, enquanto um evaluator determinístico decide entre continuar,
+repetir, corrigir, concluir ou escalar. Veja
+[docs/agentic-runtime.md](docs/agentic-runtime.md).
 
 ---
 
