@@ -50,6 +50,9 @@ Sistema onde agentes:
 - Criar `src/services/webhook_listener.py` + `src/services/repo_monitor.py`
 - Adicionar scheduler (ex.: APScheduler) para polling
 
+**Implementado:** webhook FastAPI com HMAC, deduplicação por delivery, registro
+de repositórios e fila SQLite persistente. Polling periódico permanece opcional.
+
 ---
 
 ### 2. Planejamento Dinâmico de Tarefas
@@ -152,6 +155,9 @@ correção única, conclusão e escalação humana com decisões persistidas.
 - Ativar FastAPI: adicionar `src/api/routes.py` com `/health`, `/metrics`, `/runs`
 - Integrar com Grafana ou criar dashboard simples em HTML (scripts já geram site)
 
+**Fundação implementada:** `/health`, `/metrics`, consulta de jobs, presença de
+workers e contagem de escalações estão disponíveis na API administrativa.
+
 ---
 
 ### 7. Gestão de Múltiplos Repositórios
@@ -159,9 +165,10 @@ correção única, conclusão e escalação humana com decisões persistidas.
 **Problema:** QAgent opera em um repositório por execução. Sem coordenação multi-repo.
 
 **Falta:**
-- [ ] **Registro de repositórios** — lista de repos monitorados com configuração por repo
-- [ ] **Fila de trabalho** — múltiplos PRs de múltiplos repos em fila com priorização
-- [ ] **Isolamento de contexto** — garantir que análise do repo A não contamine contexto do repo B
+- [x] **Registro de repositórios** — lista de repos monitorados com configuração por repo
+- [x] **Fila de trabalho durável** — múltiplos PRs de múltiplos repos com lease, retry e dead-letter
+- [x] **Isolamento de contexto** — worktree e diretório de saída exclusivos por job
+- [ ] **Priorização da fila** — ordenar jobs por risco, SLA ou criticidade do repositório
 - [ ] **Limites de taxa por repo** — evitar consumo excessivo de LLM para repos de baixa prioridade
 - [ ] **Configuração por repo** — `.qagent/config.yml` no repo-alvo define qual análise QAgent deve fazer
 
@@ -169,6 +176,9 @@ correção única, conclusão e escalação humana com decisões persistidas.
 - Criar `src/services/repo_registry.py` + `src/services/work_queue.py`
 - Substituir disparo único por worker loop que consome fila
 - Expandir `.qagent/knowledge/` para incluir `.qagent/config.yml`
+
+**Fundação implementada:** registro explícito de múltiplos repositórios, fila
+compartilhada, worktree isolado por job e autorização de eventos por repo.
 
 ---
 

@@ -38,9 +38,11 @@ def _artifact() -> FileAnalysisArtifact:
 class FakeAnalysisPipeline:
     def __init__(self) -> None:
         self.calls = 0
+        self.last_kwargs = {}
 
     def run(self, **kwargs) -> AnalysisPipelineResult:
         self.calls += 1
+        self.last_kwargs = kwargs
         report = Path(kwargs["output_file"])
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text("# análise", encoding="utf-8")
@@ -122,6 +124,27 @@ def test_coordinator_propagates_lifecycle_escalation(tmp_path: Path) -> None:
     assert state.escalated_files == 1
 
 
+def test_coordinator_can_stop_after_analysis(tmp_path: Path) -> None:
+    analysis = FakeAnalysisPipeline()
+    lifecycle = FakeLifecyclePipeline()
+    coordinator = AgenticRepositoryCoordinator(
+        Settings(),
+        state_store=JsonCoordinatorStateStore(tmp_path / "states"),
+        analysis_pipeline=analysis,  # type: ignore[arg-type]
+        lifecycle_pipeline=lifecycle,  # type: ignore[arg-type]
+    )
+
+    state = coordinator.run(
+        repo_path=tmp_path,
+        output_dir=tmp_path / "outputs",
+        run_test_lifecycle=False,
+    )
+
+    assert state.status == "COMPLETED"
+    assert analysis.calls == 1
+    assert lifecycle.calls == 0
+
+
 def test_resume_after_analysis_skips_completed_stage(tmp_path: Path) -> None:
     output = tmp_path / "outputs"
     artifacts_file = export_artifacts_to_json([_artifact()], str(output))
@@ -148,3 +171,56 @@ def test_resume_after_analysis_skips_completed_stage(tmp_path: Path) -> None:
     assert resumed.status == "COMPLETED"
     assert analysis.calls == 0
     assert lifecycle.calls == 1
+
+
+def test_resume_failed_state_uses_existing_artifacts(tmp_path: Path) -> None:
+    output = tmp_path / "outputs"
+    artifacts_file = export_artifacts_to_json([_artifact()], str(output))
+    analysis = FakeAnalysisPipeline()
+    lifecycle = FakeLifecyclePipeline()
+    store = JsonCoordinatorStateStore(tmp_path / "states")
+    state = CoordinatorState(
+        repo_path=str(tmp_path),
+        output_dir=str(output),
+        status="FAILED",
+        artifacts_file=str(artifacts_file),
+        error="processo interrompido",
+    )
+    store.save(state)
+    coordinator = AgenticRepositoryCoordinator(
+        Settings(),
+        state_store=store,
+        analysis_pipeline=analysis,  # type: ignore[arg-type]
+        lifecycle_pipeline=lifecycle,  # type: ignore[arg-type]
+    )
+
+    resumed = coordinator.resume(state.run_id)
+
+    assert resumed.status == "COMPLETED"
+    assert analysis.calls == 0
+    assert lifecycle.calls == 1
+
+
+def test_resume_replaces_expired_worktree_path(tmp_path: Path) -> None:
+    analysis = FakeAnalysisPipeline()
+    store = JsonCoordinatorStateStore(tmp_path / "states")
+    state = CoordinatorState(
+        repo_path=str(tmp_path / "expired-worktree"),
+        output_dir=str(tmp_path / "outputs"),
+        status="FAILED",
+        error="worktree removido após tentativa anterior",
+    )
+    store.save(state)
+    coordinator = AgenticRepositoryCoordinator(
+        Settings(),
+        state_store=store,
+        analysis_pipeline=analysis,  # type: ignore[arg-type]
+        lifecycle_pipeline=FakeLifecyclePipeline(),  # type: ignore[arg-type]
+    )
+    replacement = tmp_path / "replacement-worktree"
+
+    resumed = coordinator.resume(state.run_id, repo_path=replacement)
+
+    assert resumed.status == "COMPLETED"
+    assert resumed.repo_path == str(replacement.resolve())
+    assert analysis.last_kwargs["repo_path"] == str(replacement.resolve())

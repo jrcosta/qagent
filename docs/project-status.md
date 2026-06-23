@@ -94,6 +94,9 @@ Repositório-alvo (push/PR)
 | `TestLifecycleCapabilityExecutor` | Gera, escreve, executa, revisa e corrige testes localmente | Orquestração |
 | `AgenticRepositoryCoordinator` | Coordena análise e testes com checkpoint entre stages | Orquestração |
 | `JsonCoordinatorStateStore` | Persiste estado global e permite retomada | Infraestrutura |
+| `AutomationStore` | Registro de repos, fila, leases e métricas SQLite | Infraestrutura |
+| `AutomationWorker` | Consome jobs e executa o coordinator em worktrees | Orquestração |
+| FastAPI webhook | Recebe e autentica eventos GitHub | Percepção |
 | `TokenBudgetPlanner` | Decide modo de análise pré-LLM | Determinístico |
 | `ArtifactEvaluator` | Classifica risco e qualidade | Determinístico |
 | `RepoContextBuilder` | Extrai contexto do repositório | Determinístico |
@@ -257,10 +260,10 @@ Cada `FileAnalysisArtifact` registra:
 
 ## Limitações Conhecidas
 
-1. **Não auto-dispara:** precisa de `repository_dispatch` do repositório-alvo
+1. **Publicação externa não governada:** commit, push e PR continuam fora do runtime
 2. **Sem comunicação direta entre agentes:** crews isolados, sem mensagens inter-agente em runtime
 3. **Crew cooperativo experimental:** `CooperativeAnalysisCrewRunner` ativo apenas via flag
-4. **FastAPI inativo:** servidor HTTP disponível mas não usado
+4. **SQLite de nó único:** execução distribuída exige backend compartilhado
 5. **Sem painel de métricas:** observabilidade existe no JSON mas sem dashboard
 6. **Memória não compartilhada:** cada execução reconstrói contexto; sem estado cross-run além do LanceDB
 7. **Um repositório por vez:** sem coordenação multi-repo

@@ -45,6 +45,10 @@ jobs:
           python -c "import src.main"
           python -c "import src.main_agentic"
           python -c "import src.main_agentic_lifecycle"
+          python -c "import src.main_api"
+          python -c "import src.main_autonomous"
+          python -c "import src.main_monitor"
+          python -c "import src.main_worker"
           python -c "import src.main_test_generator"
           python -c "import src.main_test_reviewer"
 
