@@ -282,6 +282,25 @@ stages `ANALYSIS → TEST_LIFECYCLE → COMPLETED/ESCALATED`. Uma execução
 interrompida pode ser retomada com `--resume-run-id`, sem repetir stages ou
 arquivos já concluídos.
 
+### Operação autônoma por webhook
+
+```bash
+python -m src.main_registry owner/repository \
+    --local-path /srv/repos/repository \
+    --output-root /srv/qagent-outputs
+
+python -m src.main_autonomous --host 127.0.0.1 --port 8000
+```
+
+O servidor valida a assinatura GitHub, deduplica deliveries, enfileira eventos
+em SQLite e entrega os jobs a workers com lease, heartbeat, retry e dead-letter.
+Cada execução usa um worktree Git isolado. Um monitor periódico opcional
+reconcilia PRs quando webhooks são perdidos. Consulte
+[docs/autonomous-runtime.md](docs/autonomous-runtime.md).
+
+Por segurança, o registro padrão executa somente análise. A execução de testes
+de PR precisa ser autorizada explicitamente com `--allow-test-execution`.
+
 ---
 
 ## Status do Projeto

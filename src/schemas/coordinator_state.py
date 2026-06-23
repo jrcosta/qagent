@@ -23,6 +23,7 @@ class CoordinatorState(BaseModel):
     base_sha: str | None = None
     head_sha: str | None = None
     cooperative_analysis: bool = False
+    run_test_lifecycle: bool = True
     status: CoordinatorStatus = "PENDING"
     artifacts_file: str | None = None
     analysis_report_file: str | None = None
@@ -38,4 +39,3 @@ class CoordinatorState(BaseModel):
 
     def touch(self) -> None:
         self.updated_at = datetime.now(timezone.utc).isoformat()
-

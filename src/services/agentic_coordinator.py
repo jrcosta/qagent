@@ -36,23 +36,41 @@ class AgenticRepositoryCoordinator:
         base_sha: str | None = None,
         head_sha: str | None = None,
         cooperative_analysis: bool = False,
+        run_id: str | None = None,
+        run_test_lifecycle: bool = True,
     ) -> CoordinatorState:
         output = Path(output_dir).resolve()
         output.mkdir(parents=True, exist_ok=True)
         state = CoordinatorState(
+            **({"run_id": run_id} if run_id else {}),
             repo_path=str(Path(repo_path).resolve()),
             output_dir=str(output),
             base_sha=base_sha,
             head_sha=head_sha,
             cooperative_analysis=cooperative_analysis,
+            run_test_lifecycle=run_test_lifecycle,
         )
         self.state_store.save(state)
         return self._execute(state)
 
-    def resume(self, run_id: str) -> CoordinatorState:
+    def resume(
+        self,
+        run_id: str,
+        repo_path: str | Path | None = None,
+    ) -> CoordinatorState:
         state = self.state_store.load(run_id)
+        if repo_path is not None:
+            state.repo_path = str(Path(repo_path).resolve())
         if state.status in {"COMPLETED", "ESCALATED"}:
             return state
+        if state.status == "FAILED":
+            state.status = (
+                "ANALYSIS_COMPLETED"
+                if state.artifacts_file
+                else "PENDING"
+            )
+            state.error = None
+            self.state_store.save(state)
         return self._execute(state)
 
     def _execute(self, state: CoordinatorState) -> CoordinatorState:
@@ -75,6 +93,11 @@ class AgenticRepositoryCoordinator:
                 state.analysis_report_file = str(analysis.report_file)
                 state.status = "ANALYSIS_COMPLETED"
                 self.state_store.save(state)
+
+                if not state.run_test_lifecycle:
+                    state.status = "COMPLETED"
+                    self.state_store.save(state)
+                    return state
 
             if state.status in {
                 "ANALYSIS_COMPLETED",
@@ -111,4 +134,3 @@ class AgenticRepositoryCoordinator:
             state.error = str(exc)
             self.state_store.save(state)
             raise
-

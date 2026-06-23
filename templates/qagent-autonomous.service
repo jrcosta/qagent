@@ -1,0 +1,19 @@
+[Unit]
+Description=QAgent autonomous runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qagent
+EnvironmentFile=/opt/qagent/.env
+ExecStart=/opt/qagent/.venv/bin/python -m src.main_autonomous --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+User=qagent
+Group=qagent
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
