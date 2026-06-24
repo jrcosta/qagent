@@ -295,7 +295,9 @@ python -m src.main_autonomous --host 127.0.0.1 --port 8000
 O servidor valida a assinatura GitHub, deduplica deliveries, enfileira eventos
 em SQLite e entrega os jobs a workers com lease, heartbeat, retry e dead-letter.
 Cada execução usa um worktree Git isolado. Um monitor periódico opcional
-reconcilia PRs quando webhooks são perdidos. Consulte
+reconcilia PRs quando webhooks são perdidos. Quando `GITHUB_TOKEN` está
+configurado, o worker publica ou atualiza um comentário consolidado no PR com
+status, riscos, recomendações e artefatos. Consulte
 [docs/autonomous-runtime.md](docs/autonomous-runtime.md).
 
 Por segurança, o registro padrão executa somente análise. A execução de testes

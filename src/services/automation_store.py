@@ -66,6 +66,7 @@ class AutomationStore:
                     head_sha TEXT NOT NULL,
                     ref TEXT,
                     fetch_ref TEXT,
+                    pr_number INTEGER,
                     status TEXT NOT NULL,
                     attempts INTEGER NOT NULL,
                     max_attempts INTEGER NOT NULL,
@@ -74,6 +75,9 @@ class AutomationStore:
                     worker_id TEXT,
                     coordinator_run_id TEXT,
                     coordinator_status TEXT,
+                    feedback_status TEXT NOT NULL DEFAULT 'PENDING',
+                    feedback_error TEXT,
+                    feedback_comment_url TEXT,
                     error TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
@@ -100,6 +104,22 @@ class AutomationStore:
             if "fetch_ref" not in columns:
                 connection.execute(
                     "ALTER TABLE jobs ADD COLUMN fetch_ref TEXT"
+                )
+            if "pr_number" not in columns:
+                connection.execute(
+                    "ALTER TABLE jobs ADD COLUMN pr_number INTEGER"
+                )
+            if "feedback_status" not in columns:
+                connection.execute(
+                    "ALTER TABLE jobs ADD COLUMN feedback_status TEXT NOT NULL DEFAULT 'PENDING'"
+                )
+            if "feedback_error" not in columns:
+                connection.execute(
+                    "ALTER TABLE jobs ADD COLUMN feedback_error TEXT"
+                )
+            if "feedback_comment_url" not in columns:
+                connection.execute(
+                    "ALTER TABLE jobs ADD COLUMN feedback_comment_url TEXT"
                 )
 
     def register_repository(
@@ -164,6 +184,7 @@ class AutomationStore:
             head_sha=event.head_sha,
             ref=event.ref,
             fetch_ref=event.fetch_ref,
+            pr_number=event.pr_number,
             max_attempts=max_attempts,
             available_at=now,
             created_at=now,
@@ -175,9 +196,10 @@ class AutomationStore:
                     """
                     INSERT INTO jobs(
                         job_id, delivery_id, repository, event_name, action,
-                        base_sha, head_sha, ref, fetch_ref, status, attempts, max_attempts,
+                        base_sha, head_sha, ref, fetch_ref, pr_number,
+                        status, attempts, max_attempts,
                         available_at, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         job.job_id,
@@ -189,6 +211,7 @@ class AutomationStore:
                         job.head_sha,
                         job.ref,
                         event.fetch_ref,
+                        job.pr_number,
                         job.status,
                         job.attempts,
                         job.max_attempts,
@@ -300,6 +323,33 @@ class AutomationStore:
             coordinator_status=coordinator_status,
         )
 
+    def mark_feedback(
+        self,
+        job_id: str,
+        *,
+        status: str,
+        comment_url: str | None = None,
+        error: str | None = None,
+    ) -> None:
+        with self._connection() as connection:
+            connection.execute(
+                """
+                UPDATE jobs SET
+                    feedback_status=?,
+                    feedback_comment_url=?,
+                    feedback_error=?,
+                    updated_at=?
+                WHERE job_id=?
+                """,
+                (
+                    status,
+                    comment_url,
+                    error[:4000] if error else None,
+                    _iso(_now()),
+                    job_id,
+                ),
+            )
+
     def attach_coordinator_run(
         self,
         job_id: str,
@@ -405,6 +455,9 @@ class AutomationStore:
                 UPDATE jobs SET
                     status='QUEUED', attempts=0, available_at=?,
                     lease_until=NULL, worker_id=NULL, error=NULL,
+                    feedback_status='PENDING',
+                    feedback_error=NULL,
+                    feedback_comment_url=NULL,
                     updated_at=?
                 WHERE job_id=?
                 """,

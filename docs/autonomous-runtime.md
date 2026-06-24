@@ -15,12 +15,14 @@ SQLite queue
 Worker
     ↓ worktree isolado
 AgenticRepositoryCoordinator
-    ↓
+    ↓ comentário idempotente no PR
 COMPLETED | ESCALATED | FAILED
 ```
 
 O runtime não cria commits, pushes ou PRs. Ele produz testes e artefatos no
-worktree temporário e salva os outputs do QAgent no diretório configurado.
+worktree temporário, salva os outputs do QAgent no diretório configurado e,
+quando `GITHUB_TOKEN` está configurado, publica ou atualiza um comentário
+consolidado no PR.
 
 ## Configuração
 
@@ -35,6 +37,7 @@ QAGENT_WORKER_LEASE_SECONDS=900
 QAGENT_WORKER_POLL_SECONDS=2
 QAGENT_MONITOR_ENABLED=false
 QAGENT_MONITOR_POLL_SECONDS=300
+GITHUB_TOKEN=
 ```
 
 Também configure as credenciais LLM já usadas pelo QAgent.
@@ -99,6 +102,22 @@ Ou defina `QAGENT_MONITOR_ENABLED=true` no modo all-in-one. O monitor consulta
 PRs abertos e cria jobs sintéticos idempotentes quando um webhook foi perdido.
 Ele requer `GITHUB_TOKEN`.
 
+## Feedback automático no PR
+
+Para eventos `pull_request`, o worker publica um comentário idempotente com:
+
+- status da execução e `run_id`;
+- distribuição de risco;
+- arquivos analisados e principais recomendações;
+- arquivos de teste gerados, quando houver;
+- links locais dos artefatos estruturados;
+- aviso explícito quando houver escalação humana.
+
+O comentário é identificado por um marcador HTML interno e atualizado em novas
+execuções do mesmo PR, evitando duplicatas. A falha ao publicar o comentário é
+registrada em `feedback_status=FAILED`, mas não invalida uma análise já
+concluída.
+
 Para processar somente um job:
 
 ```bash
@@ -154,7 +173,8 @@ X-QAgent-Admin-Token: <QAGENT_ADMIN_TOKEN>
 - SQLite suporta bem um nó ou baixa concorrência. Múltiplos nós exigirão um
   backend transacional compartilhado.
 - O checkout registrado precisa ter acesso Git ao remote.
-- Ações externas como abrir PR e publicar comentários continuam desabilitadas.
+- Ações externas como abrir PR, push ou commit continuam desabilitadas.
+- Comentários no PR dependem de `GITHUB_TOKEN` com permissão de escrita no repo.
 - Recomenda-se executar o processo com usuário de sistema sem privilégios.
 - `allow_test_execution` é desativado por padrão porque PRs podem conter código
   hostil.

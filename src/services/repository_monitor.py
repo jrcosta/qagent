@@ -59,6 +59,7 @@ class RepositoryMonitor:
                     head_sha=pull.head.sha,
                     ref=pull.head.ref,
                     fetch_ref=f"refs/pull/{pull.number}/head",
+                    pr_number=pull.number,
                 )
                 _, was_created = self.store.enqueue(event)
                 created += int(was_created)

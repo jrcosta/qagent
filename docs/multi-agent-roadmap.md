@@ -73,7 +73,8 @@ de repositórios e fila SQLite persistente. Polling periódico permanece opciona
 runtime governado e máquina de estados JSON estão disponíveis no pipeline
 pós-review por meio de `--agentic-runtime`. O ciclo local de geração, execução,
 revisão e correção também está disponível em `main_agentic_lifecycle.py`.
-Execução distribuída e efeitos externos de GitHub continuam pendentes.
+Execução distribuída e efeitos externos de GitHub além de comentários continuam
+pendentes.
 
 **Coordinator implementado:** `main_agentic.py` executa análise e ciclo de
 testes em uma única chamada, persiste checkpoints entre stages e suporta
@@ -187,7 +188,7 @@ compartilhada, worktree isolado por job e autorização de eventos por repo.
 **Problema:** Escalação atual = `sys.exit(1)` + comentário no PR. Sem contexto estruturado nem tracking.
 
 **Falta:**
-- [ ] **Escalação rica** — ao escalar, incluir: risk_level, findings resumidos, confiança do agente, ação recomendada
+- [x] **Escalação rica em comentário** — comentário do PR inclui status, riscos, recomendações e aviso de revisão humana
 - [ ] **Tipos de escalação** — BLOCK (não mergear), REVIEW (humano revise), INFORM (FYI)
 - [ ] **Tracking de escalações** — registrar escalações não resolvidas, reagendar análise após resolução
 - [ ] **SLA de resposta** — se humano não responde em N dias, QAgent pode tomar ação padrão
