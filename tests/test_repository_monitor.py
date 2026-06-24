@@ -46,3 +46,4 @@ def test_monitor_reconciles_open_prs_idempotently(tmp_path) -> None:
     assert len(jobs) == 1
     assert jobs[0].delivery_id == "poll:owner/repo:42:head"
     assert jobs[0].fetch_ref == "refs/pull/42/head"
+    assert jobs[0].pr_number == 42

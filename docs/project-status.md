@@ -96,6 +96,7 @@ Repositório-alvo (push/PR)
 | `JsonCoordinatorStateStore` | Persiste estado global e permite retomada | Infraestrutura |
 | `AutomationStore` | Registro de repos, fila, leases e métricas SQLite | Infraestrutura |
 | `AutomationWorker` | Consome jobs e executa o coordinator em worktrees | Orquestração |
+| `GitHubPrFeedbackPublisher` | Publica/atualiza comentário idempotente no PR | Feedback |
 | FastAPI webhook | Recebe e autentica eventos GitHub | Percepção |
 | `TokenBudgetPlanner` | Decide modo de análise pré-LLM | Determinístico |
 | `ArtifactEvaluator` | Classifica risco e qualidade | Determinístico |

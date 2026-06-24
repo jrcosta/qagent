@@ -15,6 +15,7 @@ JobStatus = Literal[
     "DEAD_LETTER",
 ]
 TriggerEvent = Literal["pull_request", "push"]
+FeedbackStatus = Literal["PENDING", "PUBLISHED", "SKIPPED", "FAILED"]
 
 
 class RepositoryRegistration(BaseModel):
@@ -39,6 +40,7 @@ class AutomationEvent(BaseModel):
     head_sha: str
     ref: str | None = None
     fetch_ref: str | None = None
+    pr_number: int | None = None
     received_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -54,6 +56,7 @@ class AutomationJob(BaseModel):
     head_sha: str
     ref: str | None = None
     fetch_ref: str | None = None
+    pr_number: int | None = None
     status: JobStatus = "QUEUED"
     attempts: int = 0
     max_attempts: int = 3
@@ -62,6 +65,9 @@ class AutomationJob(BaseModel):
     worker_id: str | None = None
     coordinator_run_id: str | None = None
     coordinator_status: str | None = None
+    feedback_status: FeedbackStatus = "PENDING"
+    feedback_error: str | None = None
+    feedback_comment_url: str | None = None
     error: str | None = None
     created_at: str
     updated_at: str

@@ -49,6 +49,7 @@ def parse_github_event(
             head_sha=pull_request.get("head", {}).get("sha", ""),
             ref=pull_request.get("head", {}).get("ref"),
             fetch_ref=f"refs/pull/{number}/head" if number else None,
+            pr_number=number,
         )
 
     if event_name == "push":

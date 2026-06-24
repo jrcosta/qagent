@@ -10,6 +10,7 @@ from src.schemas.automation import AutomationJob
 from src.services.agentic_coordinator import AgenticRepositoryCoordinator
 from src.services.automation_store import AutomationStore
 from src.services.coordinator_state_store import JsonCoordinatorStateStore
+from src.services.github_pr_feedback import GitHubPrFeedbackPublisher
 from src.services.repository_workspace import RepositoryWorkspaceManager
 
 
@@ -23,6 +24,7 @@ class AutomationWorker:
         worker_id: str | None = None,
         lease_seconds: int = 900,
         coordinator_factory=None,
+        feedback_publisher=None,
     ) -> None:
         self.settings = settings
         self.store = store
@@ -32,6 +34,7 @@ class AutomationWorker:
         self.coordinator_factory = (
             coordinator_factory or self._create_coordinator
         )
+        self.feedback_publisher = feedback_publisher
 
     def run_once(self) -> AutomationJob | None:
         self.store.touch_worker(self.worker_id)
@@ -106,6 +109,7 @@ class AutomationWorker:
                     coordinator_run_id=state.run_id,
                     coordinator_status=state.status,
                 )
+                self._publish_feedback(job, state)
         except Exception as exc:
             self.store.fail(job.job_id, str(exc))
         finally:
@@ -152,6 +156,40 @@ class AutomationWorker:
                 output_dir / "coordinator_runs"
             ),
         )
+
+    def _publish_feedback(self, job: AutomationJob, state) -> None:
+        publisher = self.feedback_publisher
+        if publisher is None:
+            if not self.settings.github_token:
+                self.store.mark_feedback(
+                    job.job_id,
+                    status="SKIPPED",
+                    error="GITHUB_TOKEN não configurado",
+                )
+                return
+            publisher = GitHubPrFeedbackPublisher(
+                github_token=self.settings.github_token,
+            )
+        try:
+            comment_url = publisher.publish(job=job, state=state)
+            if comment_url is None:
+                self.store.mark_feedback(
+                    job.job_id,
+                    status="SKIPPED",
+                    error="Evento não publicável como comentário de PR",
+                )
+                return
+            self.store.mark_feedback(
+                job.job_id,
+                status="PUBLISHED",
+                comment_url=comment_url,
+            )
+        except Exception as exc:
+            self.store.mark_feedback(
+                job.job_id,
+                status="FAILED",
+                error=str(exc),
+            )
 
 
 def _safe_repo_name(full_name: str) -> str:

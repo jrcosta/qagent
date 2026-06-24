@@ -105,6 +105,7 @@ def test_webhook_enqueues_and_deduplicates_delivery(tmp_path) -> None:
     job = store.get_job(first.json()["job_id"])
     assert job is not None
     assert job.fetch_ref == "refs/pull/42/head"
+    assert job.pr_number == 42
 
 
 def test_admin_endpoints_require_token(tmp_path) -> None:

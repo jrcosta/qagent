@@ -12,6 +12,7 @@ def _event(delivery_id: str = "delivery-1") -> AutomationEvent:
         repository="owner/repo",
         base_sha="base",
         head_sha="head",
+        pr_number=42,
     )
 
 
@@ -59,7 +60,41 @@ def test_store_claims_completes_and_reports_metrics(tmp_path) -> None:
     assert completed is not None
     assert completed.status == "SUCCEEDED"
     assert completed.coordinator_status == "ESCALATED"
+    assert completed.pr_number == 42
     assert store.metrics().escalated_runs == 1
+
+
+def test_store_records_feedback_publication_status(tmp_path) -> None:
+    store = AutomationStore(tmp_path / "automation.db")
+    queued, _ = store.enqueue(_event())
+
+    store.mark_feedback(
+        queued.job_id,
+        status="PUBLISHED",
+        comment_url="https://github.com/owner/repo/pull/42#issuecomment-1",
+    )
+    updated = store.get_job(queued.job_id)
+
+    assert updated is not None
+    assert updated.feedback_status == "PUBLISHED"
+    assert updated.feedback_comment_url is not None
+
+
+def test_store_requeue_resets_feedback_status(tmp_path) -> None:
+    store = AutomationStore(tmp_path / "automation.db")
+    queued, _ = store.enqueue(_event())
+    store.dead_letter(queued.job_id, "falha")
+    store.mark_feedback(
+        queued.job_id,
+        status="FAILED",
+        error="GitHub indisponível",
+    )
+
+    requeued = store.requeue(queued.job_id)
+
+    assert requeued.status == "QUEUED"
+    assert requeued.feedback_status == "PENDING"
+    assert requeued.feedback_error is None
 
 
 def test_store_retries_then_dead_letters(tmp_path) -> None:
